@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+
+<!--
+  =======================================================================
+     
+  antiauto - an ant build file template for automake based projects
+
+     
+  Copyright (c) 2005  Michael Koch  (konqueror@gmx.de)
+     
+     
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+     
+  History:
+
+  0.1   Initial public version.
+
+  =======================================================================
+-->
+
+<project name="template" default="build" basedir=".">
+  <property file="antiauto.properties" prefix="antiauto"/>
+  
+  <target name="init">
+    <mkdir dir="${antiauto.build}"/>
+    <available file="${antiauto.src}/autogen.sh" type="file" property="antiauto.autogen"/>
+    <available file="${antiauto.configure}" type="file" property="antiauto.configurescript"/>
+    <available file="${antiauto.build}/Makefile" type="file" property="antiauto.makefiles"/>
+  </target>
+
+  <target name="autogen" if="antiauto.autogen" unless="antiauto.configurescript" depends="init">
+    <echo message="Running autogen.sh ..."/>
+    <exec dir="${antiauto.src}" executable="${antiauto.src}/autogen.sh" failonerror="true">
+      <env key="AUTOGEN_SUBDIR_MODE" value="1"/>
+    </exec>
+  </target>
+  
+  <target name="configure" unless="antiauto.makefiles" depends="autogen">
+    <echo message="Running configure ..."/>
+    <exec dir="${antiauto.build}" executable="../${antiauto.configure}" failonerror="true">
+      <arg line="${antiauto.configureflags}"/>
+    </exec>
+  </target>
+  
+  <target name="build" depends="configure">
+    <echo message="Running make ..."/>
+    <exec dir="${antiauto.build}" executable="make" failonerror="true"/>
+  </target>
+
+  <target name="check" depends="build">
+    <echo message="Running make check ..."/>
+    <exec dir="${antiauto.build}" executable="make" failonerror="true">
+      <arg line="check"/>
+    </exec>
+  </target>
+  
+  <target name="distcheck" depends="configure">
+    <echo message="Running make distcheck ..."/>
+    <exec dir="${antiauto.build}" executable="make" failonerror="true">
+      <arg line="distcheck"/>
+    </exec>
+  </target>
+  
+  <target name="install" depends="build">
+    <echo message="Running make install ..."/>
+    <exec dir="${antiauto.build}" executable="make" failonerror="true">
+      <arg line="install"/>
+    </exec>
+  </target>
+
+  <target name="clean" depends="configure">
+    <echo message="Running make clean ..."/>
+    <exec dir="${antiauto.build}" executable="make">
+      <arg line="clean"/>
+    </exec>
+  </target>
+  
+  <target name="dist" depends="configure">
+    <echo message="Running make dist ..."/>
+    <exec dir="${antiauto.build}" executable="make">
+      <arg line="dist"/>
+    </exec>
+  </target>
+
+  <target name="distclean" depends="configure">
+    <echo message="Running make distclean..."/>
+    <exec dir="${antiauto.build}" executable="make">
+      <arg line="distclean"/>
+    </exec>
+  </target>
+
+  <target name="cvs-update">
+    <echo message="Running cvs update ..."/>
+    <cvs dest="${antiauto.src}" command="update -A -d" cvsRsh="ssh"/>
+  </target>
+
+  <target name="cvs-purge">
+    <echo message="Running cvspurge ..."/>
+    <exec dir="${antiauto.src}" executable="cvspurge"/>
+  </target>
+</project>

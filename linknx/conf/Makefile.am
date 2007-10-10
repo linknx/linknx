@@ -1,0 +1,1 @@
+dist_sysconf_DATA=linknx.xml

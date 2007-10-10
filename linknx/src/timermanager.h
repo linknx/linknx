@@ -1,0 +1,157 @@
+/*
+    LinKNX KNX home automation platform
+    Copyright (C) 2007 Jean-François Meessen <linknx@ouaye.net>
+ 
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+ 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef TIMERMANAGER_H
+#define TIMERMANAGER_H
+
+#include <list>
+#include <string>
+#include <map>
+#include "config.h"
+#include "threads.h"
+#include "ticpp.h"
+#include "objectcontroller.h"
+
+class TimerTask
+{
+public:
+    virtual void onTimer(time_t time) = 0;
+    virtual void reschedule(time_t from = 0) = 0;
+    virtual time_t getExecTime() = 0;
+};
+
+class TimeSpec
+{
+public:
+    enum ExceptionDays
+    {
+        No,
+        Yes,
+        DontCare
+    };
+
+    enum WeekDays
+    {
+        Mon = 0x01,
+        Tue = 0x02,
+        Wed = 0x04,
+        Thu = 0x08,
+        Fri = 0x10,
+        Sat = 0x20,
+        Sun = 0x40,
+        All = 0x00
+    };
+
+    TimeSpec() : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), exception_m(DontCare) {};
+    //    TimeSpec(int min=-1, int hour=-1, int mday=-1, int mon=-1, int year=-1)
+    //        : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare) {};
+    TimeSpec(int min, int hour, int wdays=All, ExceptionDays exception=DontCare)
+            : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception) {};
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    //		int sec_m;
+    int min_m;
+    int hour_m;
+    int mday_m;
+    int mon_m;
+    int year_m;
+    int wdays_m;
+    ExceptionDays exception_m;
+
+};
+
+class PeriodicTask : public TimerTask
+{
+public:
+    PeriodicTask(ChangeListener* cl);
+    virtual ~PeriodicTask();
+
+    virtual void onTimer(time_t time);
+    virtual void reschedule(time_t from);
+    virtual time_t getExecTime() { return nextExecTime_m; };
+
+    void setAt(TimeSpec &at) { at_m = at; };
+    void setUntil(TimeSpec &until) { until_m = until; };
+    void setDuring(int during) { during_m = during; };
+
+protected:
+    TimeSpec at_m, until_m;
+    int during_m, after_m;
+    time_t nextExecTime_m;
+    ChangeListener* cl_m;
+    bool value_m;
+private:
+    time_t findNext(time_t start, TimeSpec* next);
+};
+
+class TimerManager : protected Thread
+{
+public:
+    TimerManager();
+    virtual ~TimerManager();
+
+    void addTask(TimerTask* task);
+    void removeTask(TimerTask* task);
+
+    void startManager() { Start(); };
+    void stopManager() { Stop(); };
+
+private:
+    void Run (pth_sem_t * stop);
+
+    typedef std::list<TimerTask*> TaskList_t;
+    TaskList_t taskList_m;
+};
+
+class DaySpec
+{
+public:
+    DaySpec() : mday_m(-1), mon_m(-1), year_m(-1) {};
+
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
+
+    int mday_m;
+    int mon_m;
+    int year_m;
+};
+
+class ExceptionDays
+{
+public:
+    ExceptionDays();
+    virtual ~ExceptionDays();
+
+    void addDay(DaySpec* date);
+    void removeDay(DaySpec* date);
+
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
+
+    bool isException(time_t time);
+
+private:
+    typedef std::list<DaySpec*> DaysList_t;
+    DaysList_t daysList_m;
+    static ExceptionDays* instance_m;
+};
+
+#endif
