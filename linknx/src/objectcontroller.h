@@ -143,6 +143,7 @@ public:
     virtual void onWrite(const uint8_t* buf, int len);
     void setTime(time_t time);
     void setTime(int wday, int hour, int min, int sec);
+    void getTime(int *wday, int *hour, int *min, int *sec);
 protected:
     int wday_m;
     int hour_m;
@@ -167,6 +168,7 @@ public:
     virtual void onWrite(const uint8_t* buf, int len);
     void setDate(time_t time);
     void setDate(int day, int month, int year);
+    void getDate(int *day, int *month, int *year);
 protected:
     int day_m;
     int month_m;

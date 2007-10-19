@@ -654,6 +654,14 @@ void TimeObject::setTime(int wday, int hour, int min, int sec)
     }
 }
 
+void TimeObject::getTime(int *wday, int *hour, int *min, int *sec)
+{
+    *wday = wday_m;
+    *hour = hour_m;
+    *min = min_m;
+    *sec = sec_m;
+}
+
 DateObject::DateObject() : day_m(0), month_m(0), year_m(0)
 {}
 
@@ -767,6 +775,16 @@ void DateObject::setDate(int day, int month, int year)
         init_m = true;
         onUpdate();
     }
+}
+
+void DateObject::getDate(int *day, int *month, int *year)
+{
+    *day = day_m;
+    *month = month_m;
+    if (year_m < 1900)
+        *year = 1900 + year_m;
+    else
+        *year = 1900;
 }
 
 ValueObject::ValueObject() : value_m(0)

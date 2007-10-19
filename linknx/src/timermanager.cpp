@@ -86,6 +86,28 @@ void TimerManager::removeTask(TimerTask* task)
     taskList_m.remove(task);
 }
 
+TimeSpec* TimeSpec::create(const std::string& type, ChangeListener* cl)
+{
+    if (type == "variable")
+        return new VariableTimeSpec(cl);
+    else
+        return new TimeSpec();
+}
+
+TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
+{
+    std::string type = pConfig->GetAttribute("type");
+    TimeSpec* timeSpec = TimeSpec::create(type, cl);
+    if (timeSpec == 0)
+    {
+        std::stringstream msg;
+        msg << "TimeSpec type not supported: '" << type << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    timeSpec->importXml(pConfig);
+    return timeSpec;
+}
+
 void TimeSpec::importXml(ticpp::Element* pConfig)
 {
     pConfig->GetAttributeOrDefault("year", &(year_m), -1);
@@ -170,13 +192,120 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception)
+{
+    *min = min_m;
+    *hour = hour_m;
+    *mday = mday_m;
+    *mon = mon_m;
+    *year = year_m;
+    *wdays = wdays_m;
+    *exception = exception_m;
+}
+
+VariableTimeSpec::VariableTimeSpec(ChangeListener* cl) : time_m(0), date_m(0), cl_m(cl)
+{
+}
+
+VariableTimeSpec::~VariableTimeSpec()
+{
+    if (cl_m && time_m)
+        time_m->removeChangeListener(cl_m);
+    if (cl_m && date_m)
+        date_m->removeChangeListener(cl_m);
+}
+
+
+void VariableTimeSpec::importXml(ticpp::Element* pConfig)
+{
+    TimeSpec::importXml(pConfig);
+    std::string time = pConfig->GetAttribute("time");
+    if (time != "")
+    {
+        Object* obj = ObjectController::instance()->getObject(time); 
+        time_m = dynamic_cast<TimeObject*>(obj); 
+        if (!time_m)
+        {
+            std::stringstream msg;
+            msg << "Wrong Object type for time in VariableTimeSpec: '" << time << "'" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
+        if (cl_m)
+            time_m->addChangeListener(cl_m);
+    }
+    std::string date = pConfig->GetAttribute("date");
+    if (date != "")
+    {
+        Object* obj = ObjectController::instance()->getObject(date); 
+        date_m = dynamic_cast<DateObject*>(obj); 
+        if (!date_m)
+        {
+            std::stringstream msg;
+            msg << "Wrong Object type for date in VariableTimeSpec: '" << date << "'" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
+        if (cl_m)
+            date_m->addChangeListener(cl_m);
+    }
+
+}
+
+void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "variable");
+    TimeSpec::exportXml(pConfig);
+    if (time_m)
+        pConfig->SetAttribute("time", time_m->getID());
+    if (date_m)
+        pConfig->SetAttribute("date", date_m->getID());
+}
+
+void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception)
+{
+    *min = min_m;
+    *hour = hour_m;
+    *mday = mday_m;
+    *mon = mon_m;
+    *year = year_m;
+    *wdays = wdays_m;
+    *exception = exception_m;
+
+    if (time_m)
+    {
+        int sec_l, min_l, hour_l, wday_l;
+        time_m->getTime(&wday_l, &hour_l, &min_l, &sec_l);
+        if (*min == -1)
+            *min = min_l;    
+        if (*hour == -1)
+            *hour = hour_l;    
+        if (*wdays == All && wday_l > 0)
+            *wdays = 1 << (wday_l - 1);    
+    }
+    if (date_m)
+    {
+        int day_l, month_l, year_l;
+        date_m->getDate(&day_l, &month_l, &year_l);
+        if (*mday == -1)
+            *mday = day_l;    
+        if (*mon == -1)
+            *mon = month_l-1;    
+        if (*year == -1)
+            *year = year_l-1900;    
+    }
+
+}
+
 PeriodicTask::PeriodicTask(ChangeListener* cl)
-        : cl_m(cl), nextExecTime_m(0), value_m(false), during_m(0), after_m(-1)
+        : cl_m(cl), nextExecTime_m(0), value_m(false), during_m(0), after_m(-1), at_m(0), until_m(0)
 {}
 
 PeriodicTask::~PeriodicTask()
 {
     Services::instance()->getTimerManager()->removeTask(this);
+    if (at_m)
+        delete at_m;
+    if (until_m)
+        delete until_m;
 }
 
 void PeriodicTask::onTimer(time_t time)
@@ -201,14 +330,14 @@ void PeriodicTask::reschedule(time_t now)
         if (during_m != -1)
             nextExecTime_m = now + during_m;
         else
-            nextExecTime_m = findNext(now, &until_m);
+            nextExecTime_m = findNext(now, until_m);
     }
     else
     {
         if (after_m != -1)
             nextExecTime_m = now + after_m;
         else
-            nextExecTime_m = findNext(now, &at_m);
+            nextExecTime_m = findNext(now, at_m);
 
     }
     if (nextExecTime_m != 0)
@@ -232,40 +361,50 @@ void PeriodicTask::reschedule(time_t now)
 time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 {
     struct tm * timeinfo;
+    if (!next)
+    {
+        std::cout << "PeriodicTask: no more schedule available" << std::endl;
+        return 0;
+    }
     timeinfo = localtime(&start);
     timeinfo->tm_min++;
-    if (next->min_m != -1)
+    
+    int min, hour, mday, mon, year, wdays;
+    TimeSpec::ExceptionDays exception;
+    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+    
+    if (min != -1)
     {
-        if  (timeinfo->tm_min > next->min_m)
+        if  (timeinfo->tm_min > min)
             timeinfo->tm_hour++;
-        timeinfo->tm_min = next->min_m;
+        timeinfo->tm_min = min;
     }
-    if (next->hour_m != -1)
+    if (hour != -1)
     {
-        if (timeinfo->tm_hour > next->hour_m)
+        if (timeinfo->tm_hour > hour)
         {
             timeinfo->tm_mday++;
             timeinfo->tm_wday++;
         }
-        timeinfo->tm_hour = next->hour_m;
+        timeinfo->tm_hour = hour;
     }
-    if (next->wdays_m == 0)
+    if (wdays == 0)
     {
-        if (next->mday_m != -1)
+        if (mday != -1)
         {
-            if (timeinfo->tm_mday > next->mday_m)
+            if (timeinfo->tm_mday > mday)
                 timeinfo->tm_mon++;
-            timeinfo->tm_mday = next->mday_m;
+            timeinfo->tm_mday = mday;
         }
-        if (next->mon_m != -1)
+        if (mon != -1)
         {
-            if (timeinfo->tm_mon > next->mon_m)
+            if (timeinfo->tm_mon > mon)
                 timeinfo->tm_year++;
-            timeinfo->tm_mon = next->mon_m;
+            timeinfo->tm_mon = mon;
         }
-        if (next->year_m != -1)
+        if (year != -1)
         {
-            if (timeinfo->tm_year > next->year_m)
+            if (timeinfo->tm_year > year)
             {
                 std::cout << "PeriodicTask: no more schedule available" << std::endl;
                 return 0;
@@ -276,7 +415,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     {
         int wd = (timeinfo->tm_wday+6) % 7;
 
-        while ((next->wdays_m & (1 << wd)) == 0)
+        while ((wdays & (1 << wd)) == 0)
         {
             timeinfo->tm_mday++;
             if (timeinfo->tm_mday > 40)
@@ -295,10 +434,10 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         std::cout << "PeriodicTask: no more schedule available" << std::endl;
         return 0;
     }
-    if (next->exception_m != TimeSpec::DontCare)
+    if (exception != TimeSpec::DontCare)
     {
-        bool exception = Services::instance()->getExceptionDays()->isException(nextExecTime);
-        if (exception && next->exception_m == TimeSpec::No || !exception && next->exception_m == TimeSpec::Yes)
+        bool isException = Services::instance()->getExceptionDays()->isException(nextExecTime);
+        if (isException && exception == TimeSpec::No || !isException && exception == TimeSpec::Yes)
         {
             std::cout << "PeriodicTask: calling findNext recursively! (" << nextExecTime << ")" << std::endl;
             return findNext(nextExecTime, next);

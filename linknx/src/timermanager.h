@@ -63,10 +63,16 @@ public:
     //        : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare) {};
     TimeSpec(int min, int hour, int wdays=All, ExceptionDays exception=DontCare)
             : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception) {};
+    virtual ~TimeSpec() {};
+
+    static TimeSpec* create(ticpp::Element* pConfig, ChangeListener* cl);
+    static TimeSpec* create(const std::string& type, ChangeListener* cl);
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
+    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception);
+protected:
     //		int sec_m;
     int min_m;
     int hour_m;
@@ -78,7 +84,23 @@ public:
 
 };
 
-class PeriodicTask : public TimerTask
+class VariableTimeSpec : public TimeSpec
+{
+public:
+    VariableTimeSpec(ChangeListener* cl);
+    virtual ~VariableTimeSpec();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception);
+protected:
+    TimeObject* time_m;
+    DateObject* date_m;
+    ChangeListener* cl_m;
+};
+
+class PeriodicTask : public TimerTask, public ChangeListener
 {
 public:
     PeriodicTask(ChangeListener* cl);
@@ -88,12 +110,13 @@ public:
     virtual void reschedule(time_t from);
     virtual time_t getExecTime() { return nextExecTime_m; };
 
-    void setAt(TimeSpec &at) { at_m = at; };
-    void setUntil(TimeSpec &until) { until_m = until; };
+    void setAt(TimeSpec* at) { at_m = at; };
+    void setUntil(TimeSpec* until) { until_m = until; };
     void setDuring(int during) { during_m = during; };
+    virtual void onChange(Object* object) { reschedule(0); };
 
 protected:
-    TimeSpec at_m, until_m;
+    TimeSpec *at_m, *until_m;
     int during_m, after_m;
     time_t nextExecTime_m;
     ChangeListener* cl_m;

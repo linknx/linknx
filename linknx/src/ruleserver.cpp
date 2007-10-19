@@ -762,7 +762,11 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     if (at && every)
         throw ticpp::Exception("Timer can't define <at> and <every> elements simultaneously");
     if (at)
-        at_m.importXml(at);
+    {
+        if (at_m)
+            delete at_m;
+        at_m = TimeSpec::create(at, this);
+    }
     else if (every)
         every->GetText(&after_m);
     else
@@ -782,7 +786,10 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     }
     else if (until)
     {
-        until_m.importXml(until);
+        if (until_m)
+            delete until_m;
+        until_m = TimeSpec::create(until, this);
+//        until_m.importXml(until);
         during_m = -1;
     }
     else
@@ -800,7 +807,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     if (after_m == -1)
     {
         ticpp::Element pAt("at");
-        at_m.exportXml(&pAt);
+        at_m->exportXml(&pAt);
         pConfig->LinkEndChild(&pAt);
     }
     else
@@ -816,7 +823,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     if (during_m == -1)
     {
         ticpp::Element pUntil("until");
-        until_m.exportXml(&pUntil);
+        until_m->exportXml(&pUntil);
         pConfig->LinkEndChild(&pUntil);
     }
     else if (during_m != 0)

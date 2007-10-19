@@ -1,3 +1,9 @@
+Release 0.0.1.18:
+
+2007-10-18  J-F Meessen
+
+	* Add support for timers driven by date/time objects (EIS3/EIS4)
+
 Release 0.0.1.17:
 
 2007-10-10  J-F Meessen
