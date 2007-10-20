@@ -38,6 +38,11 @@ void die (const char *msg, ...);
  * \return EIB address
  */
 eibaddr_t readaddr (const char *addr);
+/** formats a EIB address
+ * \param addr EIB address
+ * \return address string
+ */
+const char* writeaddr (eibaddr_t addr);
 /** parses a EIB group address
  * \param addr string with the EIB address
  * \return EIB address

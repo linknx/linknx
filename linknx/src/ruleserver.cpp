@@ -21,6 +21,11 @@
 #include "services.h"
 #include "smsgateway.h"
 
+extern "C"
+{
+#include "common.h"
+}
+
 
 RuleServer* RuleServer::instance_m;
 
@@ -554,6 +559,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectCondition(cl);
     else if (type == "timer")
         return new TimerCondition(cl);
+    else if (type == "object-src")
+        return new ObjectSourceCondition(cl);
     else
         return 0;
 }
@@ -696,7 +703,8 @@ ObjectCondition::~ObjectCondition()
 
 bool ObjectCondition::evaluate()
 {
-    bool val = object_m->equals(value_m);
+    // if no value is defined, condition is always true
+    bool val = (value_m == 0) || (object_m->equals(value_m));
     std::cout << "ObjectCondition (id='" << object_m->getID()
     << "') evaluated as '" << val
     << "'" << std::endl;
@@ -719,9 +727,15 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
 
     std::string value;
     value = pConfig->GetAttribute("value");
-
-    value_m = object_m->createObjectValue(value);
-    std::cout << "ObjectCondition: configured value_m='" << value_m->toString() << "'" << std::endl;
+    if (value != "")
+    {
+        value_m = object_m->createObjectValue(value);
+        std::cout << "ObjectCondition: configured value_m='" << value_m->toString() << "'" << std::endl;
+    }
+    else
+    {
+        std::cout << "ObjectCondition: configured, no value specified" << std::endl;
+    }
 }
 
 void ObjectCondition::exportXml(ticpp::Element* pConfig)
@@ -731,6 +745,36 @@ void ObjectCondition::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("value", value_m->toString());
     if (trigger_m)
         pConfig->SetAttribute("trigger", "true");
+}
+
+ObjectSourceCondition::ObjectSourceCondition(ChangeListener* cl) : ObjectCondition(cl), src_m(0)
+{}
+
+ObjectSourceCondition::~ObjectSourceCondition()
+{}
+
+bool ObjectSourceCondition::evaluate()
+{
+    bool val = (src_m == object_m->getLastTx()) && ObjectCondition::evaluate();
+    std::cout << "ObjectSourceCondition (id='" << object_m->getID()
+    << "') evaluated as '" << val
+    << "'" << std::endl;
+    return val;
+}
+
+void ObjectSourceCondition::importXml(ticpp::Element* pConfig)
+{
+    std::string src;
+    src = pConfig->GetAttribute("src");
+
+    src_m = readaddr(src.c_str());
+    ObjectCondition::importXml(pConfig);
+}
+
+void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("src", writeaddr(src_m));
+    ObjectCondition::exportXml(pConfig);
 }
 
 

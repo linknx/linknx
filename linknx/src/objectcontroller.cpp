@@ -152,9 +152,10 @@ void Object::onUpdate()
     }
 }
 
-void Object::onWrite(const uint8_t* buf, int len)
+void Object::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     readPending_m = false;
+    lastTx_m = src;
 }
 
 void Object::addChangeListener(ChangeListener* listener)
@@ -408,10 +409,10 @@ std::string SwitchingObject::getValue()
     return SwitchingObjectValue(getBoolValue()).toString();
 }
 
-void SwitchingObject::onWrite(const uint8_t* buf, int len)
+void SwitchingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     bool newValue;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F) != 0;
     else
@@ -498,10 +499,10 @@ std::string DimmingObject::getValue()
 //    return val.toString();
 }
 
-void DimmingObject::onWrite(const uint8_t* buf, int len)
+void DimmingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int newValue;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F);
     else
@@ -592,7 +593,7 @@ std::string TimeObject::getValue()
     return TimeObjectValue(wday_m, hour_m, min_m, sec_m).toString();
 }
 
-void TimeObject::onWrite(const uint8_t* buf, int len)
+void TimeObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -600,7 +601,7 @@ void TimeObject::onWrite(const uint8_t* buf, int len)
         return;
     }
     int wday, hour, min, sec;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
 
     wday = (buf[2] & 0xE0) >> 5;
     hour = buf[2] & 0x1F;
@@ -719,7 +720,7 @@ std::string DateObject::getValue()
     return DateObjectValue(day_m, month_m, year_m).toString();
 }
 
-void DateObject::onWrite(const uint8_t* buf, int len)
+void DateObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -727,7 +728,7 @@ void DateObject::onWrite(const uint8_t* buf, int len)
         return;
     }
     int day, month, year;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
 
     day = buf[2];
     month = buf[3];
@@ -839,7 +840,7 @@ std::string ValueObject::getValue()
     return ValueObjectValue(getFloatValue()).toString();
 }
 
-void ValueObject::onWrite(const uint8_t* buf, int len)
+void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 4)
     {
@@ -847,7 +848,7 @@ void ValueObject::onWrite(const uint8_t* buf, int len)
         return;
     }
     float newValue;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
     int d1 = ((unsigned char) buf[2]) * 256 + (unsigned char) buf[3];
     int m = d1 & 0x7ff;
     if (d1 & 0x8000)
@@ -951,10 +952,10 @@ std::string ScalingObject::getValue()
     return ScalingObjectValue(getIntValue()).toString();
 }
 
-void ScalingObject::onWrite(const uint8_t* buf, int len)
+void ScalingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int newValue;
-    Object::onWrite(buf, len);
+    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F);
     else
@@ -1027,7 +1028,7 @@ void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf
 {
     ObjectMap_t::iterator it = objectMap_m.find(dest);
     if (it != objectMap_m.end())
-        (*it).second->onWrite(buf, len);
+        (*it).second->onWrite(buf, len, src);
 }
 
 void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) { };

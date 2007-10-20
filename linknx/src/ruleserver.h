@@ -97,11 +97,26 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-private:
+protected:
     Object* object_m;
+private:
     ObjectValue* value_m;
     ChangeListener* cl_m;
     bool trigger_m;
+};
+
+class ObjectSourceCondition : public ObjectCondition
+{
+public:
+    ObjectSourceCondition(ChangeListener* cl);
+    virtual ~ObjectSourceCondition();
+
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    eibaddr_t src_m;
 };
 
 class TimerCondition : public Condition, public PeriodicTask

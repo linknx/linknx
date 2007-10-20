@@ -51,6 +51,14 @@ readaddr (const char *addr)
     die ("invalid individual address %s", addr);
 }
 
+static char writeaddr_buf[16];
+const char*
+writeaddr (eibaddr_t addr)
+{
+    sprintf (writeaddr_buf, "%d.%d.%d", (addr >> 12) & 0x0f, (addr >> 8) & 0x0f, (addr) & 0xff);
+    return writeaddr_buf;
+}
+
 void
 printIndividual (eibaddr_t addr)
 {
