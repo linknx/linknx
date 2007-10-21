@@ -56,7 +56,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = ticpp src conf include test
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -81,6 +81,11 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPPUNIT_CFLAGS = @CPPUNIT_CFLAGS@
+CPPUNIT_CONFIG = @CPPUNIT_CONFIG@
+CPPUNIT_FALSE = @CPPUNIT_FALSE@
+CPPUNIT_LIBS = @CPPUNIT_LIBS@
+CPPUNIT_TRUE = @CPPUNIT_TRUE@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -161,7 +166,9 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = 1.9
-SUBDIRS = ticpp src conf include
+@CPPUNIT_FALSE@CPPUNIT_DIR = 
+@CPPUNIT_TRUE@CPPUNIT_DIR = test
+SUBDIRS = ticpp src conf include $(CPPUNIT_DIR)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

@@ -1054,6 +1054,19 @@ void ObjectController::addObject(Object* object)
         throw ticpp::Exception("Object GAD is already registered");
 }
 
+void ObjectController::removeObject(Object* object)
+{
+    ObjectIdMap_t::iterator it = objectIdMap_m.find(object->getID());
+    if (it != objectIdMap_m.end())
+    {
+        eibaddr_t gad = it->second->getGad();
+        if (gad)
+            objectMap_m.erase(gad);
+        delete it->second;
+        objectIdMap_m.erase(it);
+    }
+}
+
 void ObjectController::importXml(ticpp::Element* pConfig)
 {
     ticpp::Iterator< ticpp::Element > child("object");

@@ -12,6 +12,10 @@ AC_CHECK_PTHSEM(2.0.4,yes,yes,no)
 AC_CHECK_HEADER(argp.h,,[AC_MSG_ERROR([argp_parse not found])])
 AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
 
+dnl Check for CPPUnit 
+ifdef([AM_PATH_CPPUNIT], [AM_PATH_CPPUNIT(1.9.6, [AM_CONDITIONAL(CPPUNIT, true)], [AM_CONDITIONAL(CPPUNIT, false)])],  
+                         [AM_CONDITIONAL(CPPUNIT, false)]) 
+
 # Checks for libraries.
 LIBCURL_CHECK_CONFIG([yes], [7.14.0])
 
@@ -74,5 +78,6 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  ticpp/Makefile
                  include/Makefile
+                 test/Makefile
                  conf/Makefile])
 AC_OUTPUT

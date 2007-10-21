@@ -60,6 +60,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
+    void setID(const char* id) { id_m = id; };
     const char* getID() { return id_m.c_str(); };
     const char* getDescr() { return descr_m.c_str(); };
     const eibaddr_t getGad() { return gad_m; };
