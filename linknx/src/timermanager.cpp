@@ -30,6 +30,28 @@ TimerManager::~TimerManager()
     StopDelete ();
 }
 
+TimerManager::TimerCheck TimerManager::checkTaskList(time_t now)
+{
+    if (taskList_m.empty())
+        return Long;
+
+    TimerTask* first = taskList_m.front();
+    time_t nextExec = first->getExecTime();
+    if (nextExec > now)
+        return Short;
+    
+    if (nextExec > now-60)
+    {
+        std::cout << "TimerTask execution. " << nextExec << std::endl;
+        first->onTimer(now);
+    }
+    else
+        std::cout << "TimerTask skipped due to clock skew or heavy load. " << nextExec << std::endl;
+    taskList_m.pop_front();
+    first->reschedule(now);
+    return Immediate;
+}
+
 void TimerManager::Run (pth_sem_t * stop1)
 {
     pth_event_t stop = pth_event (PTH_EVENT_SEM, stop1);
@@ -39,30 +61,13 @@ void TimerManager::Run (pth_sem_t * stop1)
     tv.tv_usec = 0;
     while (pth_event_status (stop) != PTH_STATUS_OCCURRED)
     {
-        if (taskList_m.empty())
-        {
-            tv.tv_sec = 10;
-        }
+        TimerCheck interval = checkTaskList(time(0));
+        if (interval == Immediate)
+            tv.tv_sec = 0;
+        else if (interval == Short)
+            tv.tv_sec = 1;
         else
-        {
-            TimerTask* first = taskList_m.front();
-            time_t now = time(0);
-            time_t nextExec = first->getExecTime();
-            if (nextExec <= now)
-            {
-                if (nextExec > now-60)
-                {
-                    std::cout << "TimerTask execution. " << nextExec << std::endl;
-                    first->onTimer(now);
-                }
-                else
-                    std::cout << "TimerTask skipped due to clock skew or heavy load. " << nextExec << std::endl;
-                taskList_m.pop_front();
-                first->reschedule(now);
-            }
-            else
-                tv.tv_sec = 1;
-        }
+            tv.tv_sec = 10;
         pth_select_ev(0,0,0,0,&tv,stop);
     }
     std::cout << "Out of TimerManager loop." << std::endl;

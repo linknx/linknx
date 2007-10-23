@@ -46,6 +46,8 @@ CONFIG_CLEAN_FILES =
 am__EXEEXT_1 = testmain$(EXEEXT)
 am_testmain_OBJECTS = testmain-TimeSpecTest.$(OBJEXT) \
 	testmain-ExceptionDaysTest.$(OBJEXT) \
+	testmain-TimerManagerTest.$(OBJEXT) \
+	testmain-PeriodicTaskTest.$(OBJEXT) \
 	testmain-testmain.$(OBJEXT) testmain-ruleserver.$(OBJEXT) \
 	testmain-objectcontroller.$(OBJEXT) common.$(OBJEXT) \
 	eibclient.$(OBJEXT) testmain-threads.$(OBJEXT) \
@@ -175,7 +177,7 @@ target_alias = @target_alias@
 
 # Rules for the test code (use `make check` to execute)
 TESTS = testmain
-testmain_SOURCES = TimeSpecTest.cpp ExceptionDaysTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h
+testmain_SOURCES = TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
@@ -229,7 +231,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eibclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ExceptionDaysTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-PeriodicTaskTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimeSpecTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimerManagerTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-emailgateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-knxconnection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-objectcontroller.Po@am__quote@
@@ -325,6 +329,34 @@ testmain-ExceptionDaysTest.obj: ExceptionDaysTest.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ExceptionDaysTest.cpp' object='testmain-ExceptionDaysTest.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-ExceptionDaysTest.obj `if test -f 'ExceptionDaysTest.cpp'; then $(CYGPATH_W) 'ExceptionDaysTest.cpp'; else $(CYGPATH_W) '$(srcdir)/ExceptionDaysTest.cpp'; fi`
+
+testmain-TimerManagerTest.o: TimerManagerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-TimerManagerTest.o -MD -MP -MF "$(DEPDIR)/testmain-TimerManagerTest.Tpo" -c -o testmain-TimerManagerTest.o `test -f 'TimerManagerTest.cpp' || echo '$(srcdir)/'`TimerManagerTest.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-TimerManagerTest.Tpo" "$(DEPDIR)/testmain-TimerManagerTest.Po"; else rm -f "$(DEPDIR)/testmain-TimerManagerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TimerManagerTest.cpp' object='testmain-TimerManagerTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-TimerManagerTest.o `test -f 'TimerManagerTest.cpp' || echo '$(srcdir)/'`TimerManagerTest.cpp
+
+testmain-TimerManagerTest.obj: TimerManagerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-TimerManagerTest.obj -MD -MP -MF "$(DEPDIR)/testmain-TimerManagerTest.Tpo" -c -o testmain-TimerManagerTest.obj `if test -f 'TimerManagerTest.cpp'; then $(CYGPATH_W) 'TimerManagerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TimerManagerTest.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-TimerManagerTest.Tpo" "$(DEPDIR)/testmain-TimerManagerTest.Po"; else rm -f "$(DEPDIR)/testmain-TimerManagerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='TimerManagerTest.cpp' object='testmain-TimerManagerTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-TimerManagerTest.obj `if test -f 'TimerManagerTest.cpp'; then $(CYGPATH_W) 'TimerManagerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/TimerManagerTest.cpp'; fi`
+
+testmain-PeriodicTaskTest.o: PeriodicTaskTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-PeriodicTaskTest.o -MD -MP -MF "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo" -c -o testmain-PeriodicTaskTest.o `test -f 'PeriodicTaskTest.cpp' || echo '$(srcdir)/'`PeriodicTaskTest.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo" "$(DEPDIR)/testmain-PeriodicTaskTest.Po"; else rm -f "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PeriodicTaskTest.cpp' object='testmain-PeriodicTaskTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-PeriodicTaskTest.o `test -f 'PeriodicTaskTest.cpp' || echo '$(srcdir)/'`PeriodicTaskTest.cpp
+
+testmain-PeriodicTaskTest.obj: PeriodicTaskTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-PeriodicTaskTest.obj -MD -MP -MF "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo" -c -o testmain-PeriodicTaskTest.obj `if test -f 'PeriodicTaskTest.cpp'; then $(CYGPATH_W) 'PeriodicTaskTest.cpp'; else $(CYGPATH_W) '$(srcdir)/PeriodicTaskTest.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo" "$(DEPDIR)/testmain-PeriodicTaskTest.Po"; else rm -f "$(DEPDIR)/testmain-PeriodicTaskTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PeriodicTaskTest.cpp' object='testmain-PeriodicTaskTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-PeriodicTaskTest.obj `if test -f 'PeriodicTaskTest.cpp'; then $(CYGPATH_W) 'PeriodicTaskTest.cpp'; else $(CYGPATH_W) '$(srcdir)/PeriodicTaskTest.cpp'; fi`
 
 testmain-testmain.o: testmain.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-testmain.o -MD -MP -MF "$(DEPDIR)/testmain-testmain.Tpo" -c -o testmain-testmain.o `test -f 'testmain.cpp' || echo '$(srcdir)/'`testmain.cpp; \

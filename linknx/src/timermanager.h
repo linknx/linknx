@@ -121,15 +121,24 @@ protected:
     time_t nextExecTime_m;
     ChangeListener* cl_m;
     bool value_m;
-private:
+
     time_t findNext(time_t start, TimeSpec* next);
 };
 
 class TimerManager : protected Thread
 {
 public:
+    enum TimerCheck
+    {
+        Immediate,
+        Short,
+        Long
+    };
+
     TimerManager();
     virtual ~TimerManager();
+
+    TimerCheck checkTaskList(time_t now);
 
     void addTask(TimerTask* task);
     void removeTask(TimerTask* task);
