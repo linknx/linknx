@@ -58,11 +58,9 @@ public:
         All = 0x00
     };
 
-    TimeSpec() : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), exception_m(DontCare) {};
-    //    TimeSpec(int min=-1, int hour=-1, int mday=-1, int mon=-1, int year=-1)
-    //        : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare) {};
-    TimeSpec(int min, int hour, int wdays=All, ExceptionDays exception=DontCare)
-            : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception) {};
+    TimeSpec();
+    TimeSpec(int min, int hour, int mday, int mon, int year);
+    TimeSpec(int min, int hour, int wdays=All, ExceptionDays exception=DontCare);
     virtual ~TimeSpec() {};
 
     static TimeSpec* create(ticpp::Element* pConfig, ChangeListener* cl);

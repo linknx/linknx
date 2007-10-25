@@ -113,6 +113,23 @@ TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
     return timeSpec;
 }
 
+TimeSpec::TimeSpec()
+    : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), exception_m(DontCare)
+{}
+
+TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year)
+    : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare)
+{
+    if (year_m >= 1900)
+        year_m -= 1900;
+    if (mon_m > 0)
+        mon_m --;
+}
+
+TimeSpec::TimeSpec(int min, int hour, int wdays, ExceptionDays exception)
+    : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception)
+{}
+
 void TimeSpec::importXml(ticpp::Element* pConfig)
 {
     pConfig->GetAttributeOrDefault("year", &(year_m), -1);
@@ -373,6 +390,11 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     }
     timeinfo = localtime(&start);
     timeinfo->tm_min++;
+    if (timeinfo->tm_min > 59)
+    {
+        timeinfo->tm_hour++;
+        timeinfo->tm_min = 0;
+    }
     
     int min, hour, mday, mon, year, wdays;
     TimeSpec::ExceptionDays exception;
@@ -384,27 +406,61 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
             timeinfo->tm_hour++;
         timeinfo->tm_min = min;
     }
+    if (timeinfo->tm_hour > 23)
+    {
+        timeinfo->tm_mday++;
+        timeinfo->tm_hour = 0;
+    }
+        
     if (hour != -1)
     {
         if (timeinfo->tm_hour > hour)
-        {
             timeinfo->tm_mday++;
-            timeinfo->tm_wday++;
+        if (timeinfo->tm_hour != hour)
+        {
+            if (min == -1)
+                timeinfo->tm_min = 0;
+            timeinfo->tm_hour = hour;
         }
-        timeinfo->tm_hour = hour;
     }
+
+    mktime(timeinfo);
+
     if (wdays == 0)
     {
         if (mday != -1)
         {
             if (timeinfo->tm_mday > mday)
                 timeinfo->tm_mon++;
-            timeinfo->tm_mday = mday;
+            if (timeinfo->tm_mday != mday)
+            {
+                if (min == -1)
+                    timeinfo->tm_min = 0;
+                if (hour == -1)
+                    timeinfo->tm_hour = 0;
+                timeinfo->tm_mday = mday;
+                mktime(timeinfo);
+                timeinfo->tm_mday = mday;
+            }
+        }
+        if (timeinfo->tm_mon > 11)
+        {
+            timeinfo->tm_year++;
+            timeinfo->tm_mon = 0;
         }
         if (mon != -1)
         {
             if (timeinfo->tm_mon > mon)
                 timeinfo->tm_year++;
+            if (timeinfo->tm_mon != mon)
+            {
+                if (min == -1)
+                    timeinfo->tm_min = 0;
+                if (hour == -1)
+                    timeinfo->tm_hour = 0;
+                if (mday == -1)
+                    timeinfo->tm_mday = 1;
+            }
             timeinfo->tm_mon = mon;
         }
         if (year != -1)
@@ -434,6 +490,14 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 
     timeinfo->tm_sec = 0;
     time_t nextExecTime = mktime(timeinfo);
+    
+    if (hour != -1 && timeinfo->tm_hour != hour)
+    {
+        // deal with clock shift due to DST
+        timeinfo->tm_hour = hour;
+        nextExecTime = mktime(timeinfo);
+    }
+    
     if (nextExecTime < 0)
     {
         std::cout << "PeriodicTask: no more schedule available" << std::endl;
