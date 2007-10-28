@@ -29,7 +29,7 @@ extern "C"
 
 ObjectController* ObjectController::instance_m;
 
-Object::Object() : gad_m(0), init_m(false), readPending_m(false)
+Object::Object() : gad_m(0), init_m(false), readPending_m(false), forcewrite_m(false)
 {}
 
 Object::~Object()
@@ -247,7 +247,7 @@ TimeObjectValue::TimeObjectValue(const std::string& value) : hour_m(-1), min_m(-
     val >> hour_m >> s1 >> min_m >> s2 >> sec_m;
     wday_m = 0;
 
-    if ( val.fail() || s1 != ':' || s2 != ':' )
+    if ( val.fail() || s1 != ':' || s2 != ':' || hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
     {
         std::stringstream msg;
         msg << "TimeObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -490,13 +490,9 @@ void DimmingObject::setValue(const std::string& value)
 
 std::string DimmingObject::getValue()
 {
-//    DimmingObjectValue val;
     if (!init_m)
         read();
     return DimmingObjectValue(direction_m, stepcode_m).toString();
-//    val.direction_m = direction_m;
-//    val.stepcode_m = stepcode_m;
-//    return val.toString();
 }
 
 void DimmingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
@@ -509,6 +505,8 @@ void DimmingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = buf[2];
     int direction = newValue & 0x08;
     int stepcode = newValue & 0x07;
+    if (stepcode == 0)
+        direction = 0;
 
     if (!init_m || stepcode != stepcode_m  || direction != direction_m)
     {
