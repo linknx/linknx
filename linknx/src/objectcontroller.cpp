@@ -271,8 +271,8 @@ DateObjectValue::DateObjectValue(const std::string& value) : year_m(-1), month_m
     std::istringstream val(value);
     char s1, s2;
     val >> year_m >> s1 >> month_m >> s2 >> day_m;
-
-    if ( val.fail() || s1 != '-' || s2 != '-' )
+    year_m -= 1900;
+    if ( val.fail() || s1 != '-' || s2 != '-' || year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
     {
         std::stringstream msg;
         msg << "DateObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -285,7 +285,7 @@ std::string DateObjectValue::toString()
     if (day_m == -1)
         return "now";
     std::ostringstream out;
-    out << year_m << "-" << month_m << "-" << day_m;
+    out << year_m+1900 << "-" << month_m << "-" << day_m;
     return out.str();
 }
 

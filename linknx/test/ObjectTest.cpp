@@ -7,13 +7,19 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testSwitchingObject );
     CPPUNIT_TEST( testSwitchingObjectWrite );
     CPPUNIT_TEST( testSwitchingObjectUpdate );
+    CPPUNIT_TEST( testSwitchingExportImport );
     CPPUNIT_TEST( testDimmingObject );
     CPPUNIT_TEST( testDimmingObjectWrite );
     CPPUNIT_TEST( testDimmingObjectUpdate );
+    CPPUNIT_TEST( testDimmingExportImport );
     CPPUNIT_TEST( testTimeObject );
     CPPUNIT_TEST( testTimeObjectWrite );
     CPPUNIT_TEST( testTimeObjectUpdate );
-//    CPPUNIT_TEST(  );
+    CPPUNIT_TEST( testTimeExportImport );
+    CPPUNIT_TEST( testDateObject );
+    CPPUNIT_TEST( testDateObjectWrite );
+    CPPUNIT_TEST( testDateObjectUpdate );
+    CPPUNIT_TEST( testDateExportImport );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -143,6 +149,20 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
     }
 
+    void testSwitchingExportImport()
+    {
+        SwitchingObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<SwitchingObject*>(res));
+        delete res;
+    }
+    
     void testDimmingObject()
     {
         const std::string up = "up";
@@ -291,6 +311,20 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
     }
 
+    void testDimmingExportImport()
+    {
+        DimmingObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<DimmingObject*>(res));
+        delete res;
+    }
+    
     void testTimeObject()
     {
         ObjectValue* val;
@@ -423,6 +457,156 @@ public:
         isOnChangeCalled_m = false;
         t.setValue("7:20:00");
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testTimeExportImport()
+    {
+        TimeObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<TimeObject*>(res));
+        delete res;
+    }
+
+    void testDateObject()
+    {
+        ObjectValue* val;
+        DateObject t, t2;
+        int day, month, year;
+        t.setValue("1900-01-01");
+        CPPUNIT_ASSERT(t.getValue() == "1900-1-1");
+        t2.setValue("now");
+        CPPUNIT_ASSERT(t2.getValue() != "1900-1-1");
+
+        t.setValue("2007-10-31");
+        CPPUNIT_ASSERT(t.getValue() == "2007-10-31");
+        t2.setValue("2006-10-05");
+        CPPUNIT_ASSERT(t2.getValue() == "2006-10-5");
+
+        t.getDate(&day, &month, &year);
+        CPPUNIT_ASSERT_EQUAL(31, day);
+        CPPUNIT_ASSERT_EQUAL(10, month);
+        CPPUNIT_ASSERT_EQUAL(2007, year);
+        t2.getDate(&day, &month, &year);
+        CPPUNIT_ASSERT_EQUAL(5, day);
+        CPPUNIT_ASSERT_EQUAL(10, month);
+        CPPUNIT_ASSERT_EQUAL(2006, year);
+
+        CPPUNIT_ASSERT_THROW(t.setValue("2007:11:5"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("-1-10-5"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-13-5"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-0-5"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-32"), ticpp::Exception);
+
+        DateObjectValue tval("2007-10-31");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("2007-10-31");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        DateObjectValue tval2("2006-10-5");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("2006-10-5");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setDate(15, 8, 2007);
+        CPPUNIT_ASSERT(t.getValue() == "2007-8-15");
+        t.getDate(&day, &month, &year);
+        CPPUNIT_ASSERT_EQUAL(15, day);
+        CPPUNIT_ASSERT_EQUAL(8, month);
+        CPPUNIT_ASSERT_EQUAL(2007, year);
+    }
+
+    void testDateObjectWrite()
+    {
+        DateObject t;
+        t.setValue("2007-8-15");
+        t.addChangeListener(this);
+
+        uint8_t buf[6] = {0, 0x80, 1, 1, 0};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 5, src);        
+        CPPUNIT_ASSERT(t.getValue() == "2000-1-1");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 23;
+        buf[3] = 10;
+        buf[4] = 99;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 5, src);       
+        CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 5, src);        
+        CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 20;
+        buf[3] = 10;
+        buf[4] = 7;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 5, src);       
+        CPPUNIT_ASSERT(t.getValue() == "2007-10-20");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        int day, month, year;
+        t.getDate(&day, &month, &year);
+        CPPUNIT_ASSERT_EQUAL(20, day);
+        CPPUNIT_ASSERT_EQUAL(10, month);
+        CPPUNIT_ASSERT_EQUAL(2007, year);
+    }
+
+    void testDateObjectUpdate()
+    {
+        DateObject t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2007-5-30");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2007-5-29");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2007-05-29");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2007-6-16");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testDateExportImport()
+    {
+        DateObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<DateObject*>(res));
+        delete res;
     }
 
 };
