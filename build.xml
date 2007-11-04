@@ -63,7 +63,7 @@
   <target name="check" depends="build">
     <echo message="Running make check ..."/>
     <exec dir="${antiauto.build}" executable="make" failonerror="true">
-      <arg line="check"/>
+      <arg line="check CXXFLAGS='-g -O0'"/>
     </exec>
   </target>
   

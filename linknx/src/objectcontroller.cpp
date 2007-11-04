@@ -247,7 +247,7 @@ TimeObjectValue::TimeObjectValue(const std::string& value) : hour_m(-1), min_m(-
     val >> hour_m >> s1 >> min_m >> s2 >> sec_m;
     wday_m = 0;
 
-    if ( val.fail() || s1 != ':' || s2 != ':' || hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
+    if ( val.fail() || !val.eof() || s1 != ':' || s2 != ':' || hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
     {
         std::stringstream msg;
         msg << "TimeObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -272,7 +272,7 @@ DateObjectValue::DateObjectValue(const std::string& value) : year_m(-1), month_m
     char s1, s2;
     val >> year_m >> s1 >> month_m >> s2 >> day_m;
     year_m -= 1900;
-    if ( val.fail() || s1 != '-' || s2 != '-' || year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
+    if ( val.fail() || !val.eof() || s1 != '-' || s2 != '-' || year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
     {
         std::stringstream msg;
         msg << "DateObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -294,7 +294,7 @@ ValueObjectValue::ValueObjectValue(const std::string& value)
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() )
+    if ( val.fail() || !val.eof() || value_m > 670760.96 || value_m < -671088.64)
     {
         std::stringstream msg;
         msg << "ValueObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -305,6 +305,7 @@ ValueObjectValue::ValueObjectValue(const std::string& value)
 std::string ValueObjectValue::toString()
 {
     std::ostringstream out;
+    out.precision(8);
     out << value_m;
     return out.str();
 }
@@ -314,7 +315,7 @@ ScalingObjectValue::ScalingObjectValue(const std::string& value)
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() )
+    if ( val.fail() || !val.eof() || value_m > 255 || value_m < 0)
     {
         std::stringstream msg;
         msg << "ScalingObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -845,14 +846,14 @@ void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
         std::cout << "Invlalid packet received for ValueObject (too short)" << std::endl;
         return;
     }
-    float newValue;
+    double newValue;
     Object::onWrite(buf, len, src);
     int d1 = ((unsigned char) buf[2]) * 256 + (unsigned char) buf[3];
     int m = d1 & 0x7ff;
     if (d1 & 0x8000)
         m |= ~0x7ff;
     int ex = (d1 & 0x7800) >> 11;
-    newValue = ((float)m * (1 << ex) / 100);
+    newValue = ((double)m * (1 << ex) / 100);
     if (!init_m || newValue != value_m)
     {
         std::cout << "New value " << newValue << " for value object " << getID() << std::endl;
@@ -862,7 +863,7 @@ void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
-void ValueObject::setFloatValue(float value)
+void ValueObject::setFloatValue(double value)
 {
     if (!init_m || value != value_m || forcewrite_m)
     {

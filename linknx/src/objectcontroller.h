@@ -193,15 +193,15 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
-    void setFloatValue(float value);
-    float getFloatValue()
+    void setFloatValue(double value);
+    double getFloatValue()
     {
         if (!init_m)
             read();
         return value_m;
     };
 protected:
-    float value_m;
+    double value_m;
 };
 
 class ScalingObject : public Object
@@ -301,9 +301,9 @@ public:
     virtual ~ValueObjectValue() {};
     virtual std::string toString();
 protected:
-    ValueObjectValue(float value) : value_m(value) {};
+    ValueObjectValue(double value) : value_m(value) {};
     friend class ValueObject;
-    float value_m;
+    double value_m;
 };
 
 class ScalingObjectValue : public ObjectValue

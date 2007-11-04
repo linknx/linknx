@@ -20,6 +20,18 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testDateObjectWrite );
     CPPUNIT_TEST( testDateObjectUpdate );
     CPPUNIT_TEST( testDateExportImport );
+    CPPUNIT_TEST( testValueObject );
+    CPPUNIT_TEST( testValueObjectWrite );
+    CPPUNIT_TEST( testValueObjectUpdate );
+    CPPUNIT_TEST( testValueExportImport );
+    CPPUNIT_TEST( testScalingObject );
+    CPPUNIT_TEST( testScalingObjectWrite );
+    CPPUNIT_TEST( testScalingObjectUpdate );
+    CPPUNIT_TEST( testScalingExportImport );
+    CPPUNIT_TEST( testHeatingModeObject );
+    CPPUNIT_TEST( testHeatingModeObjectWrite );
+    CPPUNIT_TEST( testHeatingModeObjectUpdate );
+    CPPUNIT_TEST( testHeatingModeExportImport );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -357,6 +369,7 @@ public:
         CPPUNIT_ASSERT_THROW(t.setValue("23:60:0"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("0:50:111"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("now:10:50"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("0:50:11:1"), ticpp::Exception);
 
         TimeObjectValue tval("17:30:5");
         CPPUNIT_ASSERT(t.equals(&tval));
@@ -503,6 +516,7 @@ public:
         CPPUNIT_ASSERT_THROW(t.setValue("2007-0-5"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("2007-10-0"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("2007-10-32"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-32-1"), ticpp::Exception);
 
         DateObjectValue tval("2007-10-31");
         CPPUNIT_ASSERT(t.equals(&tval));
@@ -606,6 +620,377 @@ public:
         res = Object::create(&pConfig);
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
         CPPUNIT_ASSERT(dynamic_cast<DateObject*>(res));
+        delete res;
+    }
+
+    void testValueObject()
+    {
+        ObjectValue* val;
+        ValueObject v, v2;
+        v.setValue("25");
+        CPPUNIT_ASSERT(v.getValue() == "25");
+        v2.setValue("14.55");
+        CPPUNIT_ASSERT(v2.getValue() == "14.55");
+
+        v.setValue("670760.96");
+        v2.setValue("-671088.64");
+        CPPUNIT_ASSERT(v.getValue() == "670760.96");
+        CPPUNIT_ASSERT(v2.getValue() == "-671088.64");
+
+        CPPUNIT_ASSERT_EQUAL(670760.96, v.getFloatValue());
+        CPPUNIT_ASSERT_EQUAL(-671088.64, v2.getFloatValue());
+
+        CPPUNIT_ASSERT_THROW(v.setValue("alhfle"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(v.setValue("-671089"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(v.setValue("670761"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(v.setValue("10.1aaaa"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(v.setValue("10,5"), ticpp::Exception);
+
+        ValueObjectValue fval("670760.96");
+        CPPUNIT_ASSERT(v.equals(&fval));
+        CPPUNIT_ASSERT(!v2.equals(&fval));
+
+        val = v.createObjectValue("670760.96");
+        CPPUNIT_ASSERT(v.equals(val));
+        CPPUNIT_ASSERT(!v2.equals(val));
+        delete val;
+
+        ValueObjectValue fval2("-671088.64");
+        CPPUNIT_ASSERT(!v.equals(&fval2));
+        CPPUNIT_ASSERT(v2.equals(&fval2));
+
+        val = v.createObjectValue("-671088.64");
+        CPPUNIT_ASSERT(!v.equals(val));
+        CPPUNIT_ASSERT(v2.equals(val));
+        delete val;      
+
+        v.setFloatValue(-35.24);
+        CPPUNIT_ASSERT(v.getValue() == "-35.24");
+        CPPUNIT_ASSERT_EQUAL(-35.24, v.getFloatValue());
+    }
+
+    void testValueObjectWrite()
+    {
+        ValueObject v;
+        v.setValue("27.1");
+        v.addChangeListener(this);
+
+        uint8_t buf[6] = {0, 0x80, (1<<3) | ((1360 & 0x700)>>8) , (1360 & 0xff)};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(v.getValue() == "27.2");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = (1<<7) | (4<<3) | ((-2000 & 0x700)>>8);
+        buf[3] = (-2000 & 0xff);
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(v.getValue() == "-320");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(v.getValue() == "-320");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = (1<<7) | (5<<3) | ((-1000 & 0x700)>>8);
+        buf[3] = (-1000 & 0xff);
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(v.getValue() == "-320");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = (1<<3) | ((1 & 0x700)>>8);
+        buf[3] = (1 & 0xff);
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(v.getValue() == "0.02");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL(0.02, v.getFloatValue());
+    }
+
+    void testValueObjectUpdate()
+    {
+        ValueObject v;
+        v.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        v.setValue("20.4");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        v.setValue("20.47");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        v.setValue("20.47");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        v.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        v.setValue("21.0");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testValueExportImport()
+    {
+        ValueObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<ValueObject*>(res));
+        delete res;
+    }
+
+    void testScalingObject()
+    {
+        ObjectValue* val;
+        ScalingObject t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("255");
+        CPPUNIT_ASSERT(t2.getValue() == "255");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("240");
+        CPPUNIT_ASSERT(t2.getValue() == "240");
+
+        CPPUNIT_ASSERT_EQUAL(10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL(240, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("256"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("30000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        ScalingObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        ScalingObjectValue tval2("240");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("240");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(100);
+        CPPUNIT_ASSERT(t.getValue() == "100");
+        CPPUNIT_ASSERT_EQUAL(100, t.getIntValue());
+    }
+
+    void testScalingObjectWrite()
+    {
+        ScalingObject t;
+        t.setValue("55");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 66};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "66");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 74;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "74");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "74");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL(0, t.getIntValue());
+    }
+
+    void testScalingObjectUpdate()
+    {
+        ScalingObject t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("168");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testScalingExportImport()
+    {
+        ScalingObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<ScalingObject*>(res));
+        delete res;
+    }
+
+    void testHeatingModeObject()
+    {
+        ObjectValue* val;
+        HeatingModeObject t, t2;
+        t.setValue("comfort");
+        CPPUNIT_ASSERT(t.getValue() == "comfort");
+        t2.setValue("frost");
+        CPPUNIT_ASSERT(t2.getValue() == "frost");
+
+        CPPUNIT_ASSERT_EQUAL(1, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL(4, t2.getIntValue());
+
+        t.setValue("standby");
+        CPPUNIT_ASSERT(t.getValue() == "standby");
+        t2.setValue("night");
+        CPPUNIT_ASSERT(t2.getValue() == "night");
+
+        CPPUNIT_ASSERT_EQUAL(2, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL(3, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("256"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("4"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        HeatingModeObjectValue tval("standby");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("standby");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        HeatingModeObjectValue tval2("night");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("night");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(1);
+        CPPUNIT_ASSERT(t.getValue() == "comfort");
+        CPPUNIT_ASSERT_EQUAL(1, t.getIntValue());
+    }
+
+    void testHeatingModeObjectWrite()
+    {
+        HeatingModeObject t;
+        t.setValue("frost");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 1};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "comfort");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 2;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "standby");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "standby");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 3;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "night");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 4;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "frost");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL(4, t.getIntValue());
+    }
+
+    void testHeatingModeObjectUpdate()
+    {
+        HeatingModeObject t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("comfort");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("standby");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("standby");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("night");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testHeatingModeExportImport()
+    {
+        HeatingModeObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<HeatingModeObject*>(res));
         delete res;
     }
 
