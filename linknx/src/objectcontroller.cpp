@@ -1006,7 +1006,6 @@ std::string HeatingModeObject::getValue()
 
 ObjectController::ObjectController()
 {
-    Services::instance()->getKnxConnection()->addTelegramListener(this);
 }
 
 ObjectController::~ObjectController()

@@ -343,7 +343,6 @@ public:
     void removeObject(Object* object);
 
     Object* getObject(const std::string& id);
-    void write(eibaddr_t gad, uint8_t* buf, int len);
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);

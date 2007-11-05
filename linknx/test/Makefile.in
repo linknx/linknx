@@ -44,8 +44,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 am__EXEEXT_1 = testmain$(EXEEXT)
-am_testmain_OBJECTS = testmain-ObjectTest.$(OBJEXT) \
-	testmain-TimeSpecTest.$(OBJEXT) \
+am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
+	testmain-ObjectTest.$(OBJEXT) testmain-TimeSpecTest.$(OBJEXT) \
 	testmain-ExceptionDaysTest.$(OBJEXT) \
 	testmain-TimerManagerTest.$(OBJEXT) \
 	testmain-PeriodicTaskTest.$(OBJEXT) \
@@ -178,7 +178,7 @@ target_alias = @target_alias@
 
 # Rules for the test code (use `make check` to execute)
 TESTS = testmain
-testmain_SOURCES = ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
@@ -232,6 +232,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eibclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ExceptionDaysTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ObjectControllerTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ObjectTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-PeriodicTaskTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimeSpecTest.Po@am__quote@
@@ -303,6 +304,20 @@ eibclient.obj: ../src/eibclient.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+testmain-ObjectControllerTest.o: ObjectControllerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-ObjectControllerTest.o -MD -MP -MF "$(DEPDIR)/testmain-ObjectControllerTest.Tpo" -c -o testmain-ObjectControllerTest.o `test -f 'ObjectControllerTest.cpp' || echo '$(srcdir)/'`ObjectControllerTest.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-ObjectControllerTest.Tpo" "$(DEPDIR)/testmain-ObjectControllerTest.Po"; else rm -f "$(DEPDIR)/testmain-ObjectControllerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ObjectControllerTest.cpp' object='testmain-ObjectControllerTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-ObjectControllerTest.o `test -f 'ObjectControllerTest.cpp' || echo '$(srcdir)/'`ObjectControllerTest.cpp
+
+testmain-ObjectControllerTest.obj: ObjectControllerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-ObjectControllerTest.obj -MD -MP -MF "$(DEPDIR)/testmain-ObjectControllerTest.Tpo" -c -o testmain-ObjectControllerTest.obj `if test -f 'ObjectControllerTest.cpp'; then $(CYGPATH_W) 'ObjectControllerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/ObjectControllerTest.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-ObjectControllerTest.Tpo" "$(DEPDIR)/testmain-ObjectControllerTest.Po"; else rm -f "$(DEPDIR)/testmain-ObjectControllerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ObjectControllerTest.cpp' object='testmain-ObjectControllerTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-ObjectControllerTest.obj `if test -f 'ObjectControllerTest.cpp'; then $(CYGPATH_W) 'ObjectControllerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/ObjectControllerTest.cpp'; fi`
 
 testmain-ObjectTest.o: ObjectTest.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-ObjectTest.o -MD -MP -MF "$(DEPDIR)/testmain-ObjectTest.Tpo" -c -o testmain-ObjectTest.o `test -f 'ObjectTest.cpp' || echo '$(srcdir)/'`ObjectTest.cpp; \

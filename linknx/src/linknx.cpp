@@ -183,6 +183,7 @@ main (int ac, char *ag[])
     signal (SIGINT, SIG_IGN);
     signal (SIGTERM, SIG_IGN);
 
+    services->getKnxConnection()->addTelegramListener(objects);
     services->start();
     int x;
     pth_sigwait (&t1, &x);
