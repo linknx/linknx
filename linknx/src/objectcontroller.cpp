@@ -84,6 +84,28 @@ void Object::importXml(ticpp::Element* pConfig)
     else if (gad != "nochange")
         gad_m = readgaddr(gad.c_str());
 
+    descr_m = "";
+    ticpp::Iterator< ticpp::Node > child;
+    for ( child = pConfig->FirstChild(false); child != child.end(); child++ )
+    {
+        std::string val = child->Value();
+        if (child->Type() == TiXmlNode::TEXT)
+        {
+            descr_m.append(val);
+        }
+        else if (child->Type() == TiXmlNode::ELEMENT && val == "listener")
+        {
+            std::string listener_gad = child->ToElement()->GetAttribute("gad");
+            listenerGadList_m.push_back(readgaddr(listener_gad.c_str()));
+        }
+//        else
+//        {
+//            std::stringstream msg;
+//            msg << "Invalid element '" << val << "' inside object definition" << std::endl;
+//            throw ticpp::Exception(msg.str());
+//        }
+    }
+
     forcewrite_m = (pConfig->GetAttribute("forcewrite") == "true");
 
     initValue_m = pConfig->GetAttribute("init");
@@ -96,7 +118,6 @@ void Object::importXml(ticpp::Element* pConfig)
     else if (initValue_m != "" && initValue_m != "request")
         setValue(initValue_m);
 
-    descr_m = pConfig->GetText(false);
     std::cout << "Configured object '" << id_m << "': gad='" << gad_m << "'" << std::endl;
 }
 
@@ -115,6 +136,14 @@ void Object::exportXml(ticpp::Element* pConfig)
 
     if (descr_m != "")
         pConfig->SetText(descr_m);
+
+    ListenerGadList_t::iterator it;
+    for (it = listenerGadList_m.begin(); it != listenerGadList_m.end(); it++)
+    {
+        ticpp::Element pElem("listener");
+        pElem.SetAttribute("gad", writegaddr(*it));
+        pConfig->LinkEndChild(&pElem);
+    }
 }
 
 void Object::read()
@@ -1024,8 +1053,10 @@ ObjectController* ObjectController::instance()
 
 void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
 {
-    ObjectMap_t::iterator it = objectMap_m.find(dest);
-    if (it != objectMap_m.end())
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
+    range = objectMap_m.equal_range(dest);
+    ObjectMap_t::iterator it;
+    for (it = range.first; it != range.second; it++)
         (*it).second->onWrite(buf, len, src);
 }
 
@@ -1048,8 +1079,24 @@ void ObjectController::addObject(Object* object)
 {
     if (!objectIdMap_m.insert(ObjectIdPair_t(object->getID(), object)).second)
         throw ticpp::Exception("Object ID already exists");
-    if (object->getGad() && !objectMap_m.insert(ObjectPair_t(object->getGad(), object)).second)
-        throw ticpp::Exception("Object GAD is already registered");
+    if (object->getGad())
+        objectMap_m.insert(ObjectPair_t(object->getGad(), object));
+    std::list<eibaddr_t>::iterator it2, it_end;
+    it_end = object->getListenerGadEnd();
+    for (it2=object->getListenerGad(); it2!=it_end; it2++)
+        objectMap_m.insert(ObjectPair_t((*it2), object));
+}
+
+void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object* object)
+{
+    if (gad == 0)
+        return;
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range = 
+        objectMap_m.equal_range(gad);
+    ObjectMap_t::iterator it;
+    for (it = range.first; it != range.second; it++)
+        if ((*it).second == object)
+            objectMap_m.erase(it);
 }
 
 void ObjectController::removeObject(Object* object)
@@ -1058,8 +1105,13 @@ void ObjectController::removeObject(Object* object)
     if (it != objectIdMap_m.end())
     {
         eibaddr_t gad = it->second->getGad();
-        if (gad)
-            objectMap_m.erase(gad);
+        removeObjectFromAddressMap(gad, object);
+
+        std::list<eibaddr_t>::iterator it2, it_end;
+        it_end = object->getListenerGadEnd();
+        for (it2=object->getListenerGad(); it2!=it_end; it2++)
+            removeObjectFromAddressMap((*it2), object);
+        
         delete it->second;
         objectIdMap_m.erase(it);
     }
@@ -1073,41 +1125,45 @@ void ObjectController::importXml(ticpp::Element* pConfig)
         std::string id = child->GetAttribute("id");
         bool del = child->GetAttribute("delete") == "true";
         ObjectIdMap_t::iterator it = objectIdMap_m.find(id);
-        if (it == objectIdMap_m.end())
+        if (it != objectIdMap_m.end())
+        {
+            Object* object = it->second;
+
+            removeObjectFromAddressMap(object->getGad(), object);
+            std::list<eibaddr_t>::iterator it2, it_end;
+            it_end = object->getListenerGadEnd();
+            for (it2=object->getListenerGad(); it2!=it_end; it2++)
+                removeObjectFromAddressMap((*it2), object);
+
+            if (del)
+            {
+                delete object;
+                objectIdMap_m.erase(it);
+            }
+            else
+            {
+                object->importXml(&(*child));
+                if (object->getGad())
+                    objectMap_m.insert(ObjectPair_t(object->getGad(), object));
+                std::list<eibaddr_t>::iterator it2, it_end;
+                it_end = object->getListenerGadEnd();
+                for (it2=object->getListenerGad(); it2!=it_end; it2++)
+                    objectMap_m.insert(ObjectPair_t((*it2), object));
+                objectIdMap_m.insert(ObjectIdPair_t(id, object));
+            }
+        }
+        else
         {
             if (del)
                 throw ticpp::Exception("Object not found");
             Object* object = Object::create(&(*child));
-            if (object->getGad() && !objectMap_m.insert(ObjectPair_t(object->getGad(), object)).second)
-            {
-                delete object;
-                throw ticpp::Exception("Object GAD is already registered");
-            }
+            if (object->getGad())
+                objectMap_m.insert(ObjectPair_t(object->getGad(), object));
+            std::list<eibaddr_t>::iterator it2, it_end;
+            it_end = object->getListenerGadEnd();
+            for (it2=object->getListenerGad(); it2!=it_end; it2++)
+                objectMap_m.insert(ObjectPair_t((*it2), object));
             objectIdMap_m.insert(ObjectIdPair_t(id, object));
-        }
-        else if (del)
-        {
-            eibaddr_t gad = it->second->getGad();
-            if (gad)
-                objectMap_m.erase(gad);
-            delete it->second;
-            objectIdMap_m.erase(it);
-        }
-        else
-        {
-            eibaddr_t gad = it->second->getGad();
-            it->second->importXml(&(*child));
-            eibaddr_t gad2 = it->second->getGad();
-            if (gad != gad2)
-            {
-                if (gad2)
-                {
-                    if (!objectMap_m.insert(ObjectPair_t(gad2, it->second)).second)
-                        throw ticpp::Exception("New object GAD is already registered");
-                }
-                if (gad)
-                    objectMap_m.erase(gad);
-            }
         }
     }
 

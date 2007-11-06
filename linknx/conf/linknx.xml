@@ -19,7 +19,10 @@
         <object id="dim_salon" gad="1/1/41" type="EIS2">Commande dimmer salon</object>
         <object id="ecl_bureau" gad="1/1/7">Eclairage bureau</object>
         <object id="ecl_couloir" gad="1/1/5">Eclairage couloir</object>
-        <object id="ecl_escalier" gad="1/1/6">Eclairage couloir</object>
+        <object id="ecl_escalier" gad="1/1/6">Eclairage Escalier
+            <listener gad="1/1/206"/>
+        </object>
+        <object id="status_ecl_escalier" gad="1/1/206">Eclairage Escalier (status feedback)</object>
         <object id="ecl_cuisine" gad="1/1/11">Eclairage cuisine</object>
         <object id="ecl_salon" gad="1/1/40">Eclairage salon</object>
         <object id="ecl_sam" gad="1/1/4">Eclairage salle à manger</object>

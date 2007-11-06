@@ -14,7 +14,7 @@ class ObjectControllerTest : public CppUnit::TestFixture
     CPPUNIT_TEST( testAddRemove );
     CPPUNIT_TEST( testWrite );
     CPPUNIT_TEST( testExportImport );
-//    CPPUNIT_TEST(  );
+    CPPUNIT_TEST( testWriteMultipleGad );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -171,6 +171,64 @@ public:
         CPPUNIT_ASSERT_EQUAL(readgaddr("1/1/51"), dim2->getGad());
 
     }
+
+    void testWriteMultipleGad()
+    {
+        ticpp::Element pConfig;
+        ticpp::Element pGadConfig;
+        eibaddr_t src, dest;
+        uint8_t buf[2] = {0, 0x81};
+
+        pConfig.SetAttribute("id", "test_sw_feedback1");
+        pConfig.SetAttribute("gad", "1/1/206");
+        pConfig.SetText("The feedback object description");
+        Object *obj2 = Object::create(&pConfig);
+        obj2->setValue("off");
+        oc_m->addObject(obj2);
+
+        pConfig.SetAttribute("id", "test_sw_feedback2");
+        pConfig.SetAttribute("gad", "1/1/206");
+        pConfig.SetText("The feedback2 object description");
+        Object *obj3 = Object::create(&pConfig);
+        obj3->setValue("off");
+        oc_m->addObject(obj3);
+
+        src = readaddr("0.2.16");
+        dest = readgaddr("1/1/206");
+        buf[1] = 0x81;
+        oc_m->onWrite(src, dest, buf, 2);
+
+        CPPUNIT_ASSERT(obj2->getValue() == "on");
+        CPPUNIT_ASSERT(obj3->getValue() == "on");
+
+
+        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("gad", "1/1/6");
+        pGadConfig.SetValue("listener");
+        pGadConfig.SetAttribute("gad", "1/1/206");
+        pConfig.LinkEndChild(&pGadConfig);
+        pConfig.SetText("The object description");
+        Object *obj1 = Object::create(&pConfig);
+        obj1->setValue("off");
+        oc_m->addObject(obj1);
+
+        src = readaddr("0.2.10");
+        dest = readgaddr("1/1/6");
+        buf[1] = 0x81;
+        oc_m->onWrite(src, dest, buf, 2);
+
+        CPPUNIT_ASSERT(obj1->getValue() == "on");
+
+        src = readaddr("0.2.11");
+        dest = readgaddr("1/1/206");
+        buf[1] = 0x80;
+        oc_m->onWrite(src, dest, buf, 2);
+
+        CPPUNIT_ASSERT(obj1->getValue() == "off");
+        CPPUNIT_ASSERT(obj2->getValue() == "off");
+        CPPUNIT_ASSERT(obj3->getValue() == "off");
+    }
+
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( ObjectControllerTest );

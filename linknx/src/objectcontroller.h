@@ -64,6 +64,9 @@ public:
     const char* getID() { return id_m.c_str(); };
     const char* getDescr() { return descr_m.c_str(); };
     const eibaddr_t getGad() { return gad_m; };
+    std::list<eibaddr_t>::iterator getListenerGad() { return listenerGadList_m.begin(); };
+    std::list<eibaddr_t>::iterator getListenerGadEnd() { return listenerGadList_m.end(); };
+//    eibaddr_t getListenerGad(int idx) { return listenerGadList_m[idx]; };
     const eibaddr_t getLastTx() { return lastTx_m; };
     void read();
     virtual void onUpdate();
@@ -82,6 +85,8 @@ private:
     std::string descr_m;
     typedef std::list<ChangeListener*> ListenerList_t;
     ListenerList_t listenerList_m;
+    typedef std::list<eibaddr_t> ListenerGadList_t;
+    ListenerGadList_t listenerGadList_m;
 };
 
 class SwitchingObject : public Object
@@ -355,8 +360,10 @@ private:
     ObjectController();
     virtual ~ObjectController();
 
+    void removeObjectFromAddressMap(eibaddr_t gad, Object* object);
+
     typedef std::pair<eibaddr_t ,Object*> ObjectPair_t;
-    typedef std::map<eibaddr_t ,Object*> ObjectMap_t;
+    typedef std::multimap<eibaddr_t ,Object*> ObjectMap_t;
     typedef std::pair<std::string ,Object*> ObjectIdPair_t;
     typedef std::map<std::string ,Object*> ObjectIdMap_t;
     ObjectMap_t objectMap_m;
