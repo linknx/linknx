@@ -72,10 +72,25 @@ public:
     virtual void onUpdate();
     void addChangeListener(ChangeListener* listener);
     void removeChangeListener(ChangeListener* listener);
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    void onRead(const uint8_t* buf, int len, eibaddr_t src);
+    void onResponse(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
+    virtual void doSend(bool isWrite) = 0;
 protected:
     bool init_m;
-    bool forcewrite_m;
+    enum Flags
+    {
+        Comm = 0x01,
+        Read = 0x02,
+        Write = 0x04,
+        Transmit = 0x08,
+        Update = 0x10,
+        Init = 0x20,
+        Force = 0x80,
+        Default = Comm | Write | Transmit | Update
+    };
+    int flags_m;
 private:
     std::string id_m;
     eibaddr_t gad_m;
@@ -101,7 +116,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setBoolValue(bool value);
     bool getBoolValue()
     {
@@ -127,7 +143,8 @@ public:
 
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setDimmerValue(int direction, int stepcode);
 protected:
     int direction_m;
@@ -148,7 +165,8 @@ public:
 
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setTime(time_t time);
     void setTime(int wday, int hour, int min, int sec);
     void getTime(int *wday, int *hour, int *min, int *sec);
@@ -173,7 +191,8 @@ public:
 
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setDate(time_t time);
     void setDate(int day, int month, int year);
     void getDate(int *day, int *month, int *year);
@@ -197,7 +216,8 @@ public:
 
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setFloatValue(double value);
     double getFloatValue()
     {
@@ -223,7 +243,8 @@ public:
 
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
     void setIntValue(int value);
     int getIntValue()
     {

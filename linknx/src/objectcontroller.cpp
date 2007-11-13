@@ -29,7 +29,7 @@ extern "C"
 
 ObjectController* ObjectController::instance_m;
 
-Object::Object() : gad_m(0), init_m(false), readPending_m(false), forcewrite_m(false)
+Object::Object() : gad_m(0), init_m(false), readPending_m(false), flags_m(Default)
 {}
 
 Object::~Object()
@@ -106,8 +106,37 @@ void Object::importXml(ticpp::Element* pConfig)
 //        }
     }
 
-    forcewrite_m = (pConfig->GetAttribute("forcewrite") == "true");
+    try
+    {
+        std::string flags;
+        pConfig->GetAttribute("flags", &flags);
+        flags_m = 0;
+        if (flags.find('c') != flags.npos)
+            flags_m |= Comm;
+        if (flags.find('r') != flags.npos)
+            flags_m |= Read;
+        if (flags.find('w') != flags.npos)
+            flags_m |= Write;
+        if (flags.find('t') != flags.npos)
+            flags_m |= Transmit;
+        if (flags.find('u') != flags.npos)
+            flags_m |= Update;
+        if (flags.find('i') != flags.npos)
+            flags_m |= Init;
+        if (flags.find('f') != flags.npos)
+            flags_m |= Force;
+    }
+    catch( ticpp::Exception& ex )
+    {
+        flags_m = Default; 
+    }
 
+    // BEGIN: backward compatibility with 0.0.1.17
+    if (pConfig->GetAttribute("forcewrite") == "true")
+        flags_m |= Force;
+    // END: backward compatibility with 0.0.1.17
+
+    // TODO: do we need to use the 'i' flag instead of init="request" attribute
     initValue_m = pConfig->GetAttribute("init");
     if (initValue_m == "persist")
     {
@@ -131,8 +160,25 @@ void Object::exportXml(ticpp::Element* pConfig)
     if (initValue_m != "")
         pConfig->SetAttribute("init", initValue_m);
 
-    if (forcewrite_m)
-        pConfig->SetAttribute("forcewrite", "true");
+    if (flags_m != Default)
+    {
+        std::stringstream flags;
+        if (flags_m & Comm)
+            flags << 'c';
+        if (flags_m & Read)
+            flags << 'r';
+        if (flags_m & Write)
+            flags << 'w';
+        if (flags_m & Transmit)
+            flags << 't';
+        if (flags_m & Update)
+            flags << 'u';
+        if (flags_m & Init)
+            flags << 'i';
+        if (flags_m & Force)
+            flags << 'f';
+        pConfig->SetAttribute("flags", flags.str());
+    }
 
     if (descr_m != "")
         pConfig->SetText(descr_m);
@@ -183,8 +229,27 @@ void Object::onUpdate()
 
 void Object::onWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
-    readPending_m = false;
-    lastTx_m = src;
+    if ((flags_m & Write) && (flags_m & Comm))
+    {
+        lastTx_m = src;
+        doWrite(buf, len, src);
+    }
+}
+
+void Object::onRead(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if ((flags_m & Read) && (flags_m & Comm))
+        doSend(false);
+}
+
+void Object::onResponse(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if ((flags_m & Update) && (flags_m & Comm))
+    {
+        readPending_m = false;
+        lastTx_m = src;
+        doWrite(buf, len, src);
+    }
 }
 
 void Object::addChangeListener(ChangeListener* listener)
@@ -439,10 +504,9 @@ std::string SwitchingObject::getValue()
     return SwitchingObjectValue(getBoolValue()).toString();
 }
 
-void SwitchingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     bool newValue;
-    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F) != 0;
     else
@@ -456,14 +520,19 @@ void SwitchingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
+void SwitchingObject::doSend(bool isWrite)
+{
+    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (value_m ? 1 : 0) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
+}
+
 void SwitchingObject::setBoolValue(bool value)
 {
-    if (!init_m || value != value_m || forcewrite_m)
+    if (!init_m || value != value_m || (flags_m & Force))
     {
         value_m = value;
-        uint8_t buf[3] = { 0, 0x80 };
-        buf[1] = value ? 0x81 : 0x80;
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -525,10 +594,9 @@ std::string DimmingObject::getValue()
     return DimmingObjectValue(direction_m, stepcode_m).toString();
 }
 
-void DimmingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void DimmingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int newValue;
-    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F);
     else
@@ -548,17 +616,20 @@ void DimmingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
+void DimmingObject::doSend(bool isWrite)
+{
+    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (direction_m ? 8 : 0) | (stepcode_m & 0x07) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
+}
+
 void DimmingObject::setDimmerValue(int direction, int stepcode)
 {
-    if (!init_m || stepcode_m != stepcode  || direction_m != direction || forcewrite_m)
+    if (!init_m || stepcode_m != stepcode  || direction_m != direction || (flags_m & Force))
     {
         stepcode_m = stepcode;
         direction_m = direction;
-        uint8_t buf[3] = { 0, 0x80 };
-        
-        buf[1] = (direction_m ? 0x88 : 0x80) | (stepcode_m & 0x07);
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
-
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -621,7 +692,7 @@ std::string TimeObject::getValue()
     return TimeObjectValue(wday_m, hour_m, min_m, sec_m).toString();
 }
 
-void TimeObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -629,7 +700,6 @@ void TimeObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     int wday, hour, min, sec;
-    Object::onWrite(buf, len, src);
 
     wday = (buf[2] & 0xE0) >> 5;
     hour = buf[2] & 0x1F;
@@ -656,6 +726,12 @@ void TimeObject::setTime(time_t time)
     setTime(wday, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
 }
 
+void TimeObject::doSend(bool isWrite)
+{
+    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), ((wday_m<<5) & 0xE0) | (hour_m & 0x1F), min_m, sec_m };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+}
+
 void TimeObject::setTime(int wday, int hour, int min, int sec)
 {
     if (!init_m ||
@@ -663,7 +739,7 @@ void TimeObject::setTime(int wday, int hour, int min, int sec)
             hour_m != hour ||
             min_m != min ||
             sec_m != sec ||
-            forcewrite_m)
+            (flags_m & Force))
     {
         std::cout << "TimeObject: setTime "
         << wday << " "
@@ -675,9 +751,8 @@ void TimeObject::setTime(int wday, int hour, int min, int sec)
         min_m = min;
         sec_m = sec;
 
-        uint8_t buf[5] = { 0, 0x80, ((wday<<5) & 0xE0) | (hour & 0x1F), min, sec };
-
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -748,7 +823,7 @@ std::string DateObject::getValue()
     return DateObjectValue(day_m, month_m, year_m).toString();
 }
 
-void DateObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -756,7 +831,6 @@ void DateObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     int day, month, year;
-    Object::onWrite(buf, len, src);
 
     day = buf[2];
     month = buf[3];
@@ -780,6 +854,12 @@ void DateObject::setDate(time_t time)
     setDate(timeinfo->tm_mday, timeinfo->tm_mon+1, timeinfo->tm_year);
 }
 
+void DateObject::doSend(bool isWrite)
+{
+    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), day_m, month_m, year_m };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+}
+
 void DateObject::setDate(int day, int month, int year)
 {
     if (year >= 1900)
@@ -788,7 +868,7 @@ void DateObject::setDate(int day, int month, int year)
             day_m != day ||
             month_m != month ||
             year_m != year ||
-            forcewrite_m)
+            (flags_m & Force))
     {
         std::cout << "DateObject: setDate "
         << year + 1900 << "-"
@@ -798,9 +878,8 @@ void DateObject::setDate(int day, int month, int year)
         month_m = month;
         year_m = year;
 
-        uint8_t buf[5] = { 0, 0x80, day, month, year };
-
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -868,7 +947,7 @@ std::string ValueObject::getValue()
     return ValueObjectValue(getFloatValue()).toString();
 }
 
-void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 4)
     {
@@ -876,7 +955,6 @@ void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     double newValue;
-    Object::onWrite(buf, len, src);
     int d1 = ((unsigned char) buf[2]) * 256 + (unsigned char) buf[3];
     int m = d1 & 0x7ff;
     if (d1 & 0x8000)
@@ -892,37 +970,43 @@ void ValueObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
+void ValueObject::doSend(bool isWrite)
+{
+    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), 0, 0 };
+    int ex = 0;
+    int m = (int)rint(value_m * 100);
+    if (m < 0)
+    {
+        m = -m;
+        while (m > 2048)
+        {
+            m = m >> 1;
+            ex++;
+        }
+        m = -m;
+        buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7);
+    }
+    else
+    {
+        while (m > 2047)
+        {
+            m = m >> 1;
+            ex++;
+        }
+        buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78);
+    }
+    buf[3] = (m & 0xff);
+
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+}
+
 void ValueObject::setFloatValue(double value)
 {
-    if (!init_m || value != value_m || forcewrite_m)
+    if (!init_m || value != value_m || (flags_m & Force))
     {
         value_m = value;
-        uint8_t buf[4] = { 0, 0x80, 0, 0 };
-        int ex = 0;
-        int m = (int)rint(value * 100);
-        if (m < 0)
-        {
-            m = -m;
-            while (m > 2048)
-            {
-                m = m >> 1;
-                ex++;
-            }
-            m = -m;
-            buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7);
-        }
-        else
-        {
-            while (m > 2047)
-            {
-                m = m >> 1;
-                ex++;
-            }
-            buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78);
-        }
-        buf[3] = (m & 0xff);
-
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -980,10 +1064,9 @@ std::string ScalingObject::getValue()
     return ScalingObjectValue(getIntValue()).toString();
 }
 
-void ScalingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void ScalingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int newValue;
-    Object::onWrite(buf, len, src);
     if (len == 2)
         newValue = (buf[1] & 0x3F);
     else
@@ -997,15 +1080,19 @@ void ScalingObject::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
+void ScalingObject::doSend(bool isWrite)
+{
+    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+}
+
 void ScalingObject::setIntValue(int value)
 {
-    if (!init_m || value != value_m || forcewrite_m)
+    if (!init_m || value != value_m || (flags_m & Force))
     {
         value_m = value;
-        uint8_t buf[3] = { 0, 0x80, 0 };
-        buf[2] = (value & 0xff);
-
-        Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
         init_m = true;
         onUpdate();
     }
@@ -1060,8 +1147,23 @@ void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf
         (*it).second->onWrite(buf, len, src);
 }
 
-void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) { };
-void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) { onWrite(src, dest, buf, len); };
+void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
+{
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
+    range = objectMap_m.equal_range(dest);
+    ObjectMap_t::iterator it;
+    for (it = range.first; it != range.second; it++)
+        (*it).second->onRead(buf, len, src);
+}
+
+void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
+{
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
+    range = objectMap_m.equal_range(dest);
+    ObjectMap_t::iterator it;
+    for (it = range.first; it != range.second; it++)
+        (*it).second->onResponse(buf, len, src);
+}
 
 Object* ObjectController::getObject(const std::string& id)
 {
