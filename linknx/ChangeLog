@@ -1,3 +1,9 @@
+Release 0.0.1.20:
+
+2007-11-12  J-F Meessen
+
+	* Add ETS-like flags for communication objects
+
 Release 0.0.1.19:
 
 2007-11-07  J-F Meessen
