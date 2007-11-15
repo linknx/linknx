@@ -1,5 +1,9 @@
 Release 0.0.1.20:
 
+2007-11-15  Matthias Friedrich & J-F Meessen
+
+	* Add 14 character String object EIS15
+
 2007-11-15  J-F Meessen
 
 	* Add implementation for FilePersitentStorage

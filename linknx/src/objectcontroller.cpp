@@ -51,6 +51,8 @@ Object* Object::create(const std::string& type)
         return new ScalingObject();
     else if (type == "heat-mode")
         return new HeatingModeObject();
+    else if (type == "EIS15")
+        return new StringObject();
     else
         return 0;
 }
@@ -109,12 +111,12 @@ void Object::importXml(ticpp::Element* pConfig)
             std::string listener_gad = child->ToElement()->GetAttribute("gad");
             listenerGadList_m.push_back(readgaddr(listener_gad.c_str()));
         }
-//        else
-//        {
-//            std::stringstream msg;
-//            msg << "Invalid element '" << val << "' inside object definition" << std::endl;
-//            throw ticpp::Exception(msg.str());
-//        }
+        //        else
+        //        {
+        //            std::stringstream msg;
+        //            msg << "Invalid element '" << val << "' inside object definition" << std::endl;
+        //            throw ticpp::Exception(msg.str());
+        //        }
     }
 
     try
@@ -139,7 +141,7 @@ void Object::importXml(ticpp::Element* pConfig)
     }
     catch( ticpp::Exception& ex )
     {
-        flags_m = Default; 
+        flags_m = Default;
     }
 
     // BEGIN: backward compatibility with 0.0.1.17
@@ -354,7 +356,7 @@ std::string DimmingObjectValue::toString()
         ret.push_back(':');
         ret.push_back('0' + stepcode_m);
     }
-    return ret;  
+    return ret;
 }
 
 TimeObjectValue::TimeObjectValue(const std::string& value) : hour_m(-1), min_m(-1), sec_m(-1), wday_m(-1)
@@ -483,6 +485,34 @@ std::string HeatingModeObjectValue::toString()
     return "frost";
 }
 
+StringObjectValue::StringObjectValue(const std::string& value)
+{
+    if ( value.length() > 14)
+    {
+        std::stringstream msg;
+        msg << "StringObjectValue: Bad value (too long): '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    std::string::const_iterator it = value.begin();
+    while ( it != value.end())
+    {
+        if (*it < 0)
+        {
+            std::stringstream msg;
+            msg << "StringObjectValue: Bad value (invalid character): '" << value << "'" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
+        ++it;
+    }
+    value_m = value;
+    std::cout << "StringObjectValue: Value: '" << value_m << "'" << std::endl;
+}
+
+std::string StringObjectValue::toString()
+{
+    return value_m;
+}
+
 SwitchingObject::SwitchingObject() : value_m(false)
 {}
 
@@ -591,9 +621,9 @@ bool DimmingObject::equals(ObjectValue* value)
     }
     if (!init_m)
         read();
-    std::cout << "DimmingObject (id=" << getID() << "): Compare object='" 
-              << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='" 
-              << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
+    std::cout << "DimmingObject (id=" << getID() << "): Compare object='"
+    << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='"
+    << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
     return (direction_m == val->direction_m) && (stepcode_m == val->stepcode_m);
 }
 
@@ -1145,9 +1175,104 @@ std::string HeatingModeObject::getValue()
     return HeatingModeObjectValue(getIntValue()).toString();
 }
 
-ObjectController::ObjectController()
+StringObject::StringObject()
+{}
+
+StringObject::~StringObject()
+{}
+
+void StringObject::exportXml(ticpp::Element* pConfig)
 {
+    Object::exportXml(pConfig);
+    pConfig->SetAttribute("type", "EIS15");
 }
+
+ObjectValue* StringObject::createObjectValue(const std::string& value)
+{
+    return new StringObjectValue(value);
+}
+
+bool StringObject::equals(ObjectValue* value)
+{
+    assert(value);
+    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "StringObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    return value_m == val->value_m;
+}
+
+void StringObject::setValue(ObjectValue* value)
+{
+    assert(value);
+    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    if (val == 0)
+        std::cout << "StringObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+    setStringValue(val->value_m);
+}
+
+void StringObject::setValue(const std::string& value)
+{
+    setStringValue(value);
+}
+
+std::string StringObject::getValue()
+{
+    return value_m;
+}
+
+void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if (len < 2)
+    {
+        std::cout << "Invlalid packet received for StringObject (too short)" << std::endl;
+        return;
+    }
+    std::string value;
+    for(int j=2; j<len && buf[j]!=0; j++)
+        value.push_back(buf[j]);
+
+    if (!init_m || value != value_m)
+    {
+        std::cout << "New value " << value << " for string object " << getID() << std::endl;
+        value_m = value;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void StringObject::doSend(bool isWrite)
+{
+    std::cout << "StringObject: Value: " << value_m << std::endl;
+    uint8_t buf[16];
+    memset(buf,0,sizeof(buf));
+    buf[1] = (isWrite ? 0x80 : 0x40);
+    // Convert to hex
+    for(int j=0;j<value_m.size();j++)
+        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+
+    Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
+}
+
+void StringObject::setStringValue(const std::string& value)
+{
+    if (!init_m || value != value_m || (flags_m & Force))
+    {
+        value_m = value;
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
+        init_m = true;
+        onUpdate();
+    }
+}
+
+ObjectController::ObjectController()
+{}
 
 ObjectController::~ObjectController()
 {
@@ -1218,7 +1343,7 @@ void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object* object)
 {
     if (gad == 0)
         return;
-    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range = 
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range =
         objectMap_m.equal_range(gad);
     ObjectMap_t::iterator it;
     for (it = range.first; it != range.second; it++)
@@ -1238,7 +1363,7 @@ void ObjectController::removeObject(Object* object)
         it_end = object->getListenerGadEnd();
         for (it2=object->getListenerGad(); it2!=it_end; it2++)
             removeObjectFromAddressMap((*it2), object);
-        
+
         delete it->second;
         objectIdMap_m.erase(it);
     }

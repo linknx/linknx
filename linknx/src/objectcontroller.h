@@ -66,7 +66,7 @@ public:
     const eibaddr_t getGad() { return gad_m; };
     std::list<eibaddr_t>::iterator getListenerGad() { return listenerGadList_m.begin(); };
     std::list<eibaddr_t>::iterator getListenerGadEnd() { return listenerGadList_m.end(); };
-//    eibaddr_t getListenerGad(int idx) { return listenerGadList_m[idx]; };
+    //    eibaddr_t getListenerGad(int idx) { return listenerGadList_m[idx]; };
     const eibaddr_t getLastTx() { return lastTx_m; };
     void read();
     virtual void onUpdate();
@@ -266,6 +266,26 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 };
 
+class StringObject : public Object
+{
+public:
+    StringObject();
+    virtual ~StringObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual bool equals(ObjectValue* value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    void setStringValue(const std::string& val);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+protected:
+    std::string value_m;
+};
+
 class SwitchingObjectValue : public ObjectValue
 {
 public:
@@ -353,6 +373,17 @@ public:
 protected:
     HeatingModeObjectValue(int value) : ScalingObjectValue(value) {};
     friend class HeatingModeObject;
+};
+
+class StringObjectValue : public ObjectValue
+{
+public:
+    StringObjectValue(const std::string& value);
+    virtual ~StringObjectValue() {};
+    virtual std::string toString();
+protected:
+    friend class StringObject;
+    std::string value_m;
 };
 
 class ObjectController : public TelegramListener
