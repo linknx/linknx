@@ -22,11 +22,33 @@
 
 #include <string>
 #include "config.h"
+#include "ticpp.h"
 
-namespace PersistentStorage
+class PersistentStorage
 {
-    void write(const std::string& id, const std::string& value);
-    std::string read(const std::string& id, const std::string& defval="");
-}
+public:
+    virtual ~PersistentStorage() {};
+
+    static PersistentStorage* create(ticpp::Element* pConfig);
+
+    virtual void exportXml(ticpp::Element* pConfig) = 0;
+
+    virtual void write(const std::string& id, const std::string& value) = 0;
+    virtual std::string read(const std::string& id, const std::string& defval="") = 0;
+};
+
+class FilePersistentStorage : public PersistentStorage
+{
+public:
+    FilePersistentStorage(std::string &path);
+    virtual ~FilePersistentStorage() {};
+
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void write(const std::string& id, const std::string& value);
+    virtual std::string read(const std::string& id, const std::string& defval="");
+private:
+    std::string path_m;
+};
 
 #endif

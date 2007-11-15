@@ -21,7 +21,7 @@
 
 Services* Services::instance_m;
 
-Services::Services() : xmlServer_m(0)
+Services::Services() : xmlServer_m(0), persistentStorage_m(0)
 {}
 
 Services::~Services()
@@ -72,6 +72,13 @@ void Services::importXml(ticpp::Element* pConfig)
     ticpp::Element* pExceptionDays = pConfig->FirstChildElement("exceptiondays", false);
     if (pExceptionDays)
         exceptionDays_m.importXml(pExceptionDays);
+    ticpp::Element* pPersistence = pConfig->FirstChildElement("persistence", false);
+    if (pPersistence)
+    {
+        if (persistentStorage_m)
+            delete persistentStorage_m;
+        persistentStorage_m = PersistentStorage::create(pPersistence);
+    }
 }
 
 void Services::exportXml(ticpp::Element* pConfig)
@@ -98,4 +105,11 @@ void Services::exportXml(ticpp::Element* pConfig)
     ticpp::Element pExceptionDays("exceptiondays");
     exceptionDays_m.exportXml(&pExceptionDays);
     pConfig->LinkEndChild(&pExceptionDays);
+
+    if (persistentStorage_m)
+    {
+        ticpp::Element pPersistence("persistence");
+        persistentStorage_m->exportXml(&pPersistence);
+        pConfig->LinkEndChild(&pPersistence);
+    }
 }

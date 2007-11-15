@@ -84,17 +84,28 @@ void Object::importXml(ticpp::Element* pConfig)
     else if (gad != "nochange")
         gad_m = readgaddr(gad.c_str());
 
-    descr_m = "";
+    bool has_descr = false;
+    bool has_listener = false;
     ticpp::Iterator< ticpp::Node > child;
     for ( child = pConfig->FirstChild(false); child != child.end(); child++ )
     {
         std::string val = child->Value();
-        if (child->Type() == TiXmlNode::TEXT)
+        if (child->Type() == TiXmlNode::TEXT && val.length())
         {
+            if (!has_descr)
+            {
+                descr_m = "";
+                has_descr = true;
+            }
             descr_m.append(val);
         }
         else if (child->Type() == TiXmlNode::ELEMENT && val == "listener")
         {
+            if (!has_listener)
+            {
+                listenerGadList_m.clear();
+                has_listener = true;
+            }
             std::string listener_gad = child->ToElement()->GetAttribute("gad");
             listenerGadList_m.push_back(readgaddr(listener_gad.c_str()));
         }
@@ -140,9 +151,21 @@ void Object::importXml(ticpp::Element* pConfig)
     initValue_m = pConfig->GetAttribute("init");
     if (initValue_m == "persist")
     {
-        std::string val = PersistentStorage::read(id_m);
-        if (val != "")
-            setValue(val);
+        PersistentStorage *persistence = Services::instance()->getPersistentStorage();
+        if (persistence)
+        {
+            initValue_m = ""; // avoid setValue() to immediately write back what we read
+            std::string val = persistence->read(id_m);
+            if (val != "")
+                setValue(val);
+            initValue_m = "persist";
+        }
+        else
+        {
+            std::stringstream msg;
+            msg << "Unable to persist object '" << id_m << "'; PersistentStorage not configured" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
     }
     else if (initValue_m != "" && initValue_m != "request")
         setValue(initValue_m);
@@ -223,7 +246,9 @@ void Object::onUpdate()
     }
     if (initValue_m == "persist")
     {
-        PersistentStorage::write(id_m, getValue());
+        PersistentStorage *persistence = Services::instance()->getPersistentStorage();
+        if (persistence)
+            persistence->write(id_m, getValue());
     }
 }
 

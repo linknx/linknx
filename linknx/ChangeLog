@@ -1,5 +1,9 @@
 Release 0.0.1.20:
 
+2007-11-15  J-F Meessen
+
+	* Add implementation for FilePersitentStorage
+
 2007-11-12  J-F Meessen
 
 	* Add ETS-like flags for communication objects

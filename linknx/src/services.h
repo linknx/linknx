@@ -28,6 +28,7 @@
 #include "smsgateway.h"
 #include "emailgateway.h"
 #include "knxconnection.h"
+#include "persistentstorage.h"
 
 
 class Services
@@ -51,6 +52,7 @@ public:
     EmailGateway* getEmailGateway() { return &emailGateway_m; };
     TimerManager* getTimerManager() { return &timers_m; };
     ExceptionDays* getExceptionDays() { return &exceptionDays_m; };
+    PersistentStorage* getPersistentStorage() { return persistentStorage_m; };
 
 private:
     Services();
@@ -59,6 +61,7 @@ private:
     static Services* instance_m;
 
     XmlServer *xmlServer_m;
+    PersistentStorage *persistentStorage_m;
     TimerManager timers_m;
     SmsGateway smsGateway_m;
     EmailGateway emailGateway_m;
