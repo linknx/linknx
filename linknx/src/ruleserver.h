@@ -183,7 +183,7 @@ private:
     ObjectValue* value_m;
 };
 
-class CycleOnOffAction : public Action
+class CycleOnOffAction : public Action, public ChangeListener
 {
 public:
     CycleOnOffAction();
@@ -191,12 +191,15 @@ public:
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void onChange(Object* object);
 
 private:
     virtual void Run (pth_sem_t * stop);
 
     SwitchingObject* object_m;
     int delayOn_m, delayOff_m, count_m;
+    Condition* stopCondition_m;
+    bool running_m;
 };
 
 class SendSmsAction : public Action

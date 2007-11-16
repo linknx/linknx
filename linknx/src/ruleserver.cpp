@@ -397,7 +397,8 @@ void SetValueAction::Run (pth_sem_t * stop)
         object_m->setValue(value_m);
 }
 
-CycleOnOffAction::CycleOnOffAction() : object_m(0), count_m(0), delayOn_m(0), delayOff_m(0)
+CycleOnOffAction::CycleOnOffAction()
+    : object_m(0), count_m(0), delayOn_m(0), delayOff_m(0), stopCondition_m(0), running_m(false)
 {}
 
 CycleOnOffAction::~CycleOnOffAction()
@@ -419,6 +420,16 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("on", &delayOn_m);
     pConfig->GetAttribute("off", &delayOff_m);
     pConfig->GetAttribute("count", &count_m);
+
+    ticpp::Iterator< ticpp::Element > child;
+    ticpp::Element* pStopCondition = pConfig->FirstChildElement("stopcondition", false);
+    if (pStopCondition)
+    {
+        if (stopCondition_m)
+            delete stopCondition_m;
+        stopCondition_m = Condition::create(pStopCondition, this);
+    }
+
     std::cout << "CycleOnOffAction: Configured for object " << object_m->getID()
     << " with delay_on=" << delayOn_m
     << "; delay_off=" << delayOff_m
@@ -434,21 +445,43 @@ void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("count", count_m);
 
     Action::exportXml(pConfig);
+
+    if (stopCondition_m)
+    {
+        ticpp::Element pCond("stopcondition");
+        stopCondition_m->exportXml(&pCond);
+        pConfig->LinkEndChild(&pCond);
+    }
+}
+
+void CycleOnOffAction::onChange(Object* object)
+{
+    if (stopCondition_m && running_m && stopCondition_m->evaluate())
+        running_m = false;
 }
 
 void CycleOnOffAction::Run (pth_sem_t * stop)
 {
     if (!object_m)
         return;
+    running_m = true;
     pth_sleep(delay_m);
     std::cout << "Execute CycleOnOffAction" << std::endl;
     for (int i=0; i<count_m; i++)
     {
+        if (!running_m)
+            break;
         object_m->setBoolValue(true);
         pth_sleep(delayOn_m);
+        if (!running_m)
+            break;
         object_m->setBoolValue(false);
         pth_sleep(delayOff_m);
     }
+    if (running_m)
+        running_m = false;
+    else
+        std::cout << "CycleOnOffAction stopped by condition" << std::endl;
 }
 
 SendSmsAction::SendSmsAction()

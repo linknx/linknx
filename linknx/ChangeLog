@@ -1,5 +1,9 @@
 Release 0.0.1.20:
 
+2007-11-17  J-F Meessen
+
+	* Add "stop condition" allowing to interrupt cycleOnOffAction
+
 2007-11-15  Matthias Friedrich & J-F Meessen
 
 	* Add 14 character String object EIS15
