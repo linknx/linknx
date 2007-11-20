@@ -32,6 +32,10 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testHeatingModeObjectWrite );
     CPPUNIT_TEST( testHeatingModeObjectUpdate );
     CPPUNIT_TEST( testHeatingModeExportImport );
+    CPPUNIT_TEST( testStringObject );
+    CPPUNIT_TEST( testStringObjectWrite );
+    CPPUNIT_TEST( testStringObjectUpdate );
+    CPPUNIT_TEST( testStringExportImport );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -991,6 +995,121 @@ public:
         res = Object::create(&pConfig);
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
         CPPUNIT_ASSERT(dynamic_cast<HeatingModeObject*>(res));
+        delete res;
+    }
+
+    void testStringObject()
+    {
+        ObjectValue* val;
+        StringObject s, s2;
+        s.setValue("test");
+        CPPUNIT_ASSERT(s.getValue() == "test");
+        s2.setValue("Hi there!");
+        CPPUNIT_ASSERT(s2.getValue() == "Hi there!");
+
+        s.setValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        s2.setValue("AnotherMessage");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage");
+
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage");
+
+        CPPUNIT_ASSERT_THROW(s.setValue("illegal 'é'"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("256µs"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("noël"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("more than 14 characters"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("just a bit more"), ticpp::Exception);
+
+        StringObjectValue sval("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(&sval));
+        CPPUNIT_ASSERT(!s2.equals(&sval));
+
+        val = s.createObjectValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(val));
+        CPPUNIT_ASSERT(!s2.equals(val));
+        delete val;      
+
+        StringObjectValue sval2("AnotherMessage");
+        CPPUNIT_ASSERT(!s.equals(&sval2));
+        CPPUNIT_ASSERT(s2.equals(&sval2));
+
+        val = s.createObjectValue("AnotherMessage");
+        CPPUNIT_ASSERT(!s.equals(val));
+        CPPUNIT_ASSERT(s2.equals(val));
+        delete val;      
+
+        s.setStringValue("A test \n value");
+        CPPUNIT_ASSERT(s.getValue() == "A test \n value");
+    }
+
+    void testStringObjectWrite()
+    {
+        StringObject s;
+        s.setValue("something");
+        s.addChangeListener(this);
+
+        uint8_t buf[16] = {0, 0x80, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);        
+        CPPUNIT_ASSERT(s.getValue() == "EIB is OK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[6] = 0x49;
+        buf[7] = 0x53;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);       
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);        
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[8] = 0x0a;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);       
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+    }
+
+    void testStringObjectUpdate()
+    {
+        StringObject s;
+        s.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK?");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        s.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("something else");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testStringExportImport()
+    {
+        StringObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<StringObject*>(res));
         delete res;
     }
 

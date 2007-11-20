@@ -1218,7 +1218,8 @@ void StringObject::setValue(ObjectValue* value)
 
 void StringObject::setValue(const std::string& value)
 {
-    setStringValue(value);
+    StringObjectValue val(value);
+    setStringValue(val.value_m);
 }
 
 std::string StringObject::getValue()
