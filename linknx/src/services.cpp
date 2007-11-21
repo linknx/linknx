@@ -29,6 +29,8 @@ Services::~Services()
     stop();
     if (xmlServer_m)
         delete xmlServer_m;
+    if (persistentStorage_m)
+        delete persistentStorage_m;
 }
 
 Services* Services::instance()

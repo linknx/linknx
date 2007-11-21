@@ -77,7 +77,7 @@ std::string FilePersistentStorage::read(const std::string& id, const std::string
     std::string value;
     std::string filename = path_m+id;
     std::ifstream fp_in(filename.c_str(), std::ios::in);
-    std::getline(fp_in, value);
+    std::getline(fp_in, value, static_cast<char>(-1));
     if (fp_in.fail())
         value = defval;
     fp_in.close();

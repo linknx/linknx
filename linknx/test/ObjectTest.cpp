@@ -1,5 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
+#include <cstdlib>
 #include "objectcontroller.h"
+#include "services.h"
 
 class ObjectTest : public CppUnit::TestFixture, public ChangeListener
 {
@@ -8,34 +10,42 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testSwitchingObjectWrite );
     CPPUNIT_TEST( testSwitchingObjectUpdate );
     CPPUNIT_TEST( testSwitchingExportImport );
+    CPPUNIT_TEST( testSwitchingPersist );
     CPPUNIT_TEST( testDimmingObject );
     CPPUNIT_TEST( testDimmingObjectWrite );
     CPPUNIT_TEST( testDimmingObjectUpdate );
     CPPUNIT_TEST( testDimmingExportImport );
+    CPPUNIT_TEST( testDimmingPersist );
     CPPUNIT_TEST( testTimeObject );
     CPPUNIT_TEST( testTimeObjectWrite );
     CPPUNIT_TEST( testTimeObjectUpdate );
     CPPUNIT_TEST( testTimeExportImport );
+    CPPUNIT_TEST( testTimePersist );
     CPPUNIT_TEST( testDateObject );
     CPPUNIT_TEST( testDateObjectWrite );
     CPPUNIT_TEST( testDateObjectUpdate );
     CPPUNIT_TEST( testDateExportImport );
+    CPPUNIT_TEST( testDatePersist );
     CPPUNIT_TEST( testValueObject );
     CPPUNIT_TEST( testValueObjectWrite );
     CPPUNIT_TEST( testValueObjectUpdate );
     CPPUNIT_TEST( testValueExportImport );
+    CPPUNIT_TEST( testValuePersist );
     CPPUNIT_TEST( testScalingObject );
     CPPUNIT_TEST( testScalingObjectWrite );
     CPPUNIT_TEST( testScalingObjectUpdate );
     CPPUNIT_TEST( testScalingExportImport );
+    CPPUNIT_TEST( testScalingPersist );
     CPPUNIT_TEST( testHeatingModeObject );
     CPPUNIT_TEST( testHeatingModeObjectWrite );
     CPPUNIT_TEST( testHeatingModeObjectUpdate );
     CPPUNIT_TEST( testHeatingModeExportImport );
+    CPPUNIT_TEST( testHeatingModePersist );
     CPPUNIT_TEST( testStringObject );
     CPPUNIT_TEST( testStringObjectWrite );
     CPPUNIT_TEST( testStringObjectUpdate );
     CPPUNIT_TEST( testStringExportImport );
+    CPPUNIT_TEST( testStringPersist );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -51,6 +61,7 @@ public:
 
     void tearDown()
     {
+        Services::reset();
     }
 
     void onChange(Object* obj)
@@ -177,6 +188,35 @@ public:
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
         CPPUNIT_ASSERT(dynamic_cast<SwitchingObject*>(res));
         delete res;
+    }
+    
+    void testSwitchingPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("on");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "on");
+        res->setValue("off");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "off");
+        delete res2;
     }
     
     void testDimmingObject()
@@ -341,6 +381,41 @@ public:
         delete res;
     }
     
+    void testDimmingPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_dim");
+        pConfig.SetAttribute("type", "EIS2");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("up");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "up");
+        res->setValue("stop");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "stop");
+        res2->setValue("down:3");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "down:3");
+        delete res3;
+    }
+    
     void testTimeObject()
     {
         ObjectValue* val;
@@ -490,6 +565,41 @@ public:
         delete res;
     }
 
+    void testTimePersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_time");
+        pConfig.SetAttribute("type", "EIS3");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("07:25:00");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "7:25:0");
+        res->setValue("23:59:59");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "23:59:59");
+        res2->setValue("now");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "now");
+        delete res3;
+    }
+    
     void testDateObject()
     {
         ObjectValue* val;
@@ -627,6 +737,41 @@ public:
         delete res;
     }
 
+    void testDatePersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_date");
+        pConfig.SetAttribute("type", "EIS4");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("2007-05-30");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "2007-5-30");
+        res->setValue("1978-06-16");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "1978-6-16");
+        res2->setValue("now");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "now");
+        delete res3;
+    }
+    
     void testValueObject()
     {
         ObjectValue* val;
@@ -753,6 +898,41 @@ public:
         delete res;
     }
 
+    void testValuePersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_value");
+        pConfig.SetAttribute("type", "EIS5");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("21.5");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "21.5");
+        res->setValue("3.1415");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "3.1415");
+        res2->setValue("-2");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "-2");
+        delete res3;
+    }
+
     void testScalingObject()
     {
         ObjectValue* val;
@@ -869,6 +1049,41 @@ public:
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
         CPPUNIT_ASSERT(dynamic_cast<ScalingObject*>(res));
         delete res;
+    }
+
+    void testScalingPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "EIS6");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("255");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "255");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("35");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "35");
+        delete res3;
     }
 
     void testHeatingModeObject()
@@ -998,6 +1213,46 @@ public:
         delete res;
     }
 
+    void testHeatingModePersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_heat");
+        pConfig.SetAttribute("type", "heat-mode");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("comfort");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "comfort");
+        res->setValue("standby");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "standby");
+        res2->setValue("night");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "night");
+        res3->setValue("frost");
+        delete res3;
+
+        Object *res4 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res4->getValue() == "frost");
+        delete res4;
+    }
+
     void testStringObject()
     {
         ObjectValue* val;
@@ -1111,6 +1366,46 @@ public:
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
         CPPUNIT_ASSERT(dynamic_cast<StringObject*>(res));
         delete res;
+    }
+
+    void testStringPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_string");
+        pConfig.SetAttribute("type", "EIS15");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("EIB is OK");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "EIB is OK");
+        res->setValue("Test \r\n ?!=+");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?!=+");
+        res2->setValue("14  characters");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "14  characters");
+        res3->setValue("");
+        delete res3;
+
+        Object *res4 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res4->getValue() == "");
+        delete res4;
     }
 
 };
