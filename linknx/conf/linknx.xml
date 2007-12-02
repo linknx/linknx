@@ -168,6 +168,7 @@
         <xmlserver type="inet" port="1028"/>
         <smsgateway type="clickatell" user="xyz" pass="xxx" api_id="123456"/>
         <emailserver type="smtp" host="smtp.myprovider.com:25" from="linknx@mydomain.com"/>
+        <persistence type="file" path="/var/lib/linknx/persist"/>
         <exceptiondays>
             <date day="1" month="1" />
             <date day="1" month="5" />

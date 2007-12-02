@@ -103,6 +103,13 @@ private:
     ObjectValue* value_m;
     ChangeListener* cl_m;
     bool trigger_m;
+    int op_m;
+    enum Operation
+    {
+        eq = 0x01,
+        gt = 0x02,
+        lt = 0x04
+    };
 };
 
 class ObjectSourceCondition : public ObjectCondition

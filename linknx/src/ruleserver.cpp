@@ -725,7 +725,7 @@ void NotCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-ObjectCondition::ObjectCondition(ChangeListener* cl) : value_m(0), cl_m(cl), trigger_m(false)
+ObjectCondition::ObjectCondition(ChangeListener* cl) : value_m(0), cl_m(cl), trigger_m(false), op_m(eq)
 {}
 
 ObjectCondition::~ObjectCondition()
@@ -737,7 +737,12 @@ ObjectCondition::~ObjectCondition()
 bool ObjectCondition::evaluate()
 {
     // if no value is defined, condition is always true
-    bool val = (value_m == 0) || (object_m->equals(value_m));
+    bool val = (value_m == 0);
+    if (!val)
+    {
+        int res = object_m->compare(value_m);
+        val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
+    }
     std::cout << "ObjectCondition (id='" << object_m->getID()
     << "') evaluated as '" << val
     << "'" << std::endl;
@@ -769,12 +774,48 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
     {
         std::cout << "ObjectCondition: configured, no value specified" << std::endl;
     }
+
+    std::string op;
+    op = pConfig->GetAttribute("op");
+    if (op == "" || op == "eq")
+        op_m = eq;
+    else if (op == "lt")
+        op_m = lt;
+    else if (op == "gt")
+        op_m = gt;
+    else if (op == "ne")
+        op_m = lt | gt;
+    else if (op == "lte")
+        op_m = gt | eq;
+    else if (op == "gte")
+        op_m = gt | eq;
+    else
+    {
+        std::stringstream msg;
+        msg << "ObjectCondition: operation not supported: '" << op << "'";
+        throw ticpp::Exception(msg.str());
+    }
 }
 
 void ObjectCondition::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "object");
     pConfig->SetAttribute("id", object_m->getID());
+    if (op_m != eq)
+    {
+        std::string op;
+        if (op_m == lt)
+            op = "lt";
+        else if (op_m == gt)
+            op = "gt";
+        else if (op_m == (lt | eq))
+            op = "lte";
+        else if (op_m == (gt | eq))
+            op = "gte";
+        else
+            op = "ne";
+        pConfig->SetAttribute("op", op);
+    }
     pConfig->SetAttribute("value", value_m->toString());
     if (trigger_m)
         pConfig->SetAttribute("trigger", "true");

@@ -53,6 +53,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
     virtual bool equals(ObjectValue* value) = 0;
+    virtual int compare(ObjectValue* value) = 0;
     virtual void setValue(ObjectValue* value) = 0;
     virtual void setValue(const std::string& value) = 0;
     virtual std::string getValue() = 0;
@@ -112,6 +113,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -137,6 +139,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -159,6 +162,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -185,6 +189,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -210,6 +215,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -237,6 +243,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
@@ -274,6 +281,7 @@ public:
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();

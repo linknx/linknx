@@ -1,3 +1,13 @@
+Release 0.0.1.21:
+
+2007-12-02  J-F Meessen
+
+	* Added linknx.spec file to be able to build rpm with command "rpmbuild -ta"
+
+2007-11-23  J-F Meessen
+
+	* Allow comparisons (<, >, >=, <=, <>, ==) for conditions on object values
+
 Release 0.0.1.20:
 
 2007-11-17  J-F Meessen

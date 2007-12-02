@@ -539,6 +539,26 @@ bool SwitchingObject::equals(ObjectValue* value)
     return value_m == val->value_m;
 }
 
+int SwitchingObject::compare(ObjectValue* value)
+{
+    assert(value);
+    SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "SwitchingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "SwitchingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    if (value_m == val->value_m)
+        return 0;
+    else if (value_m)
+        return 1;
+    else
+        return -1;
+}
+
 void SwitchingObject::setValue(ObjectValue* value)
 {
     assert(value);
@@ -625,6 +645,35 @@ bool DimmingObject::equals(ObjectValue* value)
     << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='"
     << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
     return (direction_m == val->direction_m) && (stepcode_m == val->stepcode_m);
+}
+
+int DimmingObject::compare(ObjectValue* value)
+{
+    assert(value);
+    DimmingObjectValue* val = dynamic_cast<DimmingObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "DimmingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "DimmingObject (id=" << getID() << "): Compare object='"
+    << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='"
+    << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
+
+    if (stepcode_m == 0 && val->stepcode_m == 0)
+        return 0;
+    if (direction_m == val->direction_m)
+    {
+        if (stepcode_m == val->stepcode_m)
+            return 0;
+        if (stepcode_m > val->stepcode_m) // bigger stepcode => smaller steps
+            return direction_m ? -1 : 1;
+        else
+            return direction_m ? 1 : -1;
+    }
+    return direction_m ? 1 : -1;
 }
 
 void DimmingObject::setValue(ObjectValue* value)
@@ -720,6 +769,41 @@ bool TimeObject::equals(ObjectValue* value)
         read();
     //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
     return (sec_m == val->sec_m) && (min_m == val->min_m) && (hour_m == val->hour_m) && (wday_m == val->wday_m);
+}
+
+int TimeObject::compare(ObjectValue* value)
+{
+    assert(value);
+    TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "TimeObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+
+    if (wday_m > val->wday_m)
+        return 1;
+    if (wday_m < val->wday_m)
+        return -1;
+
+    if (hour_m > val->hour_m)
+        return 1;
+    if (hour_m < val->hour_m)
+        return -1;
+
+    if (min_m > val->min_m)
+        return 1;
+    if (min_m < val->min_m)
+        return -1;
+
+    if (sec_m > val->sec_m)
+        return 1;
+    if (sec_m < val->sec_m)
+        return -1;
+    return 0;
 }
 
 void TimeObject::setValue(ObjectValue* value)
@@ -853,6 +937,37 @@ bool DateObject::equals(ObjectValue* value)
     return (day_m == val->day_m) && (month_m == val->month_m) && (year_m == val->year_m);
 }
 
+int DateObject::compare(ObjectValue* value)
+{
+    assert(value);
+    DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "DateObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    //    std::cout << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+
+
+    if (year_m > val->year_m)
+        return 1;
+    if (year_m < val->year_m)
+        return -1;
+
+    if (month_m > val->month_m)
+        return 1;
+    if (month_m < val->month_m)
+        return -1;
+
+    if (day_m > val->day_m)
+        return 1;
+    if (day_m < val->day_m)
+        return -1;
+    return 0;
+}
+
 void DateObject::setValue(ObjectValue* value)
 {
     assert(value);
@@ -982,6 +1097,27 @@ bool ValueObject::equals(ObjectValue* value)
     return value_m == val->value_m;
 }
 
+int ValueObject::compare(ObjectValue* value)
+{
+    assert(value);
+    ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "ValueObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "ValueObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    
+    if (value_m == val->value_m)
+        return 0;
+    if (value_m > val->value_m)
+        return 1;
+    else
+        return -1;
+}
+
 void ValueObject::setValue(ObjectValue* value)
 {
     assert(value);
@@ -1099,6 +1235,27 @@ bool ScalingObject::equals(ObjectValue* value)
     return value_m == val->value_m;
 }
 
+int ScalingObject::compare(ObjectValue* value)
+{
+    assert(value);
+    ScalingObjectValue* val = dynamic_cast<ScalingObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "ScalingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "ScalingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+
+    if (value_m == val->value_m)
+        return 0;
+    if (value_m > val->value_m)
+        return 1;
+    else
+        return -1;
+}
+
 void ScalingObject::setValue(ObjectValue* value)
 {
     assert(value);
@@ -1205,6 +1362,27 @@ bool StringObject::equals(ObjectValue* value)
         read();
     std::cout << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
     return value_m == val->value_m;
+}
+
+int StringObject::compare(ObjectValue* value)
+{
+    assert(value);
+    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "StringObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return -1;
+    }
+    if (!init_m)
+        read();
+    std::cout << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+
+    if (value_m == val->value_m)
+        return 0;
+    if (value_m < val->value_m)
+        return -1;
+    else
+        return 1;
 }
 
 void StringObject::setValue(ObjectValue* value)
