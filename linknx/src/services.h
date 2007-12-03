@@ -53,6 +53,7 @@ public:
     TimerManager* getTimerManager() { return &timers_m; };
     ExceptionDays* getExceptionDays() { return &exceptionDays_m; };
     PersistentStorage* getPersistentStorage() { return persistentStorage_m; };
+    void createDefault();
 
 private:
     Services();

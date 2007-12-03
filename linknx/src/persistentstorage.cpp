@@ -29,7 +29,7 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
     std::string type = pConfig->GetAttribute("type");
     if (type == "file")
     {
-        std::string path = pConfig->GetAttributeOrDefault("path", "/var/linknx/persist");
+        std::string path = pConfig->GetAttributeOrDefault("path", "/var/lib/linknx/persist");
         return new FilePersistentStorage(path);
     }
     else if (type == "")

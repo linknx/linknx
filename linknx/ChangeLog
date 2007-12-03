@@ -1,5 +1,10 @@
 Release 0.0.1.21:
 
+2007-12-03  J-F Meessen
+
+	* Move config and persistence files to FHS compliant locations
+	* Allow user to tell if/where the config is written when linknx is stopped
+
 2007-12-02  J-F Meessen
 
 	* Added linknx.spec file to be able to build rpm with command "rpmbuild -ta"

@@ -53,6 +53,13 @@ void Services::stop()
     knxConnection_m.stopConnection();
 }
 
+void Services::createDefault()
+{
+    if (xmlServer_m)
+        delete xmlServer_m;
+    xmlServer_m = new XmlInetServer(1028);
+}
+
 void Services::importXml(ticpp::Element* pConfig)
 {
     ticpp::Element* pSmsGateway = pConfig->FirstChildElement("smsgateway", false);

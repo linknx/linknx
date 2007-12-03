@@ -49,6 +49,8 @@ struct arguments
 {
     /** path for config file */
     const char *configfile;
+    /** path where to write config file */
+    const char *writeconfig;
     /** path to pid file */
     const char *pidfile;
     /** path to trace log file */
@@ -71,11 +73,14 @@ static char args_doc[] = "";
 static struct argp_option options[] =
     {
         {"config", 'c', "FILE", OPTION_ARG_OPTIONAL,
-            "read configuration from file (default /tmp/linknx.xml)"
+            "read configuration from file (default: /var/lib/linknx/linknx.xml)"
+        },
+        {"write", 'w', "FILE", OPTION_ARG_OPTIONAL,
+            "write configuration to file (if no FILE specified, the config file is overwritten)"
         },
         {"pid-file", 'p', "FILE", 0, "write the PID of the process to FILE"},
         {"daemon", 'd', "FILE", OPTION_ARG_OPTIONAL,
-         "start the programm as daemon, the output will be written to FILE, if the argument present"},
+         "start the program as daemon, the output will be written to FILE, if the argument present"},
         {0}
     };
 
@@ -87,7 +92,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
     switch (key)
     {
     case 'c':
-        arguments->configfile = (char *) (arg ? arg : "/tmp/linknx.xml");
+        arguments->configfile = (char *) (arg ? arg : "/var/lib/linknx/linknx.xml");
+        break;
+    case 'w':
+        arguments->writeconfig = (char *) (arg ? arg : "");
         break;
     case 'p':
         arguments->pidfile = arg;
@@ -175,6 +183,12 @@ main (int ac, char *ag[])
             std::cout << ex.m_details << std::endl;
             die ("initialisation failed");
         }
+        if (arg.writeconfig[0] == 0)
+            arg.writeconfig = arg.configfile;
+    }
+    else 
+    {
+        services->createDefault();
     }
     sigset_t t1;
     sigemptyset (&t1);
@@ -188,35 +202,36 @@ main (int ac, char *ag[])
     int x;
     pth_sigwait (&t1, &x);
 
-
-    try
+    if (arg.writeconfig)
     {
-        // Save a document
-        ticpp::Document doc;
-        ticpp::Declaration decl("1.0", "", "");
-        doc.LinkEndChild(&decl);
-
-        ticpp::Element pConfig("config");
-
-        ticpp::Element pServices("services");
-        services->exportXml(&pServices);
-        pConfig.LinkEndChild(&pServices);
-        ticpp::Element pObjects("objects");
-        objects->exportXml(&pObjects);
-        pConfig.LinkEndChild(&pObjects);
-        ticpp::Element pRules("rules");
-        rules->exportXml(&pRules);
-        pConfig.LinkEndChild(&pRules);
-
-        doc.LinkEndChild(&pConfig);
-        doc.SaveFile("lastconfig.xml");
-    }
-    catch( ticpp::Exception& ex )
-    {
-        // If any function has an error, execution will enter here.
-        // Report the error
-        std::cout << ex.m_details;
-        die ("Save to lastconfig.xml failed");
+        try
+        {
+            // Save a document
+            ticpp::Document doc;
+            ticpp::Declaration decl("1.0", "", "");
+            doc.LinkEndChild(&decl);
+    
+            ticpp::Element pConfig("config");
+    
+            ticpp::Element pServices("services");
+            services->exportXml(&pServices);
+            pConfig.LinkEndChild(&pServices);
+            ticpp::Element pObjects("objects");
+            objects->exportXml(&pObjects);
+            pConfig.LinkEndChild(&pObjects);
+            ticpp::Element pRules("rules");
+            rules->exportXml(&pRules);
+            pConfig.LinkEndChild(&pRules);
+    
+            doc.LinkEndChild(&pConfig);
+            doc.SaveFile(arg.writeconfig);
+        }
+        catch( ticpp::Exception& ex )
+        {
+            // If any function has an error, execution will enter here.
+            // Report the error
+            std::cerr << "ERROR writing config to file: " << ex.m_details << std::endl;
+        }
     }
 
     signal (SIGINT, SIG_DFL);
