@@ -1,3 +1,9 @@
+Release 0.0.1.22:
+
+2007-12-04  J-F Meessen
+
+	* Add workaround for eof flag bug in uClibc++ v0.2.2
+
 Release 0.0.1.21:
 
 2007-12-03  J-F Meessen

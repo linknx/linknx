@@ -368,7 +368,10 @@ TimeObjectValue::TimeObjectValue(const std::string& value) : hour_m(-1), min_m(-
     val >> hour_m >> s1 >> min_m >> s2 >> sec_m;
     wday_m = 0;
 
-    if ( val.fail() || !val.eof() || s1 != ':' || s2 != ':' || hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         s1 != ':' || s2 != ':' ||
+         hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
     {
         std::stringstream msg;
         msg << "TimeObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -393,7 +396,10 @@ DateObjectValue::DateObjectValue(const std::string& value) : year_m(-1), month_m
     char s1, s2;
     val >> year_m >> s1 >> month_m >> s2 >> day_m;
     year_m -= 1900;
-    if ( val.fail() || !val.eof() || s1 != '-' || s2 != '-' || year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         s1 != '-' || s2 != '-' ||
+         year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
     {
         std::stringstream msg;
         msg << "DateObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -415,7 +421,10 @@ ValueObjectValue::ValueObjectValue(const std::string& value)
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() || !val.eof() || value_m > 670760.96 || value_m < -671088.64)
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         value_m > 670760.96 ||
+         value_m < -671088.64)
     {
         std::stringstream msg;
         msg << "ValueObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -436,7 +445,10 @@ ScalingObjectValue::ScalingObjectValue(const std::string& value)
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() || !val.eof() || value_m > 255 || value_m < 0)
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         value_m > 255 ||
+         value_m < 0)
     {
         std::stringstream msg;
         msg << "ScalingObjectValue: Bad value: '" << value << "'" << std::endl;
