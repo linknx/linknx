@@ -183,7 +183,7 @@ main (int ac, char *ag[])
             std::cout << ex.m_details << std::endl;
             die ("initialisation failed");
         }
-        if (arg.writeconfig[0] == 0)
+        if (arg.writeconfig && arg.writeconfig[0] == 0)
             arg.writeconfig = arg.configfile;
     }
     else 
