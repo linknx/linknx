@@ -35,20 +35,23 @@ public:
 
     virtual void write(const std::string& id, const std::string& value) = 0;
     virtual std::string read(const std::string& id, const std::string& defval="") = 0;
+    virtual void writelog(const std::string& id, const std::string& value) = 0;
 };
 
 class FilePersistentStorage : public PersistentStorage
 {
 public:
-    FilePersistentStorage(std::string &path);
+    FilePersistentStorage(std::string &path, std::string &logPath);
     virtual ~FilePersistentStorage() {};
 
     virtual void exportXml(ticpp::Element* pConfig);
 
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
+    virtual void writelog(const std::string& id, const std::string& value);
 private:
     std::string path_m;
+    std::string logPath_m;
 };
 
 #endif

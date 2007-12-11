@@ -29,7 +29,7 @@ extern "C"
 
 ObjectController* ObjectController::instance_m;
 
-Object::Object() : gad_m(0), init_m(false), readPending_m(false), flags_m(Default)
+Object::Object() : gad_m(0), init_m(false), readPending_m(false), persist_m(false), writeLog_m(false), flags_m(Default)
 {}
 
 Object::~Object()
@@ -148,19 +148,21 @@ void Object::importXml(ticpp::Element* pConfig)
     if (pConfig->GetAttribute("forcewrite") == "true")
         flags_m |= Force;
     // END: backward compatibility with 0.0.1.17
+    
+    writeLog_m = (pConfig->GetAttribute("log") == "true");
 
     // TODO: do we need to use the 'i' flag instead of init="request" attribute
+    persist_m = false;
     initValue_m = pConfig->GetAttribute("init");
     if (initValue_m == "persist")
     {
         PersistentStorage *persistence = Services::instance()->getPersistentStorage();
         if (persistence)
         {
-            initValue_m = ""; // avoid setValue() to immediately write back what we read
             std::string val = persistence->read(id_m);
             if (val != "")
                 setValue(val);
-            initValue_m = "persist";
+            persist_m = true;
         }
         else
         {
@@ -184,6 +186,9 @@ void Object::exportXml(ticpp::Element* pConfig)
 
     if (initValue_m != "")
         pConfig->SetAttribute("init", initValue_m);
+
+    if (writeLog_m)
+        pConfig->SetAttribute("log", "true");
 
     if (flags_m != Default)
     {
@@ -246,11 +251,16 @@ void Object::onUpdate()
         // std::cout << "Calling onChange on listener for " << id_m << std::endl;
         (*it)->onChange(this);
     }
-    if (initValue_m == "persist")
+    if (persist_m || writeLog_m)
     {
         PersistentStorage *persistence = Services::instance()->getPersistentStorage();
         if (persistence)
-            persistence->write(id_m, getValue());
+        {
+            if (persist_m)
+                persistence->write(id_m, getValue());
+            if (writeLog_m)
+                persistence->writelog(id_m, getValue());
+        }
     }
 }
 

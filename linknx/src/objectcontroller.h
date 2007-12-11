@@ -97,6 +97,8 @@ private:
     eibaddr_t gad_m;
     eibaddr_t lastTx_m;
     std::string initValue_m;
+    bool persist_m;
+    bool writeLog_m;
     bool readPending_m;
     std::string descr_m;
     typedef std::list<ChangeListener*> ListenerList_t;
