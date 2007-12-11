@@ -1,5 +1,10 @@
 Release 0.0.1.22:
 
+2007-12-11  J-F Meessen
+
+	* Add support for SMTP auth to support mail servers requiring  authentication
+	* Fix segfault when no -w param on command line
+
 2007-12-04  J-F Meessen
 
 	* Add workaround for eof flag bug in uClibc++ v0.2.2

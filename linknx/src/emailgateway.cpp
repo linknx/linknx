@@ -39,6 +39,8 @@ void EmailGateway::importXml(ticpp::Element* pConfig)
         type_m = SMTP;
         pConfig->GetAttribute("host", &host_m);
         pConfig->GetAttribute("from", &from_m);
+        login_m = pConfig->GetAttribute("login");
+        pass_m = pConfig->GetAttribute("pass");
 # else
         std::stringstream msg;
         msg << "EmailGateway: Gateway type 'smtp' not supported, libesmtp not available" << std::endl;
@@ -64,6 +66,10 @@ void EmailGateway::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("type", "smtp");
         pConfig->SetAttribute("host", host_m);
         pConfig->SetAttribute("from", from_m);
+        if (login_m != "")
+            pConfig->SetAttribute("login", login_m);
+        if (pass_m != "")
+            pConfig->SetAttribute("pass", pass_m);
     }
 }
 
@@ -73,6 +79,21 @@ const char *EmailGateway::callback(void **buf, int *len, void *arg)
     const char *tmp = body->getData(len);
     std::cout << "EmailGateway: callback " << (tmp ? tmp : "") << " len=" << len << std::endl;
     return tmp;
+}
+
+int EmailGateway::authCallback(auth_client_request_t request, char **result, int fields, void *arg)
+{
+    int i;
+    EmailGateway* gw = static_cast<EmailGateway*>(arg);
+
+    for (i = 0; i < fields; i++)
+    {
+        if (request[i].flags & AUTH_PASS)
+            result[i] = const_cast<char*>(gw->pass_m.c_str());
+        else
+            result[i] = const_cast<char*>(gw->login_m.c_str());
+    }
+    return 1;
 }
 
 MessageBody::MessageBody(std::string& text) : status_m(0)
@@ -129,6 +150,7 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
         smtp_session_t session;
         smtp_message_t message;
         smtp_recipient_t recipient;
+        auth_context_t authctx;
         const smtp_status_t *status;
         struct sigaction sa;
         sa.sa_handler = SIG_IGN;
@@ -146,7 +168,13 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
            is specified as 25 along with the default MTA host. */
         smtp_set_server (session, host_m.c_str());
 
+        authctx = auth_create_context ();
+        // auth_set_mechanism_flags (authctx, AUTH_PLUGIN_EXTERNAL, 0);
+        auth_set_interact_cb (authctx, EmailGateway::authCallback, this);
+        
         //  smtp_set_eventcb(session, event_cb, NULL);
+        
+        smtp_auth_set_context (session, authctx);
 
         /* Set the reverse path for the mail envelope.  (NULL is ok)
          */
@@ -194,6 +222,8 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
         /* Free resources consumed by the program.
          */
         smtp_destroy_session (session);
+        auth_destroy_context (authctx);
+        auth_client_exit ();
 #endif
     }
     else
