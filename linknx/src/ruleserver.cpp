@@ -847,8 +847,9 @@ void ObjectSourceCondition::importXml(ticpp::Element* pConfig)
 
 void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
 {
-    pConfig->SetAttribute("src", writeaddr(src_m));
     ObjectCondition::exportXml(pConfig);
+    pConfig->SetAttribute("type", "object-src");
+    pConfig->SetAttribute("src", writeaddr(src_m));
 }
 
 

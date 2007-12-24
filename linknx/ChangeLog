@@ -1,3 +1,9 @@
+Release 0.0.1.23:
+
+2007-12-24  J-F Meessen
+
+	* Fix xml export of object-src action
+
 Release 0.0.1.22:
 
 2007-12-11  J-F Meessen
