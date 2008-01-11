@@ -81,6 +81,13 @@
 <stopOnError>false</stopOnError>
 <useDefaultCommand>false</useDefaultCommand>
 </target>
+<target name="distclean" path="" targetID="org.eclipse.cdt.make.MakeTargetBuilder">
+<buildCommand>ant</buildCommand>
+<buildArguments></buildArguments>
+<buildTarget>distclean</buildTarget>
+<stopOnError>false</stopOnError>
+<useDefaultCommand>false</useDefaultCommand>
+</target>
 </buildTargets>
 </item>
 </data>

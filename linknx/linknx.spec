@@ -1,5 +1,5 @@
 Name:           linknx
-Version:        0.0.1.21
+Version:        0.0.1.23
 Release:        1
 Summary:        KNX home automation platform
 

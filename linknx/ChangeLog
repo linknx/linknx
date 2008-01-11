@@ -1,5 +1,9 @@
 Release 0.0.1.23:
 
+2008-01-10  J-F Meessen
+
+	* Add mysql support for persistence
+
 2007-12-24  J-F Meessen
 
 	* Fix xml export of object-src action

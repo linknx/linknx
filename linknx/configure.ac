@@ -23,6 +23,8 @@ LIBCURL_CHECK_CONFIG([yes], [7.14.0])
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h stddef.h stdlib.h unistd.h])
 
+WITH_MYSQL()
+
 dnl #########################################################################
 dnl Check if using libesmtp
 dnl #########################################################################

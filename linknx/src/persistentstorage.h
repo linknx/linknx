@@ -24,6 +24,10 @@
 #include "config.h"
 #include "ticpp.h"
 
+#ifdef HAVE_MYSQL
+#include <mysql/mysql.h>
+#endif
+
 class PersistentStorage
 {
 public:
@@ -53,5 +57,29 @@ private:
     std::string path_m;
     std::string logPath_m;
 };
+
+#ifdef HAVE_MYSQL
+class MysqlPersistentStorage : public PersistentStorage
+{
+public:
+    MysqlPersistentStorage(ticpp::Element* pConfig);
+    virtual ~MysqlPersistentStorage();
+
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void write(const std::string& id, const std::string& value);
+    virtual std::string read(const std::string& id, const std::string& defval="");
+    virtual void writelog(const std::string& id, const std::string& value);
+private:
+    MYSQL con_m;
+
+    std::string host_m;
+    std::string user_m;
+    std::string pass_m;
+    std::string db_m;
+    std::string table_m;
+    std::string logtable_m;
+};
+#endif // HAVE_MYSQL
 
 #endif
