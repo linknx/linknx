@@ -1,5 +1,9 @@
 Release 0.0.1.23:
 
+2008-01-14  J-F Meessen
+
+	* Fix compile error when libesmtp not installed
+
 2008-01-10  J-F Meessen
 
 	* Add mysql support for persistence

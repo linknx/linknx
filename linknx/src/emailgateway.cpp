@@ -81,6 +81,7 @@ const char *EmailGateway::callback(void **buf, int *len, void *arg)
     return tmp;
 }
 
+#ifdef HAVE_LIBESMTP
 int EmailGateway::authCallback(auth_client_request_t request, char **result, int fields, void *arg)
 {
     int i;
@@ -95,6 +96,7 @@ int EmailGateway::authCallback(auth_client_request_t request, char **result, int
     }
     return 1;
 }
+#endif
 
 MessageBody::MessageBody(std::string& text) : status_m(0)
 {

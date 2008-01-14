@@ -23,7 +23,10 @@
 #include <string>
 #include "config.h"
 #include "ticpp.h"
+
+#ifdef HAVE_LIBESMTP
 #include <auth-client.h>
+#endif
 
 class MessageBody
 {
@@ -48,7 +51,7 @@ public:
 
 private:
     static const char *callback(void **buf, int *len, void *arg);
-    static int authCallback(auth_client_request_t request, char **result, int fields, void *arg);
+
     enum EmailGatewayType
     {
         SMTP,
@@ -61,6 +64,10 @@ private:
     std::string from_m;
     std::string login_m;
     std::string pass_m;
+
+#ifdef HAVE_LIBESMTP
+    static int authCallback(auth_client_request_t request, char **result, int fields, void *arg);
+#endif
 
 };
 
