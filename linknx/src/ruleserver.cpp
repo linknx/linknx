@@ -535,7 +535,8 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "send-email");
     pConfig->SetAttribute("to", to_m);
     pConfig->SetAttribute("subject", subject_m);
-    pConfig->SetAttribute("text", text_m);
+    if (text_m != "")
+        pConfig->SetText(text_m);
 
     Action::exportXml(pConfig);
 }
