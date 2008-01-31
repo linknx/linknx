@@ -82,7 +82,7 @@ public:
 
     int readmessage (pth_event_t stop);
     int sendmessage (int size, const char * msg, pth_event_t stop);
-    int sendmessage (const std::string& msg, pth_event_t stop);
+    int sendmessage (std::string msg, pth_event_t stop);
     int sendreject (const char* msgstr, const std::string& type, pth_event_t stop);
 
     std::string msg_m;

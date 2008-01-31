@@ -288,8 +288,9 @@ int ClientConnection::sendreject (const char* msgstr, const std::string& type, p
     sendmessage (msg.str(), stop);
 }
 
-int ClientConnection::sendmessage (const std::string& msg, pth_event_t stop)
+int ClientConnection::sendmessage (std::string msg, pth_event_t stop)
 {
+    msg.push_back('\4');
     return sendmessage(msg.length(), msg.c_str(), stop);
 }
 
@@ -306,7 +307,6 @@ int ClientConnection::sendmessage (int size, const char * msg, pth_event_t stop)
             return -1;
         start += i;
     }
-    pth_write_ev (fd_m, "\4", 1, stop);
     return 0;
 }
 
