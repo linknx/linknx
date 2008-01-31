@@ -5,6 +5,7 @@ Release 0.0.1.23:
 	* Fix 40ms delay when performing successive XML requests
 	* Forbid slashes in object ID's
 	* Add XML command to read all/multiple objects
+	* Fix bug in setvalue and compare for time/date value set to "now"
 
 2008-01-14  J-F Meessen
 

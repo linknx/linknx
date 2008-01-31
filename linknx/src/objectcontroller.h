@@ -327,6 +327,7 @@ public:
     TimeObjectValue(const std::string& value);
     virtual ~TimeObjectValue() {};
     virtual std::string toString();
+    void getTimeValue(int *wday, int *hour, int *min, int *sec);
 protected:
     TimeObjectValue(int wday, int hour, int min, int sec) : wday_m(wday), hour_m(hour), min_m(min), sec_m(sec) {};
     friend class TimeObject;
@@ -342,6 +343,7 @@ public:
     DateObjectValue(const std::string& value);
     virtual ~DateObjectValue() {};
     virtual std::string toString();
+    void getDateValue(int *day, int *month, int *year);
 protected:
     DateObjectValue(int day, int month, int year) : day_m(day), month_m(month), year_m(year) {};
     friend class DateObject;
@@ -413,6 +415,8 @@ public:
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void exportObjectValues(ticpp::Element* pObjects);
 
     virtual void onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len);
     virtual void onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len);

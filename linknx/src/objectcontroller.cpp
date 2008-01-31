@@ -405,6 +405,28 @@ std::string TimeObjectValue::toString()
     return out.str();
 }
 
+void TimeObjectValue::getTimeValue(int *wday, int *hour, int *min, int *sec)
+{
+    if (hour_m == -1)
+    {
+        time_t t = time(0);
+        struct tm * timeinfo = localtime(&t);
+        *wday = timeinfo->tm_wday;
+        if (*wday == 0)
+            *wday = 7;
+        *hour = timeinfo->tm_hour;
+        *min = timeinfo->tm_min;
+        *sec = timeinfo->tm_sec;
+    }
+    else
+    {
+        *wday = wday_m;
+        *hour = hour_m;
+        *min = min_m;
+        *sec = sec_m;
+    }
+}
+
 DateObjectValue::DateObjectValue(const std::string& value) : year_m(-1), month_m(-1), day_m(-1)
 {
     if (value == "now")
@@ -431,6 +453,24 @@ std::string DateObjectValue::toString()
     std::ostringstream out;
     out << year_m+1900 << "-" << month_m << "-" << day_m;
     return out.str();
+}
+
+void DateObjectValue::getDateValue(int *day, int *month, int *year)
+{
+    if (day_m == -1)
+    {
+        time_t t = time(0);
+        struct tm * timeinfo = localtime(&t);
+        *day = timeinfo->tm_mday;
+        *month = timeinfo->tm_mon+1;
+        *year = timeinfo->tm_year;
+    }
+    else
+    {
+        *day = day_m;
+        *month = month_m;
+        *year = year_m;
+    }
 }
 
 ValueObjectValue::ValueObjectValue(const std::string& value)
@@ -787,6 +827,7 @@ ObjectValue* TimeObject::createObjectValue(const std::string& value)
 
 bool TimeObject::equals(ObjectValue* value)
 {
+    int wday, hour, min, sec;
     assert(value);
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
@@ -797,11 +838,13 @@ bool TimeObject::equals(ObjectValue* value)
     if (!init_m)
         read();
     //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
-    return (sec_m == val->sec_m) && (min_m == val->min_m) && (hour_m == val->hour_m) && (wday_m == val->wday_m);
+    val->getTimeValue(&wday, &hour, &min, &sec);
+    return (sec_m == sec) && (min_m == min) && (hour_m == hour) && (wday_m == wday);
 }
 
 int TimeObject::compare(ObjectValue* value)
 {
+    int wday, hour, min, sec;
     assert(value);
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
@@ -812,45 +855,47 @@ int TimeObject::compare(ObjectValue* value)
     if (!init_m)
         read();
     //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    val->getTimeValue(&wday, &hour, &min, &sec);
 
-    if (wday_m > val->wday_m)
+    if (wday_m > wday)
         return 1;
-    if (wday_m < val->wday_m)
+    if (wday_m < wday)
         return -1;
 
-    if (hour_m > val->hour_m)
+    if (hour_m > hour)
         return 1;
-    if (hour_m < val->hour_m)
+    if (hour_m < hour)
         return -1;
 
-    if (min_m > val->min_m)
+    if (min_m > min)
         return 1;
-    if (min_m < val->min_m)
+    if (min_m < min)
         return -1;
 
-    if (sec_m > val->sec_m)
+    if (sec_m > sec)
         return 1;
-    if (sec_m < val->sec_m)
+    if (sec_m < sec)
         return -1;
     return 0;
 }
 
 void TimeObject::setValue(ObjectValue* value)
 {
+    int wday, hour, min, sec;
     assert(value);
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
         std::cout << "TimeObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    if (val->hour_m == -1)
-        setTime(time(0));
-    else
-        setTime(val->wday_m, val->hour_m, val->min_m, val->sec_m);
+    val->getTimeValue(&wday, &hour, &min, &sec);
+    setTime(wday, hour, min, sec);
 }
 
 void TimeObject::setValue(const std::string& value)
 {
+    int wday, hour, min, sec;
     TimeObjectValue val(value);
-    setTime(val.wday_m, val.hour_m, val.min_m, val.sec_m);
+    val.getTimeValue(&wday, &hour, &min, &sec);
+    setTime(wday, hour, min, sec);
 }
 
 std::string TimeObject::getValue()
@@ -953,6 +998,7 @@ ObjectValue* DateObject::createObjectValue(const std::string& value)
 
 bool DateObject::equals(ObjectValue* value)
 {
+    int day, month, year;
     assert(value);
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
@@ -963,11 +1009,13 @@ bool DateObject::equals(ObjectValue* value)
     if (!init_m)
         read();
     //    std::cout << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
-    return (day_m == val->day_m) && (month_m == val->month_m) && (year_m == val->year_m);
+    val->getDateValue(&day, &month, &year);
+    return (day_m == day) && (month_m == month) && (year_m == year);
 }
 
 int DateObject::compare(ObjectValue* value)
 {
+    int day, month, year;
     assert(value);
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
@@ -978,41 +1026,42 @@ int DateObject::compare(ObjectValue* value)
     if (!init_m)
         read();
     //    std::cout << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    val->getDateValue(&day, &month, &year);
 
-
-    if (year_m > val->year_m)
+    if (year_m > year)
         return 1;
-    if (year_m < val->year_m)
+    if (year_m < year)
         return -1;
 
-    if (month_m > val->month_m)
+    if (month_m > month)
         return 1;
-    if (month_m < val->month_m)
+    if (month_m < month)
         return -1;
 
-    if (day_m > val->day_m)
+    if (day_m > day)
         return 1;
-    if (day_m < val->day_m)
+    if (day_m < day)
         return -1;
     return 0;
 }
 
 void DateObject::setValue(ObjectValue* value)
 {
+    int day, month, year;
     assert(value);
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
         std::cout << "DateObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    if (val->day_m == -1)
-        setDate(time(0));
-    else
-        setDate(val->day_m, val->month_m, val->year_m);
+    val->getDateValue(&day, &month, &year);
+    setDate(day, month, year);
 }
 
 void DateObject::setValue(const std::string& value)
 {
+    int day, month, year;
     DateObjectValue val(value);
-    setDate(val.day_m, val.month_m, val.year_m);
+    val.getDateValue(&day, &month, &year);
+    setDate(day, month, year);
 }
 
 std::string DateObject::getValue()
@@ -1637,5 +1686,17 @@ void ObjectController::exportXml(ticpp::Element* pConfig)
         ticpp::Element pElem("object");
         (*it).second->exportXml(&pElem);
         pConfig->LinkEndChild(&pElem);
+    }
+}
+
+void ObjectController::exportObjectValues(ticpp::Element* pObjects)
+{
+    ObjectIdMap_t::iterator it;
+    for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
+    {
+        ticpp::Element pElem("object");
+        pElem.SetAttribute("id", (*it).second->getID());
+        pElem.SetAttribute("value", (*it).second->getValue());
+        pObjects->LinkEndChild(&pElem);
     }
 }

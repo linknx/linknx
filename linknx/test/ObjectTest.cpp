@@ -475,6 +475,14 @@ public:
         CPPUNIT_ASSERT_EQUAL(20, hour);
         CPPUNIT_ASSERT_EQUAL(45, min);
         CPPUNIT_ASSERT_EQUAL(0, sec);
+
+        TimeObjectValue tval3("now");
+        CPPUNIT_ASSERT(tval3.toString() == "now");
+        tval3.getTimeValue(&wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT(wday != -1);
+        CPPUNIT_ASSERT(hour != -1);
+        CPPUNIT_ASSERT(min != -1);
+        CPPUNIT_ASSERT(sec != -1);
     }
 
     void testTimeObjectWrite()
@@ -596,7 +604,7 @@ public:
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
-        CPPUNIT_ASSERT(res3->getValue() == "now");
+        CPPUNIT_ASSERT(res3->getValue() != "now");
         delete res3;
     }
     
@@ -656,6 +664,13 @@ public:
         CPPUNIT_ASSERT_EQUAL(15, day);
         CPPUNIT_ASSERT_EQUAL(8, month);
         CPPUNIT_ASSERT_EQUAL(2007, year);
+
+        DateObjectValue tval3("now");
+        CPPUNIT_ASSERT(tval3.toString() == "now");
+        tval3.getDateValue(&day, &month, &year);
+        CPPUNIT_ASSERT(day != -1);
+        CPPUNIT_ASSERT(month != -1);
+        CPPUNIT_ASSERT(year != -1);
     }
 
     void testDateObjectWrite()
@@ -768,7 +783,7 @@ public:
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
-        CPPUNIT_ASSERT(res3->getValue() == "now");
+        CPPUNIT_ASSERT(res3->getValue() != "now");
         delete res3;
     }
     
