@@ -76,6 +76,13 @@ void Object::importXml(ticpp::Element* pConfig)
     std::string id = pConfig->GetAttribute("id");
     if (id == "")
         throw ticpp::Exception("Missing or empty object ID");
+    if(id.find("/", 0) != std::string::npos)
+    {
+        std::stringstream msg;
+        msg << "Slash character '/' not allowed in Object ID: " << id <<std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
     if (id_m == "")
         id_m = id;
 

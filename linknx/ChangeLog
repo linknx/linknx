@@ -3,6 +3,7 @@ Release 0.0.1.23:
 2008-01-31  J-F Meessen
 
 	* Fix 40ms delay when performing successive XML requests
+	* Forbid slashes in object ID's
 
 2008-01-14  J-F Meessen
 
