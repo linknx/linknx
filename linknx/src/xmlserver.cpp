@@ -196,6 +196,30 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     //            std::cout << "SENDING MESSAGE:" << std::endl << msg.str() << std::endl << "END OF MESSAGE" << std::endl;
                     sendmessage (msg.str(), stop);
                 }
+                else if (pRead->Value() == "objects")
+                {
+                    if (pRead->NoChildren())
+                    {
+                        ObjectController::instance()->exportObjectValues(pRead);
+                    }
+                    else
+                    {
+                        ticpp::Iterator< ticpp::Element > pObjects;
+                        for ( pObjects = pRead->FirstChildElement(); pObjects != pObjects.end(); pObjects++ )
+                        {
+                            if (pObjects->Value() == "object")
+                            {
+                                std::string id = pObjects->GetAttribute("id");
+                                Object* obj = ObjectController::instance()->getObject(id);
+                                pObjects->SetAttribute("value", obj->getValue());
+                            }
+                            else
+                                throw "Unknown objects element";
+                        }
+                    }
+                    pMsg->SetAttribute("status", "success");
+                    sendmessage (doc.GetAsString(), stop);
+                }
                 else if (pRead->Value() == "config")
                 {
                     ticpp::Element* pConfig = pRead->FirstChildElement(false);
