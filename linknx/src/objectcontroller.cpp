@@ -248,6 +248,9 @@ void Object::read()
             pth_usleep(10000);
         ++cnt;
     }
+    // If the device didn't answer after 1 second, we consider the object's
+    // default value as the current value to avoid waiting forever.
+    init_m = true;
 }
 
 void Object::onUpdate()
