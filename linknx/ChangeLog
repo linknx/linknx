@@ -1,5 +1,10 @@
 Release 0.0.1.24:
 
+2008-03-09  J-F Meessen
+
+	* Fix comparison problems with dimming values "up" coming from bus
+	* Add "copy-value" action
+
 2008-02-21  J-F Meessen
 
 	* Avoid 1 second wait time when reading group objects that doesn't reply on the bus

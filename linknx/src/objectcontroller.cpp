@@ -186,6 +186,7 @@ void Object::importXml(ticpp::Element* pConfig)
 
 void Object::exportXml(ticpp::Element* pConfig)
 {
+    pConfig->SetAttribute("type", getType());
     pConfig->SetAttribute("id", id_m);
 
     if (gad_m != 0)
@@ -691,12 +692,6 @@ DimmingObject::DimmingObject() : direction_m(0), stepcode_m(0)
 DimmingObject::~DimmingObject()
 {}
 
-void DimmingObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS2");
-}
-
 ObjectValue* DimmingObject::createObjectValue(const std::string& value)
 {
     return new DimmingObjectValue(value);
@@ -816,12 +811,6 @@ TimeObject::TimeObject() : wday_m(0), hour_m(0), min_m(0), sec_m(0)
 
 TimeObject::~TimeObject()
 {}
-
-void TimeObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS3");
-}
 
 ObjectValue* TimeObject::createObjectValue(const std::string& value)
 {
@@ -988,12 +977,6 @@ DateObject::DateObject() : day_m(0), month_m(0), year_m(0)
 DateObject::~DateObject()
 {}
 
-void DateObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS4");
-}
-
 ObjectValue* DateObject::createObjectValue(const std::string& value)
 {
     return new DateObjectValue(value);
@@ -1152,12 +1135,6 @@ ValueObject::ValueObject() : value_m(0)
 ValueObject::~ValueObject()
 {}
 
-void ValueObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS5");
-}
-
 ObjectValue* ValueObject::createObjectValue(const std::string& value)
 {
     return new ValueObjectValue(value);
@@ -1290,12 +1267,6 @@ ScalingObject::ScalingObject() : value_m(0)
 ScalingObject::~ScalingObject()
 {}
 
-void ScalingObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS6");
-}
-
 ObjectValue* ScalingObject::createObjectValue(const std::string& value)
 {
     return new ScalingObjectValue(value);
@@ -1391,12 +1362,6 @@ void ScalingObject::setIntValue(int value)
     }
 }
 
-void HeatingModeObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "heat-mode");
-}
-
 ObjectValue* HeatingModeObject::createObjectValue(const std::string& value)
 {
     return new HeatingModeObjectValue(value);
@@ -1418,12 +1383,6 @@ StringObject::StringObject()
 
 StringObject::~StringObject()
 {}
-
-void StringObject::exportXml(ticpp::Element* pConfig)
-{
-    Object::exportXml(pConfig);
-    pConfig->SetAttribute("type", "EIS15");
-}
 
 ObjectValue* StringObject::createObjectValue(const std::string& value)
 {

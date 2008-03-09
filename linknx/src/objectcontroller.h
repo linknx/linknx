@@ -57,6 +57,7 @@ public:
     virtual void setValue(ObjectValue* value) = 0;
     virtual void setValue(const std::string& value) = 0;
     virtual std::string getValue() = 0;
+    virtual std::string getType() = 0;
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
@@ -119,6 +120,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
+    virtual std::string getType() { return "EIS1"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -145,8 +147,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "EIS2"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -168,8 +169,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "EIS3"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -195,8 +195,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "EIS4"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -221,8 +220,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "EIS5"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -249,8 +247,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "EIS6"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -271,8 +268,7 @@ public:
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual std::string getType() { return "heat-mode"; };
 };
 
 class StringObject : public Object
@@ -287,8 +283,9 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
+    virtual std::string getType() { return "EIS15"; };
+
     void setStringValue(const std::string& val);
-    virtual void exportXml(ticpp::Element* pConfig);
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);

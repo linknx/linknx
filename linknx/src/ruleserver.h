@@ -190,6 +190,22 @@ private:
     ObjectValue* value_m;
 };
 
+class CopyValueAction : public Action
+{
+public:
+    CopyValueAction();
+    virtual ~CopyValueAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    Object* from_m;
+    Object* to_m;
+};
+
 class CycleOnOffAction : public Action, public ChangeListener
 {
 public:

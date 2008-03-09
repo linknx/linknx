@@ -248,6 +248,8 @@ Action* Action::create(const std::string& type)
         return new DimUpAction();
     else if (type == "set-value")
         return new SetValueAction();
+    else if (type == "copy-value")
+        return new CopyValueAction();
     else if (type == "cycle-on-off")
         return new CycleOnOffAction();
     else if (type == "send-sms")
@@ -395,6 +397,49 @@ void SetValueAction::Run (pth_sem_t * stop)
     std::cout << "Execute SetValueAction with value " << value_m->toString() << std::endl;
     if (object_m)
         object_m->setValue(value_m);
+}
+
+CopyValueAction::CopyValueAction() : from_m(0), to_m(0)
+{}
+
+CopyValueAction::~CopyValueAction()
+{}
+
+void CopyValueAction::importXml(ticpp::Element* pConfig)
+{
+    std::string obj;
+    obj = pConfig->GetAttribute("to");
+    to_m = ObjectController::instance()->getObject(obj);
+    obj = pConfig->GetAttribute("from");
+    from_m = ObjectController::instance()->getObject(obj);
+    if (from_m->getType() != to_m->getType())
+    {
+        std::stringstream msg;
+        msg << "Incompatible object types for CopyValueAction: from='" << from_m->getID() << "' to='" << to_m->getID() << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
+    std::cout << "CopyValueAction: Configured to copy value from " << from_m->getID() << " to " << to_m->getID() << std::endl;
+}
+
+void CopyValueAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "copy-value");
+    pConfig->SetAttribute("from", from_m->getID());
+    pConfig->SetAttribute("to", to_m->getID());
+
+    Action::exportXml(pConfig);
+}
+
+void CopyValueAction::Run (pth_sem_t * stop)
+{
+    if (from_m && to_m)
+    {
+        pth_sleep(delay_m);
+        std::string value = from_m->getValue();
+        std::cout << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << std::endl;
+        to_m->setValue(value);
+    }
 }
 
 CycleOnOffAction::CycleOnOffAction()
