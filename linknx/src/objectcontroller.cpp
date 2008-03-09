@@ -777,7 +777,7 @@ void DimmingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = (buf[1] & 0x3F);
     else
         newValue = buf[2];
-    int direction = newValue & 0x08;
+    int direction = (newValue & 0x08) >> 3;
     int stepcode = newValue & 0x07;
     if (stepcode == 0)
         direction = 0;

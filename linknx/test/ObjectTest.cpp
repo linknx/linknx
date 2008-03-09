@@ -126,6 +126,11 @@ public:
         sw.setBoolValue(false);
         sw.addChangeListener(this);
 
+        const std::string tr = "true";
+        const std::string fa = "false";
+        SwitchingObjectValue swvaltrue(tr);
+        SwitchingObjectValue swvalfalse(fa);
+
         uint8_t buf[3] = {0, 0x81, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
@@ -137,18 +142,21 @@ public:
         isOnChangeCalled_m = false;
         sw.onWrite(buf, 2, src);       
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 0x00;
         isOnChangeCalled_m = false;
         sw.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x01;
         isOnChangeCalled_m = false;
         sw.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvaltrue));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
@@ -296,42 +304,55 @@ public:
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 2, src);        
         CPPUNIT_ASSERT(dim.getValue() == "up:3");
+        DimmingObjectValue dimval1("up:3");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x80;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 2, src);       
         CPPUNIT_ASSERT(dim.getValue() == "stop");
+        DimmingObjectValue dimval2("stop");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 0x08;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(dim.getValue() == "stop");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x04;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(dim.getValue() == "down:4");
+        DimmingObjectValue dimval3("down:4");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x8f;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 2, src);       
         CPPUNIT_ASSERT(dim.getValue() == "up:7");
+        DimmingObjectValue dimval4("up:7");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x81;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 2, src);       
         CPPUNIT_ASSERT(dim.getValue() == "down");
+        DimmingObjectValue dimval5("down");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval5));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x89;
         isOnChangeCalled_m = false;
         dim.onWrite(buf, 2, src);       
         CPPUNIT_ASSERT(dim.getValue() == "up");
+        DimmingObjectValue dimval6("up");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval6));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
@@ -496,6 +517,8 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
         CPPUNIT_ASSERT(t.getValue() == "0:0:0");
+        TimeObjectValue tval1("0:0:0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 23;
@@ -504,11 +527,15 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
         CPPUNIT_ASSERT(t.getValue() == "23:10:4");
+        TimeObjectValue tval2("23:10:4");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
         CPPUNIT_ASSERT(t.getValue() == "23:10:4");
+        TimeObjectValue tval3("23:10:4");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 20;
@@ -517,6 +544,8 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
         CPPUNIT_ASSERT(t.getValue() == "20:10:4");
+        TimeObjectValue tval4("20:10:4");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 20 | (3 << 5);
@@ -525,6 +554,9 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
         CPPUNIT_ASSERT(t.getValue() == "20:10:4");
+//      TODO: implement weekday support in TimeObjectValue
+//        TimeObjectValue tval5("20:10:4");
+//        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval5));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         int wday, hour, min, sec;
@@ -684,6 +716,8 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
         CPPUNIT_ASSERT(t.getValue() == "2000-1-1");
+        DateObjectValue tval1("2000-1-1");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 23;
@@ -692,11 +726,15 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
         CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
+        DateObjectValue tval2("1999-10-23");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
         CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
+        DateObjectValue tval3("1999-10-23");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 20;
@@ -705,6 +743,8 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
         CPPUNIT_ASSERT(t.getValue() == "2007-10-20");
+        DateObjectValue tval4("2007-10-20");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         int day, month, year;
@@ -844,6 +884,8 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);        
         CPPUNIT_ASSERT(v.getValue() == "27.2");
+        ValueObjectValue fval1("27.2");
+        CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = (1<<7) | (4<<3) | ((-2000 & 0x700)>>8);
@@ -851,11 +893,14 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);       
         CPPUNIT_ASSERT(v.getValue() == "-320");
+        ValueObjectValue fval2("-320");
+        CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);        
         CPPUNIT_ASSERT(v.getValue() == "-320");
+        CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = (1<<7) | (5<<3) | ((-1000 & 0x700)>>8);
@@ -863,6 +908,7 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);       
         CPPUNIT_ASSERT(v.getValue() == "-320");
+        CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = (1<<3) | ((1 & 0x700)>>8);
@@ -870,6 +916,8 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);       
         CPPUNIT_ASSERT(v.getValue() == "0.02");
+        ValueObjectValue fval3("0.02");
+        CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         CPPUNIT_ASSERT_EQUAL(0.02, v.getFloatValue());
@@ -1006,23 +1054,30 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(t.getValue() == "66");
+        ScalingObjectValue tval1("66");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 74;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "74");
+        ScalingObjectValue tval2("74");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(t.getValue() == "74");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "0");
+        ScalingObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         CPPUNIT_ASSERT_EQUAL(0, t.getIntValue());
@@ -1162,29 +1217,38 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(t.getValue() == "comfort");
+        HeatingModeObjectValue tval1("comfort");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 2;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "standby");
+        HeatingModeObjectValue tval2("standby");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(t.getValue() == "standby");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 3;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "night");
+        HeatingModeObjectValue tval3("night");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 4;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "frost");
+        HeatingModeObjectValue tval4("frost");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         CPPUNIT_ASSERT_EQUAL(4, t.getIntValue());
@@ -1331,17 +1395,22 @@ public:
         isOnChangeCalled_m = false;
         s.onWrite(buf, 16, src);       
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        StringObjectValue sval1("EIB IS OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         s.onWrite(buf, 16, src);        
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[8] = 0x0a;
         isOnChangeCalled_m = false;
         s.onWrite(buf, 16, src);       
         CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK");
+        StringObjectValue sval2("EIB IS\nOK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
