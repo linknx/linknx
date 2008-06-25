@@ -436,9 +436,16 @@ void CopyValueAction::Run (pth_sem_t * stop)
     if (from_m && to_m)
     {
         pth_sleep(delay_m);
-        std::string value = from_m->getValue();
-        std::cout << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << std::endl;
-        to_m->setValue(value);
+        try
+        {
+            std::string value = from_m->getValue();
+            std::cout << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << std::endl;
+            to_m->setValue(value);
+        }
+        catch( ticpp::Exception& ex )
+        {
+            std::cout << "Error in CopyValueAction: " << ex.m_details << std::endl;
+        }
     }
 }
 
