@@ -1,3 +1,13 @@
+Release 0.0.1.25:
+
+2008-06-25  J-F Meessen
+
+	* Add Sunrise/Sunset/Noon timespec
+
+2008-05-23  J-F Meessen
+
+	* Catch invalid values in copyValueAction
+
 Release 0.0.1.24:
 
 2008-03-09  J-F Meessen

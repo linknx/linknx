@@ -81,6 +81,9 @@ void Services::importXml(ticpp::Element* pConfig)
     ticpp::Element* pExceptionDays = pConfig->FirstChildElement("exceptiondays", false);
     if (pExceptionDays)
         exceptionDays_m.importXml(pExceptionDays);
+    ticpp::Element* pLocationInfo = pConfig->FirstChildElement("location", false);
+    if (pLocationInfo)
+        locationInfo_m.importXml(pLocationInfo);
     ticpp::Element* pPersistence = pConfig->FirstChildElement("persistence", false);
     if (pPersistence)
     {
@@ -114,6 +117,13 @@ void Services::exportXml(ticpp::Element* pConfig)
     ticpp::Element pExceptionDays("exceptiondays");
     exceptionDays_m.exportXml(&pExceptionDays);
     pConfig->LinkEndChild(&pExceptionDays);
+
+    if (!locationInfo_m.isEmpty())
+    {
+        ticpp::Element pLocationInfo("location");
+        locationInfo_m.exportXml(&pLocationInfo);
+        pConfig->LinkEndChild(&pLocationInfo);
+    }
 
     if (persistentStorage_m)
     {

@@ -18,6 +18,7 @@
 */
 
 #include "timermanager.h"
+#include "suncalc.h"
 #include "services.h"
 #include <iostream>
 #include <ctime>
@@ -95,6 +96,12 @@ TimeSpec* TimeSpec::create(const std::string& type, ChangeListener* cl)
 {
     if (type == "variable")
         return new VariableTimeSpec(cl);
+    if (type == "sunrise")
+        return new SunriseTimeSpec();
+    if (type == "sunset")
+        return new SunsetTimeSpec();
+    if (type == "noon")
+        return new SolarNoonTimeSpec();
     else
         return new TimeSpec();
 }
@@ -214,7 +221,7 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception)
+void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset)
 {
     *min = min_m;
     *hour = hour_m;
@@ -282,7 +289,7 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("date", date_m->getID());
 }
 
-void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception)
+void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset)
 {
     *min = min_m;
     *hour = hour_m;
@@ -347,7 +354,32 @@ void PeriodicTask::reschedule(time_t now)
 {
     if (now == 0)
         now = time(0);
-    if (value_m)
+    if (nextExecTime_m == 0 && during_m != 0)
+    {
+        // first schedule. check if value must be on or off (except if timer is instantaneous)
+        time_t start, stop;
+        if (during_m != -1)
+            stop = now + during_m;
+        else
+            stop = findNext(now, until_m);
+
+        if (after_m != -1)
+            start = now + after_m;
+        else
+            start = findNext(now, at_m);
+
+        if (stop < start)
+        {
+            value_m = true;
+            nextExecTime_m = stop;
+        }
+        else
+        {
+            value_m = false;
+            nextExecTime_m = start;
+        }
+    }
+    else if (value_m)
     {
         if (during_m != -1)
             nextExecTime_m = now + during_m;
@@ -398,7 +430,12 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     
     int min, hour, mday, mon, year, wdays;
     TimeSpec::ExceptionDays exception;
-    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+    min  = timeinfo->tm_min;
+    hour = timeinfo->tm_hour;
+    mday = timeinfo->tm_mday;
+    mon  = timeinfo->tm_mon;
+    year = timeinfo->tm_year;
+    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, timeinfo->tm_gmtoff);
     
     if (min != -1)
     {
@@ -512,6 +549,9 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
             return findNext(nextExecTime, next);
         }
     }
+    // now that we selected a day, make time adjustments for that day if needed (e.g. for sunrise or sunset)
+    if (next->adjustTime(timeinfo))
+        nextExecTime = mktime(timeinfo);
     return nextExecTime;
 }
 

@@ -29,6 +29,7 @@
 #include "emailgateway.h"
 #include "knxconnection.h"
 #include "persistentstorage.h"
+#include "suncalc.h"
 
 
 class Services
@@ -53,6 +54,7 @@ public:
     TimerManager* getTimerManager() { return &timers_m; };
     ExceptionDays* getExceptionDays() { return &exceptionDays_m; };
     PersistentStorage* getPersistentStorage() { return persistentStorage_m; };
+    LocationInfo* getLocationInfo() { return &locationInfo_m; };
     void createDefault();
 
 private:
@@ -68,6 +70,7 @@ private:
     EmailGateway emailGateway_m;
     KnxConnection knxConnection_m;
     ExceptionDays exceptionDays_m;
+    LocationInfo locationInfo_m;
 };
 
 #endif
