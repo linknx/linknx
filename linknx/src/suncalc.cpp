@@ -439,13 +439,13 @@ void SolarTimeSpec::importXml(ticpp::Element* pConfig)
 {
     TimeSpec::importXml(pConfig);
     double offset;
-    pConfig->GetAttributeOrDefault("offset", &offset_m, 0);
+    offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
 }
 
 void SolarTimeSpec::exportXml(ticpp::Element* pConfig)
 {
     if (offset_m != 0)
-        pConfig->SetAttribute("offset", offset_m);
+        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
     TimeSpec::exportXml(pConfig);
 }
 
@@ -497,15 +497,21 @@ void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year,
     if (rs == 0)
     {
         double res = computeTime(rise, set);
-        res += ((double)offset_m/3600);
+        res += (((double)offset_m)/3600);
         *min = minutes(res + minutes((double)tzOffset/3600));
         *hour = hours(res + (double)tzOffset/3600);
+        if (*min < 0 || *hour < 0)
+        {
+            *min = 0;
+            *hour = 0;
+        }
         std::cout << "sun_rise_set returned " << *hour<< ":" <<*min << std::endl;
     }
     else
     {
+        *min = 0;
+        *hour = 0;
         std::cout << "sun_rise_set returned error." << std::endl;
-        
     }
     *mday = mday_m;
     *mon = mon_m;
@@ -530,9 +536,14 @@ bool SolarTimeSpec::adjustTime(struct tm * timeinfo)
     if (rs == 0)
     {
         double res = computeTime(rise, set);
-        res += ((double)offset_m/3600);
+        res += (((double)offset_m)/3600);
         timeinfo->tm_min = minutes(res + minutes((double)tz_offset/3600));
         timeinfo->tm_hour = hours(res + (double)tz_offset/3600);
+        if (timeinfo->tm_min < 0 || timeinfo->tm_hour < 0)
+        {
+            timeinfo->tm_min = 0;
+            timeinfo->tm_hour = 0;
+        }
         std::cout << "adjustTime returned " << timeinfo->tm_hour<< ":" <<timeinfo->tm_min << std::endl;
     }
     else

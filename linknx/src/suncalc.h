@@ -40,7 +40,7 @@ public:
 protected:
     virtual double computeTime(double rise, double set) = 0;
 private:
-    double offset_m;
+    int offset_m;
 };
 
 class SunriseTimeSpec : public SolarTimeSpec

@@ -83,6 +83,53 @@ void RuleServer::exportXml(ticpp::Element* pConfig)
     }
 }
 
+int RuleServer::parseDuration(const std::string& duration, bool allowNegative)
+{
+    if (duration == "")
+        return 0;
+    std::istringstream val(duration);
+    std::string unit;
+    int num;
+    val >> num;
+
+    if (val.fail() || (num < 0 && !allowNegative))
+    {
+        std::stringstream msg;
+        msg << "RuleServer::parseDuration: Bad value: '" << duration << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    val >> unit;
+    if (unit == "d")
+        num = num * 3600 * 24;
+    else if (unit == "h")
+        num = num * 3600;
+    else if (unit == "m")
+        num = num * 60;
+    else if (unit != "" && unit != "s")
+    {
+        std::stringstream msg;
+        msg << "RuleServer::parseDuration: Bad unit: '" << unit << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    return num;
+}
+
+std::string RuleServer::formatDuration(int duration)
+{
+    if (duration == 0)
+        return "";
+    std::stringstream output;
+    if (duration % (3600*24) == 0)
+        output << (duration / (3600*24)) << 'd';
+    else if (duration % 3600 == 0)
+        output << (duration / 3600) << 'h';
+    else if (duration % 60 == 0)
+        output << (duration / 60) << 'm';
+    else
+        output << duration;
+    return output.str();
+}
+
 Rule::Rule() : condition_m(0), prevValue_m(false), isActive_m(false)
 {}
 
@@ -266,7 +313,7 @@ Action* Action::create(ticpp::Element* pConfig)
 {
     std::string type = pConfig->GetAttribute("type");
     int delay;
-    pConfig->GetAttributeOrDefault("delay", &delay, 0);
+    delay = RuleServer::parseDuration(pConfig->GetAttribute("delay"));
     Action* action = Action::create(type);
     if (action == 0)
     {
@@ -282,7 +329,7 @@ Action* Action::create(ticpp::Element* pConfig)
 void Action::exportXml(ticpp::Element* pConfig)
 {
     if (delay_m != 0)
-        pConfig->SetAttribute("delay", delay_m);
+        pConfig->SetAttribute("delay", RuleServer::formatDuration(delay_m));
 }
 
 DimUpAction::DimUpAction() : start_m(0), stop_m(255), duration_m(60), object_m(0)
@@ -305,7 +352,7 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     }
     pConfig->GetAttribute("start", &start_m);
     pConfig->GetAttribute("stop", &stop_m);
-    pConfig->GetAttribute("duration", &duration_m);
+    duration_m = RuleServer::parseDuration(pConfig->GetAttribute("duration"));
     std::cout << "DimUpAction: Configured for object " << object_m->getID()
     << " with start=" << start_m
     << "; stop=" << stop_m
@@ -318,7 +365,7 @@ void DimUpAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("id", object_m->getID());
     pConfig->SetAttribute("start", start_m);
     pConfig->SetAttribute("stop", stop_m);
-    pConfig->SetAttribute("duration", duration_m);
+    pConfig->SetAttribute("duration", RuleServer::formatDuration(duration_m));
 
     Action::exportXml(pConfig);
 }
@@ -469,8 +516,8 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
     }
 
-    pConfig->GetAttribute("on", &delayOn_m);
-    pConfig->GetAttribute("off", &delayOff_m);
+    delayOn_m = RuleServer::parseDuration(pConfig->GetAttribute("on"));
+    delayOff_m = RuleServer::parseDuration(pConfig->GetAttribute("off"));
     pConfig->GetAttribute("count", &count_m);
 
     ticpp::Iterator< ticpp::Element > child;
@@ -492,8 +539,8 @@ void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "cycle-on-off");
     pConfig->SetAttribute("id", object_m->getID());
-    pConfig->SetAttribute("on", delayOn_m);
-    pConfig->SetAttribute("off", delayOff_m);
+    pConfig->SetAttribute("on", RuleServer::formatDuration(delayOn_m));
+    pConfig->SetAttribute("off", RuleServer::formatDuration(delayOff_m));
     pConfig->SetAttribute("count", count_m);
 
     Action::exportXml(pConfig);
@@ -940,7 +987,7 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         at_m = TimeSpec::create(at, this);
     }
     else if (every)
-        every->GetText(&after_m);
+        after_m = RuleServer::parseDuration(every->GetText());
     else
         throw ticpp::Exception("Timer must define <at> or <every> elements");
 
@@ -950,7 +997,7 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception("Timer can't define <until> and <during> elements simultaneously");
     if (during)
     {
-        during->GetText(&during_m);
+        during_m = RuleServer::parseDuration(during->GetText());
         if (every && after_m > during_m)
             after_m -= during_m;
         else if (every)
@@ -988,7 +1035,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
         int every = after_m;
         if (during_m > 0)
             every += during_m;
-        pEvery.SetText(every);
+        pEvery.SetText(RuleServer::formatDuration(every));
         pConfig->LinkEndChild(&pEvery);
     }
 
@@ -1001,7 +1048,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     else if (during_m != 0)
     {
         ticpp::Element pDuring("during");
-        pDuring.SetText(during_m);
+        pDuring.SetText(RuleServer::formatDuration(during_m));
         pConfig->LinkEndChild(&pDuring);
     }
 }

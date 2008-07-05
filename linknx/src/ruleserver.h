@@ -311,6 +311,9 @@ public:
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    
+    static int parseDuration(const std::string& duration, bool allowNegative = false);
+    static std::string formatDuration(int duration);
 
 private:
     RuleServer();
