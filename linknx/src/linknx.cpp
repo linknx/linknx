@@ -60,11 +60,22 @@ struct arguments
 struct arguments arg;
 
 /** version */
-const char *argp_program_version = PACKAGE_STRING;
+const char *argp_program_version = PACKAGE_STRING
+#ifdef HAVE_LIBCURL
+    "\n- Clickatell SMS gateway enabled"
+#endif
+#ifdef HAVE_LIBESMTP
+    "\n- E-mail gateway enabled"
+#endif
+#ifdef HAVE_MYSQL
+    "\n- MySQL support enabled"
+#endif
+;
+
 /** documentation */
 static char doc[] =
     "LinKNX -- KNX home automation platform\n"
-    "(C) 2007 Jean-François Meessen <linknx@ouaye.net>\n";
+    "(C) 2007-2008 Jean-François Meessen <linknx@ouaye.net>\n";
 
 /** documentation for arguments*/
 static char args_doc[] = "";
