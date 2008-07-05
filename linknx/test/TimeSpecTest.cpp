@@ -49,7 +49,7 @@ public:
         TimeSpec *ts = new TimeSpec();
         ts->importXml(&pConfig);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
@@ -71,7 +71,7 @@ public:
         pConfig.SetAttribute("year", "2006");
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(3, min);
         CPPUNIT_ASSERT_EQUAL(19, hour);
         CPPUNIT_ASSERT_EQUAL(5, mday);
@@ -95,7 +95,7 @@ public:
         pConfig.SetAttribute("wdays", "67");
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(59, min);
         CPPUNIT_ASSERT_EQUAL(20, hour);
         CPPUNIT_ASSERT_EQUAL(6, mday);
@@ -113,7 +113,7 @@ public:
         ts_1->exportXml(&pConfig);
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
@@ -133,7 +133,7 @@ public:
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(-1, min);
         CPPUNIT_ASSERT_EQUAL(-1, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
@@ -159,7 +159,7 @@ public:
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(50, min);
         CPPUNIT_ASSERT_EQUAL(23, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
@@ -174,7 +174,7 @@ public:
 
         CPPUNIT_ASSERT(isOnChangeCalled_m);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(51, min);
         CPPUNIT_ASSERT_EQUAL(22, hour);
     }
@@ -197,7 +197,7 @@ public:
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(26, mday);
@@ -212,7 +212,7 @@ public:
 
         CPPUNIT_ASSERT(isOnChangeCalled_m);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception);
+        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(31, mday);

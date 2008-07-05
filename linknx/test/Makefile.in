@@ -57,7 +57,8 @@ am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
 	testmain-persistentstorage.$(OBJEXT) \
 	testmain-xmlserver.$(OBJEXT) testmain-smsgateway.$(OBJEXT) \
 	testmain-emailgateway.$(OBJEXT) \
-	testmain-knxconnection.$(OBJEXT) testmain-services.$(OBJEXT)
+	testmain-knxconnection.$(OBJEXT) testmain-services.$(OBJEXT) \
+	testmain-suncalc.$(OBJEXT)
 testmain_OBJECTS = $(am_testmain_OBJECTS)
 am__DEPENDENCIES_1 =
 testmain_DEPENDENCIES = ../ticpp/libticpp.a $(am__DEPENDENCIES_1) \
@@ -179,7 +180,7 @@ target_alias = @target_alias@
 
 # Rules for the test code (use `make check` to execute)
 TESTS = testmain
-testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h  ../src/suncalc.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
@@ -245,6 +246,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ruleserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-services.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-smsgateway.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-suncalc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-testmain.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-threads.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-timermanager.Po@am__quote@
@@ -543,6 +545,20 @@ testmain-services.obj: ../src/services.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/services.cpp' object='testmain-services.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-services.obj `if test -f '../src/services.cpp'; then $(CYGPATH_W) '../src/services.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/services.cpp'; fi`
+
+testmain-suncalc.o: ../src/suncalc.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-suncalc.o -MD -MP -MF "$(DEPDIR)/testmain-suncalc.Tpo" -c -o testmain-suncalc.o `test -f '../src/suncalc.cpp' || echo '$(srcdir)/'`../src/suncalc.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-suncalc.Tpo" "$(DEPDIR)/testmain-suncalc.Po"; else rm -f "$(DEPDIR)/testmain-suncalc.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/suncalc.cpp' object='testmain-suncalc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-suncalc.o `test -f '../src/suncalc.cpp' || echo '$(srcdir)/'`../src/suncalc.cpp
+
+testmain-suncalc.obj: ../src/suncalc.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-suncalc.obj -MD -MP -MF "$(DEPDIR)/testmain-suncalc.Tpo" -c -o testmain-suncalc.obj `if test -f '../src/suncalc.cpp'; then $(CYGPATH_W) '../src/suncalc.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/suncalc.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-suncalc.Tpo" "$(DEPDIR)/testmain-suncalc.Po"; else rm -f "$(DEPDIR)/testmain-suncalc.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/suncalc.cpp' object='testmain-suncalc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-suncalc.obj `if test -f '../src/suncalc.cpp'; then $(CYGPATH_W) '../src/suncalc.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/suncalc.cpp'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
