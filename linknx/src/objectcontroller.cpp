@@ -1090,7 +1090,10 @@ void DateObject::setDate(time_t time)
 
 void DateObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), day_m, month_m, year_m };
+    uint8_t buf[5] = { 0,
+                       (isWrite ? 0x80 : 0x40),
+                       day_m, month_m,
+                       (year_m >= 100 && year_m < 190) ? year_m-100 : year_m };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
 }
 
