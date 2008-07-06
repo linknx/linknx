@@ -31,6 +31,7 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testValueObjectUpdate );
     CPPUNIT_TEST( testValueExportImport );
     CPPUNIT_TEST( testValuePersist );
+    CPPUNIT_TEST( testValueObject32Write );
     CPPUNIT_TEST( testScalingObject );
     CPPUNIT_TEST( testScalingObjectWrite );
     CPPUNIT_TEST( testScalingObjectUpdate );
@@ -994,6 +995,24 @@ public:
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-2");
         delete res3;
+    }
+
+    void testValueObject32Write()
+    {
+        ValueObject32 v;
+        v.setValue("27.1");
+        v.addChangeListener(this);
+
+        uint8_t buf[6] = {0, 0x80, 0x40, 0x49, 0x0e, 0x56};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        v.onWrite(buf, 6, src);        
+        CPPUNIT_ASSERT(v.getValue() == "3.1415");
+        ValueObjectValue fval1("3.1414");
+        ValueObjectValue fval2("3.1416");
+        CPPUNIT_ASSERT_EQUAL(1, v.compare(&fval1));
+        CPPUNIT_ASSERT_EQUAL(-1, v.compare(&fval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
     void testScalingObject()

@@ -157,6 +157,15 @@ protected:
     int stepcode_m;
 };
 
+class BlindsObject : public DimmingObject
+{
+public:
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "3.008"; };
+};
+
 class TimeObject : public Object
 {
 public:
@@ -234,6 +243,19 @@ public:
 protected:
     double value_m;
 };
+
+class ValueObject32 : public ValueObject
+{
+public:
+    ValueObject32() {};
+    virtual ~ValueObject32() {};
+
+    virtual std::string getType() { return "14.xxx"; };
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
 
 class ScalingObject : public Object
 {
@@ -314,6 +336,19 @@ public:
 protected:
     DimmingObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
     friend class DimmingObject;
+    int direction_m;
+    int stepcode_m;
+};
+
+class BlindsObjectValue : public ObjectValue
+{
+public:
+    BlindsObjectValue(const std::string& value);
+    virtual ~BlindsObjectValue() {};
+    virtual std::string toString();
+protected:
+    BlindsObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
+    friend class BlindsObject;
     int direction_m;
     int stepcode_m;
 };

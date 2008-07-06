@@ -37,21 +37,25 @@ Object::~Object()
 
 Object* Object::create(const std::string& type)
 {
-    if (type == "" || type == "EIS1")
+    if (type == "" || type == "EIS1" || type == "1.001")
         return new SwitchingObject();
-    else if (type == "EIS2")
+    else if (type == "EIS2" || type == "3.007")
         return new DimmingObject();
-    else if (type == "EIS3")
+    else if (type == "3.008")
+        return new BlindsObject();
+    else if (type == "EIS3" || type == "10.001")
         return new TimeObject();
-    else if (type == "EIS4")
+    else if (type == "EIS4" || type == "11.001")
         return new DateObject();
-    else if (type == "EIS5")
+    else if (type == "EIS5" || type == "9.xxx")
         return new ValueObject();
-    else if (type == "EIS6")
+    else if (type == "14.xxx")
+        return new ValueObject32();
+    else if (type == "EIS6" || type == "5.010")
         return new ScalingObject();
-    else if (type == "heat-mode")
+    else if (type == "heat-mode" || type == "20.102")
         return new HeatingModeObject();
-    else if (type == "EIS15")
+    else if (type == "EIS15" || type == "16.000")
         return new StringObject();
     else
         return 0;
@@ -372,6 +376,57 @@ std::string DimmingObjectValue::toString()
     if (stepcode_m == 0)
         return "stop";
     std::string ret(direction_m ? "up" : "down");
+    if (stepcode_m != 1)
+    {
+        ret.push_back(':');
+        ret.push_back('0' + stepcode_m);
+    }
+    return ret;
+}
+
+BlindsObjectValue::BlindsObjectValue(const std::string& value)
+{
+    std::string dir;
+    int pos = value.find(":");
+    dir = value.substr(0, pos);
+    stepcode_m = 1;
+    if (pos != value.npos)
+    {
+        if (value.length() > pos+1)
+        {
+            char step = value[pos+1];
+            if (step >= '1' && step <= '7')
+                stepcode_m = step - '0';
+            else
+            {
+                std::stringstream msg;
+                msg << "BlindsObjectValue: Invalid stepcode (must be between 1 and 7): '" << step << "'" << std::endl;
+                throw ticpp::Exception(msg.str());
+            }
+        }
+    }
+    if (dir == "stop")
+    {
+        direction_m = 0;
+        stepcode_m = 0;
+    }
+    else if (dir == "close")
+        direction_m = 1;
+    else if (dir == "open")
+        direction_m = 0;
+    else
+    {
+        std::stringstream msg;
+        msg << "BlindsObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string BlindsObjectValue::toString()
+{
+    if (stepcode_m == 0)
+        return "stop";
+    std::string ret(direction_m ? "close" : "open");
     if (stepcode_m != 1)
     {
         ret.push_back(':');
@@ -804,6 +859,24 @@ void DimmingObject::setDimmerValue(int direction, int stepcode)
         init_m = true;
         onUpdate();
     }
+}
+
+ObjectValue* BlindsObject::createObjectValue(const std::string& value)
+{
+    return new BlindsObjectValue(value);
+}
+
+void BlindsObject::setValue(const std::string& value)
+{
+    BlindsObjectValue val(value);
+    setDimmerValue(val.direction_m, val.stepcode_m);
+}
+
+std::string BlindsObject::getValue()
+{
+    if (!init_m)
+        read();
+    return BlindsObjectValue(direction_m, stepcode_m).toString();
 }
 
 TimeObject::TimeObject() : wday_m(0), hour_m(0), min_m(0), sec_m(0)
@@ -1262,6 +1335,38 @@ void ValueObject::setFloatValue(double value)
         init_m = true;
         onUpdate();
     }
+}
+
+void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if (len < 6)
+    {
+        std::cout << "Invlalid packet received for ValueObject32 (too short)" << std::endl;
+        return;
+    }
+
+    uint32_t tmp = buf[2]<<24 | buf[3]<<16 | buf[4]<<8 | buf[5];
+    double newValue = *reinterpret_cast<const float*>(&tmp);
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for ValueObject32 " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void ValueObject32::doSend(bool isWrite)
+{
+    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), 0, 0, 0, 0 };
+    float val = static_cast<float>(value_m);
+    uint32_t tmp = *reinterpret_cast<uint32_t*>(&val);
+    buf[5] = static_cast<uint8_t>(tmp & 0x000000FF); 
+    buf[4] = static_cast<uint8_t>((tmp & 0x0000FF00) >> 8); 
+    buf[3] = static_cast<uint8_t>((tmp & 0x00FF0000) >> 16); 
+    buf[2] = static_cast<uint8_t>((tmp & 0xFF000000) >> 24);
+
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
 
 ScalingObject::ScalingObject() : value_m(0)
