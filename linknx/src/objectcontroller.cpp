@@ -51,10 +51,24 @@ Object* Object::create(const std::string& type)
         return new ValueObject();
     else if (type == "14.xxx")
         return new ValueObject32();
-    else if (type == "EIS6" || type == "5.010")
+    else if (type == "EIS6" || type == "5.xxx")
+        return new U8Object();
+    else if (type == "5.001")
         return new ScalingObject();
+    else if (type == "5.003")
+        return new AngleObject();
     else if (type == "heat-mode" || type == "20.102")
         return new HeatingModeObject();
+    else if (type == "EIS10" || type == "7.xxx")
+        return new U16Object();
+    else if (type == "EIS11" || type == "12.xxx")
+        return new U32Object();
+    else if (type == "EIS14" || type == "6.xxx")
+        return new S8Object();
+    else if (type == "8.xxx")
+        return new S16Object();
+    else if (type == "13.xxx")
+        return new S32Object();
     else if (type == "EIS15" || type == "16.000")
         return new StringObject();
     else
@@ -556,7 +570,50 @@ std::string ValueObjectValue::toString()
     return out.str();
 }
 
-ScalingObjectValue::ScalingObjectValue(const std::string& value)
+ValueObject32Value::ValueObject32Value(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "ValueObject32Value: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string ValueObject32Value::toString()
+{
+    std::ostringstream out;
+    out.precision(8);
+    out << value_m;
+    return out.str();
+}
+
+UIntObjectValue::UIntObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "UIntObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string UIntObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+U8ObjectValue::U8ObjectValue(const std::string& value)
 {
     std::istringstream val(value);
     val >> value_m;
@@ -567,15 +624,67 @@ ScalingObjectValue::ScalingObjectValue(const std::string& value)
          value_m < 0)
     {
         std::stringstream msg;
+        msg << "U8ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string U8ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+ScalingObjectValue::ScalingObjectValue(const std::string& value)
+{
+    float fvalue;
+    std::istringstream val(value);
+    val >> fvalue;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         fvalue > 100 ||
+         fvalue < 0)
+    {
+        std::stringstream msg;
         msg << "ScalingObjectValue: Bad value: '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
+    value_m = (int)(fvalue * 255 / 100);
 }
 
 std::string ScalingObjectValue::toString()
 {
     std::ostringstream out;
-    out << value_m;
+    out.precision(3);
+    out << (float)value_m * 100 / 255;
+    return out.str();
+}
+
+AngleObjectValue::AngleObjectValue(const std::string& value)
+{
+    float fvalue;
+    std::istringstream val(value);
+    val >> fvalue;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         fvalue > 360 ||
+         fvalue < 0)
+    {
+        std::stringstream msg;
+        msg << "AngleObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    value_m = ((int)(fvalue * 256 / 360)) % 256;
+}
+
+std::string AngleObjectValue::toString()
+{
+    std::ostringstream out;
+    out.precision(4);
+    out << (float)value_m * 360 / 256;
     return out.str();
 }
 
@@ -611,6 +720,138 @@ std::string HeatingModeObjectValue::toString()
         return "frost";
     }
     return "frost";
+}
+
+U16ObjectValue::U16ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         value_m > 65535 ||
+         value_m < 0)
+    {
+        std::stringstream msg;
+        msg << "U16ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string U16ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+U32ObjectValue::U32ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "U32ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string U32ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+IntObjectValue::IntObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "IntObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string IntObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+S8ObjectValue::S8ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         value_m > 127 ||
+         value_m < -128)
+    {
+        std::stringstream msg;
+        msg << "S8ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string S8ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+S16ObjectValue::S16ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         value_m > 32767 ||
+         value_m < -32768)
+    {
+        std::stringstream msg;
+        msg << "S16ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string S16ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+S32ObjectValue::S32ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "S32ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string S32ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
 }
 
 StringObjectValue::StringObjectValue(const std::string& value)
@@ -1337,6 +1578,31 @@ void ValueObject::setFloatValue(double value)
     }
 }
 
+ObjectValue* ValueObject32::createObjectValue(const std::string& value)
+{
+    return new ValueObject32Value(value);
+}
+
+void ValueObject32::setValue(ObjectValue* value)
+{
+    assert(value);
+    ValueObject32Value* val = dynamic_cast<ValueObject32Value*>(value);
+    if (val == 0)
+        std::cout << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+    setFloatValue(val->value_m);
+}
+
+void ValueObject32::setValue(const std::string& value)
+{
+    ValueObject32Value val(value);
+    setFloatValue(val.value_m);
+}
+
+std::string ValueObject32::getValue()
+{
+    return ValueObject32Value(getFloatValue()).toString();
+}
+
 void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 6)
@@ -1369,44 +1635,39 @@ void ValueObject32::doSend(bool isWrite)
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
 
-ScalingObject::ScalingObject() : value_m(0)
+UIntObject::UIntObject() : value_m(0)
 {}
 
-ScalingObject::~ScalingObject()
+UIntObject::~UIntObject()
 {}
 
-ObjectValue* ScalingObject::createObjectValue(const std::string& value)
-{
-    return new ScalingObjectValue(value);
-}
-
-bool ScalingObject::equals(ObjectValue* value)
+bool UIntObject::equals(ObjectValue* value)
 {
     assert(value);
-    ScalingObjectValue* val = dynamic_cast<ScalingObjectValue*>(value);
+    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "ScalingObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        std::cout << "UIntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "ScalingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    std::cout << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
     return value_m == val->value_m;
 }
 
-int ScalingObject::compare(ObjectValue* value)
+int UIntObject::compare(ObjectValue* value)
 {
     assert(value);
-    ScalingObjectValue* val = dynamic_cast<ScalingObjectValue*>(value);
+    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "ScalingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        std::cout << "UIntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "ScalingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    std::cout << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
 
     if (value_m == val->value_m)
         return 0;
@@ -1416,13 +1677,80 @@ int ScalingObject::compare(ObjectValue* value)
         return -1;
 }
 
-void ScalingObject::setValue(ObjectValue* value)
+void UIntObject::setValue(ObjectValue* value)
 {
     assert(value);
-    ScalingObjectValue* val = dynamic_cast<ScalingObjectValue*>(value);
+    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
-        std::cout << "ScalingObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        std::cout << "UIntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
     setIntValue(val->value_m);
+}
+
+void UIntObject::setIntValue(uint32_t value)
+{
+    if (!init_m || value != value_m || (flags_m & Force))
+    {
+        value_m = value;
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
+        init_m = true;
+        onUpdate();
+    }
+}
+
+U8Object::U8Object()
+{}
+
+U8Object::~U8Object()
+{}
+
+ObjectValue* U8Object::createObjectValue(const std::string& value)
+{
+    return new U8ObjectValue(value);
+}
+
+void U8Object::setValue(const std::string& value)
+{
+    U8ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string U8Object::getValue()
+{
+    return U8ObjectValue(getIntValue()).toString();
+}
+
+void U8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    int newValue;
+    if (len == 2)
+        newValue = (buf[1] & 0x3F);
+    else
+        newValue = buf[2];
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for U8 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void U8Object::doSend(bool isWrite)
+{
+    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+}
+
+ScalingObject::ScalingObject()
+{}
+
+ScalingObject::~ScalingObject()
+{}
+
+ObjectValue* ScalingObject::createObjectValue(const std::string& value)
+{
+    return new ScalingObjectValue(value);
 }
 
 void ScalingObject::setValue(const std::string& value)
@@ -1436,38 +1764,26 @@ std::string ScalingObject::getValue()
     return ScalingObjectValue(getIntValue()).toString();
 }
 
-void ScalingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+AngleObject::AngleObject()
+{}
+
+AngleObject::~AngleObject()
+{}
+
+ObjectValue* AngleObject::createObjectValue(const std::string& value)
 {
-    int newValue;
-    if (len == 2)
-        newValue = (buf[1] & 0x3F);
-    else
-        newValue = buf[2];
-    if (!init_m || newValue != value_m)
-    {
-        std::cout << "New value " << newValue << " for scaling object " << getID() << std::endl;
-        value_m = newValue;
-        init_m = true;
-        onUpdate();
-    }
+    return new AngleObjectValue(value);
 }
 
-void ScalingObject::doSend(bool isWrite)
+void AngleObject::setValue(const std::string& value)
 {
-    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+    AngleObjectValue val(value);
+    setIntValue(val.value_m);
 }
 
-void ScalingObject::setIntValue(int value)
+std::string AngleObject::getValue()
 {
-    if (!init_m || value != value_m || (flags_m & Force))
-    {
-        value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
-    }
+    return AngleObjectValue(getIntValue()).toString();
 }
 
 ObjectValue* HeatingModeObject::createObjectValue(const std::string& value)
@@ -1484,6 +1800,281 @@ void HeatingModeObject::setValue(const std::string& value)
 std::string HeatingModeObject::getValue()
 {
     return HeatingModeObjectValue(getIntValue()).toString();
+}
+
+U16Object::U16Object()
+{}
+
+U16Object::~U16Object()
+{}
+
+ObjectValue* U16Object::createObjectValue(const std::string& value)
+{
+    return new U16ObjectValue(value);
+}
+
+void U16Object::setValue(const std::string& value)
+{
+    U16ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string U16Object::getValue()
+{
+    return U16ObjectValue(getIntValue()).toString();
+}
+
+void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    unsigned int newValue;
+    newValue = (buf[2]<<8) | buf[3];
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for U16 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void U16Object::doSend(bool isWrite)
+{
+    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+}
+
+U32Object::U32Object()
+{}
+
+U32Object::~U32Object()
+{}
+
+ObjectValue* U32Object::createObjectValue(const std::string& value)
+{
+    return new U32ObjectValue(value);
+}
+
+void U32Object::setValue(const std::string& value)
+{
+    U32ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string U32Object::getValue()
+{
+    return U32ObjectValue(getIntValue()).toString();
+}
+
+void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    unsigned int newValue;
+    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for U32 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void U32Object::doSend(bool isWrite)
+{
+    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+}
+
+IntObject::IntObject() : value_m(0)
+{}
+
+IntObject::~IntObject()
+{}
+
+bool IntObject::equals(ObjectValue* value)
+{
+    assert(value);
+    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "IntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    return value_m == val->value_m;
+}
+
+int IntObject::compare(ObjectValue* value)
+{
+    assert(value);
+    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    if (val == 0)
+    {
+        std::cout << "IntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        return false;
+    }
+    if (!init_m)
+        read();
+    std::cout << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+
+    if (value_m == val->value_m)
+        return 0;
+    if (value_m > val->value_m)
+        return 1;
+    else
+        return -1;
+}
+
+void IntObject::setValue(ObjectValue* value)
+{
+    assert(value);
+    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    if (val == 0)
+        std::cout << "IntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+    setIntValue(val->value_m);
+}
+
+void IntObject::setIntValue(int32_t value)
+{
+    if (!init_m || value != value_m || (flags_m & Force))
+    {
+        value_m = value;
+        if ((flags_m & Transmit) && (flags_m & Comm))
+            doSend(true);
+        init_m = true;
+        onUpdate();
+    }
+}
+
+S8Object::S8Object()
+{}
+
+S8Object::~S8Object()
+{}
+
+ObjectValue* S8Object::createObjectValue(const std::string& value)
+{
+    return new S8ObjectValue(value);
+}
+
+void S8Object::setValue(const std::string& value)
+{
+    S8ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string S8Object::getValue()
+{
+    return S8ObjectValue(getIntValue()).toString();
+}
+
+void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    int32_t newValue;
+    if (len == 2)
+        newValue = (buf[1] & 0x3F);
+    else
+        newValue = buf[2];
+    if (newValue > 127)
+        newValue -= 256;
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for S8 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void S8Object::doSend(bool isWrite)
+{
+    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+}
+
+S16Object::S16Object()
+{}
+
+S16Object::~S16Object()
+{}
+
+ObjectValue* S16Object::createObjectValue(const std::string& value)
+{
+    return new S16ObjectValue(value);
+}
+
+void S16Object::setValue(const std::string& value)
+{
+    S16ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string S16Object::getValue()
+{
+    return S16ObjectValue(getIntValue()).toString();
+}
+
+void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    int32_t newValue;
+    newValue = (buf[2]<<8) | buf[3];
+    if (newValue > 32767)
+        newValue -= 65536;
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for S16 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void S16Object::doSend(bool isWrite)
+{
+    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+}
+
+S32Object::S32Object()
+{}
+
+S32Object::~S32Object()
+{}
+
+ObjectValue* S32Object::createObjectValue(const std::string& value)
+{
+    return new S32ObjectValue(value);
+}
+
+void S32Object::setValue(const std::string& value)
+{
+    S32ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string S32Object::getValue()
+{
+    return S32ObjectValue(getIntValue()).toString();
+}
+
+void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    int32_t newValue;
+    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    if (!init_m || newValue != value_m)
+    {
+        std::cout << "New value " << newValue << " for S32 object " << getID() << std::endl;
+        value_m = newValue;
+        init_m = true;
+        onUpdate();
+    }
+}
+
+void S32Object::doSend(bool isWrite)
+{
+    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
 
 StringObject::StringObject()

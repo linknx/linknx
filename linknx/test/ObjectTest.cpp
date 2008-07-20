@@ -32,6 +32,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testValueExportImport );
     CPPUNIT_TEST( testValuePersist );
     CPPUNIT_TEST( testValueObject32Write );
+    CPPUNIT_TEST( testU8Object );
+    CPPUNIT_TEST( testU8ObjectWrite );
+    CPPUNIT_TEST( testU8ObjectUpdate );
+    CPPUNIT_TEST( testU8ExportImport );
+    CPPUNIT_TEST( testU8Persist );
     CPPUNIT_TEST( testScalingObject );
     CPPUNIT_TEST( testScalingObjectWrite );
     CPPUNIT_TEST( testScalingObjectUpdate );
@@ -42,6 +47,31 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testHeatingModeObjectUpdate );
     CPPUNIT_TEST( testHeatingModeExportImport );
     CPPUNIT_TEST( testHeatingModePersist );
+    CPPUNIT_TEST( testU16Object );
+    CPPUNIT_TEST( testU16ObjectWrite );
+    CPPUNIT_TEST( testU16ObjectUpdate );
+    CPPUNIT_TEST( testU16ExportImport );
+    CPPUNIT_TEST( testU16Persist );
+    CPPUNIT_TEST( testU32Object );
+    CPPUNIT_TEST( testU32ObjectWrite );
+    CPPUNIT_TEST( testU32ObjectUpdate );
+    CPPUNIT_TEST( testU32ExportImport );
+    CPPUNIT_TEST( testU32Persist );
+    CPPUNIT_TEST( testS8Object );
+    CPPUNIT_TEST( testS8ObjectWrite );
+    CPPUNIT_TEST( testS8ObjectUpdate );
+    CPPUNIT_TEST( testS8ExportImport );
+    CPPUNIT_TEST( testS8Persist );
+    CPPUNIT_TEST( testS16Object );
+    CPPUNIT_TEST( testS16ObjectWrite );
+    CPPUNIT_TEST( testS16ObjectUpdate );
+    CPPUNIT_TEST( testS16ExportImport );
+    CPPUNIT_TEST( testS16Persist );
+    CPPUNIT_TEST( testS32Object );
+    CPPUNIT_TEST( testS32ObjectWrite );
+    CPPUNIT_TEST( testS32ObjectUpdate );
+    CPPUNIT_TEST( testS32ExportImport );
+    CPPUNIT_TEST( testS32Persist );
     CPPUNIT_TEST( testStringObject );
     CPPUNIT_TEST( testStringObjectWrite );
     CPPUNIT_TEST( testStringObjectUpdate );
@@ -1015,10 +1045,10 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
-    void testScalingObject()
+    void testU8Object()
     {
         ObjectValue* val;
-        ScalingObject t, t2;
+        U8Object t, t2;
         t.setValue("0");
         CPPUNIT_ASSERT(t.getValue() == "0");
         t2.setValue("255");
@@ -1029,8 +1059,8 @@ public:
         t2.setValue("240");
         CPPUNIT_ASSERT(t2.getValue() == "240");
 
-        CPPUNIT_ASSERT_EQUAL(10, t.getIntValue());
-        CPPUNIT_ASSERT_EQUAL(240, t2.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)240, t2.getIntValue());
 
         CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("256"), ticpp::Exception);
@@ -1039,7 +1069,7 @@ public:
         CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
 
-        ScalingObjectValue tval("10");
+        U8ObjectValue tval("10");
         CPPUNIT_ASSERT(t.equals(&tval));
         CPPUNIT_ASSERT(!t2.equals(&tval));
 
@@ -1048,7 +1078,7 @@ public:
         CPPUNIT_ASSERT(!t2.equals(val));
         delete val;      
 
-        ScalingObjectValue tval2("240");
+        U8ObjectValue tval2("240");
         CPPUNIT_ASSERT(!t.equals(&tval2));
         CPPUNIT_ASSERT(t2.equals(&tval2));
 
@@ -1059,12 +1089,12 @@ public:
 
         t.setIntValue(100);
         CPPUNIT_ASSERT(t.getValue() == "100");
-        CPPUNIT_ASSERT_EQUAL(100, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)100, t.getIntValue());
     }
 
-    void testScalingObjectWrite()
+    void testU8ObjectWrite()
     {
-        ScalingObject t;
+        U8Object t;
         t.setValue("55");
         t.addChangeListener(this);
 
@@ -1073,7 +1103,7 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);        
         CPPUNIT_ASSERT(t.getValue() == "66");
-        ScalingObjectValue tval1("66");
+        U8ObjectValue tval1("66");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -1081,7 +1111,7 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "74");
-        ScalingObjectValue tval2("74");
+        U8ObjectValue tval2("74");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -1095,16 +1125,16 @@ public:
         isOnChangeCalled_m = false;
         t.onWrite(buf, 3, src);       
         CPPUNIT_ASSERT(t.getValue() == "0");
-        ScalingObjectValue tval3("0");
+        U8ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
-        CPPUNIT_ASSERT_EQUAL(0, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)0, t.getIntValue());
     }
 
-    void testScalingObjectUpdate()
+    void testU8ObjectUpdate()
     {
-        ScalingObject t;
+        U8Object t;
         t.addChangeListener(this);
 
         isOnChangeCalled_m = false;
@@ -1126,9 +1156,9 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
     }
 
-    void testScalingExportImport()
+    void testU8ExportImport()
     {
-        ScalingObject orig;
+        U8Object orig;
         Object *res;
         ticpp::Element pConfig;
 
@@ -1136,11 +1166,11 @@ public:
         orig.exportXml(&pConfig);
         res = Object::create(&pConfig);
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
-        CPPUNIT_ASSERT(dynamic_cast<ScalingObject*>(res));
+        CPPUNIT_ASSERT(dynamic_cast<U8Object*>(res));
         delete res;
     }
 
-    void testScalingPersist()
+    void testU8Persist()
     {
         system ("rm -rf /tmp/linknx_unittest");
         system ("mkdir /tmp/linknx_unittest");
@@ -1175,6 +1205,163 @@ public:
         delete res3;
     }
 
+    void testScalingObject()
+    {
+        ObjectValue* val;
+        ScalingObject t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("100");
+        CPPUNIT_ASSERT(t2.getValue() == "100");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "9.8");
+        t2.setValue("99.9");
+        CPPUNIT_ASSERT(t2.getValue() == "99.6");
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)25, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)254, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("256"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("101"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("30000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+
+        ScalingObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        ScalingObjectValue tval2("99.6");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+//        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("99.6");
+        CPPUNIT_ASSERT(!t.equals(val));
+//        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(255);
+        CPPUNIT_ASSERT(t.getValue() == "100");
+        CPPUNIT_ASSERT_EQUAL((uint32_t)255, t.getIntValue());
+    }
+
+    void testScalingObjectWrite()
+    {
+        ScalingObject t;
+        t.setValue("55");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 128};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "50.2");
+        ScalingObjectValue tval1("50.2");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 10;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "3.92");
+        ScalingObjectValue tval2("3.92");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "3.92");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        ScalingObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)0, t.getIntValue());
+    }
+
+    void testScalingObjectUpdate()
+    {
+        ScalingObject t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("68");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("69");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("69");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("70");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testScalingExportImport()
+    {
+        ScalingObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<ScalingObject*>(res));
+        delete res;
+    }
+
+    void testScalingPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "5.001");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("100");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "100");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("35");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "34.5");
+        delete res3;
+    }
+
     void testHeatingModeObject()
     {
         ObjectValue* val;
@@ -1184,16 +1371,16 @@ public:
         t2.setValue("frost");
         CPPUNIT_ASSERT(t2.getValue() == "frost");
 
-        CPPUNIT_ASSERT_EQUAL(1, t.getIntValue());
-        CPPUNIT_ASSERT_EQUAL(4, t2.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)1, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)4, t2.getIntValue());
 
         t.setValue("standby");
         CPPUNIT_ASSERT(t.getValue() == "standby");
         t2.setValue("night");
         CPPUNIT_ASSERT(t2.getValue() == "night");
 
-        CPPUNIT_ASSERT_EQUAL(2, t.getIntValue());
-        CPPUNIT_ASSERT_EQUAL(3, t2.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)2, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)3, t2.getIntValue());
 
         CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("1"), ticpp::Exception);
@@ -1222,7 +1409,7 @@ public:
 
         t.setIntValue(1);
         CPPUNIT_ASSERT(t.getValue() == "comfort");
-        CPPUNIT_ASSERT_EQUAL(1, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)1, t.getIntValue());
     }
 
     void testHeatingModeObjectWrite()
@@ -1270,7 +1457,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
-        CPPUNIT_ASSERT_EQUAL(4, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)4, t.getIntValue());
     }
 
     void testHeatingModeObjectUpdate()
@@ -1349,6 +1536,822 @@ public:
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "frost");
         delete res4;
+    }
+
+    void testU16Object()
+    {
+        ObjectValue* val;
+        U16Object t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("65535");
+        CPPUNIT_ASSERT(t2.getValue() == "65535");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("65530");
+        CPPUNIT_ASSERT(t2.getValue() == "65530");
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)65530, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("65536"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("70000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        U16ObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        U16ObjectValue tval2("65530");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("65530");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(100);
+        CPPUNIT_ASSERT(t.getValue() == "100");
+        CPPUNIT_ASSERT_EQUAL((uint32_t)100, t.getIntValue());
+    }
+
+    void testU16ObjectWrite()
+    {
+        U16Object t;
+        t.setValue("55");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 39, 16};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(t.getValue() == "10000");
+        U16ObjectValue tval1("10000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 255;
+        buf[3] = 254;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(t.getValue() == "65534");
+        U16ObjectValue tval2("65534");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(t.getValue() == "65534");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        U16ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)0, t.getIntValue());
+    }
+
+    void testU16ObjectUpdate()
+    {
+        U16Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("168");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testU16ExportImport()
+    {
+        U16Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<U16Object*>(res));
+        delete res;
+    }
+
+    void testU16Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "7.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("65535");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "65535");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("50000");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "50000");
+        delete res3;
+    }
+
+    void testU32Object()
+    {
+        ObjectValue* val;
+        U32Object t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("4294967295");
+        CPPUNIT_ASSERT(t2.getValue() == "4294967295");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("4000000000");
+        CPPUNIT_ASSERT(t2.getValue() == "4000000000");
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((uint32_t)4000000000UL, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("4294967296"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("5000000000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        U32ObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        U32ObjectValue tval2("4000000000");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("4000000000");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(3000000000UL);
+        CPPUNIT_ASSERT(t.getValue() == "3000000000");
+        CPPUNIT_ASSERT_EQUAL((uint32_t)3000000000UL, t.getIntValue());
+    }
+
+    void testU32ObjectWrite()
+    {
+        U32Object t;
+        t.setValue("2000000000");
+        t.addChangeListener(this);
+
+        uint8_t buf[6] = {0, 0x80, 0xB2, 0xD0, 0x5E, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);        
+        CPPUNIT_ASSERT(t.getValue() == "3000000000");
+        U32ObjectValue tval1("3000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        buf[4] = 3;
+        buf[5] = 232;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);       
+        CPPUNIT_ASSERT(t.getValue() == "1000");
+        U32ObjectValue tval2("1000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);        
+        CPPUNIT_ASSERT(t.getValue() == "1000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        buf[4] = 0;
+        buf[5] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        U32ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((uint32_t)0, t.getIntValue());
+    }
+
+    void testU32ObjectUpdate()
+    {
+        U32Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("4000168");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("4000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("4000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("4000170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testU32ExportImport()
+    {
+        U32Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<U32Object*>(res));
+        delete res;
+    }
+
+    void testU32Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "12.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("4294967295");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "4294967295");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("4000000000");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "4000000000");
+        delete res3;
+    }
+
+    void testS8Object()
+    {
+        ObjectValue* val;
+        S8Object t, t2;
+        t.setValue("-128");
+        CPPUNIT_ASSERT(t.getValue() == "-128");
+        t2.setValue("127");
+        CPPUNIT_ASSERT(t2.getValue() == "127");
+
+        t.setValue("-10");
+        CPPUNIT_ASSERT(t.getValue() == "-10");
+        t2.setValue("120");
+        CPPUNIT_ASSERT(t2.getValue() == "120");
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)-10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((int32_t)120, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-130"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("128"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("30000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("-25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        S8ObjectValue tval("-10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("-10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        S8ObjectValue tval2("120");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("120");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(0);
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        CPPUNIT_ASSERT_EQUAL((int32_t)0, t.getIntValue());
+    }
+
+    void testS8ObjectWrite()
+    {
+        S8Object t;
+        t.setValue("55");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 128};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "-128");
+        S8ObjectValue tval1("-128");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 127;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "127");
+        S8ObjectValue tval2("127");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(t.getValue() == "127");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 3, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        S8ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)0, t.getIntValue());
+    }
+
+    void testS8ObjectUpdate()
+    {
+        S8Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("118");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-118");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-118");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("119");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testS8ExportImport()
+    {
+        S8Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<S8Object*>(res));
+        delete res;
+    }
+
+    void testS8Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "6.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("127");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "127");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("-35");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "-35");
+        delete res3;
+    }
+
+    void testS16Object()
+    {
+        ObjectValue* val;
+        S16Object t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("32767");
+        CPPUNIT_ASSERT(t2.getValue() == "32767");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("-32768");
+        CPPUNIT_ASSERT(t2.getValue() == "-32768");
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((int32_t)-32768, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-32769"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("32768"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("70000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        S16ObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        S16ObjectValue tval2("-32768");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("-32768");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(100);
+        CPPUNIT_ASSERT(t.getValue() == "100");
+        CPPUNIT_ASSERT_EQUAL((int32_t)100, t.getIntValue());
+    }
+
+    void testS16ObjectWrite()
+    {
+        S16Object t;
+        t.setValue("55");
+        t.addChangeListener(this);
+
+        uint8_t buf[4] = {0, 0x80, 39, 16};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(t.getValue() == "10000");
+        S16ObjectValue tval1("10000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 255;
+        buf[3] = 254;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(t.getValue() == "-2");
+        S16ObjectValue tval2("-2");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);        
+        CPPUNIT_ASSERT(t.getValue() == "-2");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 4, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        S16ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)0, t.getIntValue());
+    }
+
+    void testS16ObjectUpdate()
+    {
+        S16Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("30169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-30169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-30169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("30170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testS16ExportImport()
+    {
+        S16Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<S16Object*>(res));
+        delete res;
+    }
+
+    void testS16Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "8.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("32767");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "32767");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("-32700");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "-32700");
+        delete res3;
+    }
+
+    void testS32Object()
+    {
+        ObjectValue* val;
+        S32Object t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("2147483647");
+        CPPUNIT_ASSERT(t2.getValue() == "2147483647");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("-2147483648");
+        CPPUNIT_ASSERT(t2.getValue() == "-2147483648");
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((int32_t)-2147483648UL, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("-2147483649"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2147483648"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("5000000000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        S32ObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        S32ObjectValue tval2("-2147483648");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("-2147483648");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(-2000000000UL);
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        CPPUNIT_ASSERT_EQUAL((int32_t)-2000000000UL, t.getIntValue());
+    }
+
+    void testS32ObjectWrite()
+    {
+        S32Object t;
+        t.setValue("-2000000000");
+        t.addChangeListener(this);
+
+        uint8_t buf[6] = {0, 0x80, 0x77, 0x35, 0x94, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);        
+        CPPUNIT_ASSERT(t.getValue() == "2000000000");
+        S32ObjectValue tval1("2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0x88;
+        buf[3] = 0xCA;
+        buf[4] = 0x6C;
+        buf[5] = 0x00;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);       
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        S32ObjectValue tval2("-2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);        
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        buf[4] = 0;
+        buf[5] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 6, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        S32ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((int32_t)0, t.getIntValue());
+    }
+
+    void testS32ObjectUpdate()
+    {
+        S32Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testS32ExportImport()
+    {
+        S32Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<S32Object*>(res));
+        delete res;
+    }
+
+    void testS32Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "13.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("2000000000");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "2000000000");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("-2147483648");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "-2147483648");
+        delete res3;
     }
 
     void testStringObject()

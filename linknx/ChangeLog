@@ -1,5 +1,15 @@
 Release 0.0.1.25:
 
+2008-07-20  J-F Meessen
+
+	* Add new KNX data-types (8, 16 and 32 bit signed/unsigned int and IEEE754 32 bit float)
+
+2008-07-05  J-F Meessen
+
+	* Improve delay configuration (allow d, h or m at end for days, hours or minutes)
+	* Improve version information
+	* Fix EIS4 datatype (11.001 - date) year encoding not compliant
+
 2008-06-25  J-F Meessen
 
 	* Add Sunrise/Sunset/Noon timespec

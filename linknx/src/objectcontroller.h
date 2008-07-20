@@ -23,6 +23,7 @@
 #include <list>
 #include <string>
 #include <map>
+#include <stdint.h>
 #include "config.h"
 #include "ticpp.h"
 #include "knxconnection.h"
@@ -120,7 +121,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS1"; };
+    virtual std::string getType() { return "1.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -147,7 +148,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS2"; };
+    virtual std::string getType() { return "3.007"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -178,7 +179,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS3"; };
+    virtual std::string getType() { return "10.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -204,7 +205,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS4"; };
+    virtual std::string getType() { return "11.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -229,7 +230,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS5"; };
+    virtual std::string getType() { return "9.xxx"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
@@ -250,6 +251,10 @@ public:
     ValueObject32() {};
     virtual ~ValueObject32() {};
 
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
     virtual std::string getType() { return "14.xxx"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -257,40 +262,175 @@ public:
 };
 
 
-class ScalingObject : public Object
+class UIntObject : public Object
 {
 public:
-    ScalingObject();
-    virtual ~ScalingObject();
+    UIntObject();
+    virtual ~UIntObject();
 
-    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "EIS6"; };
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getValue() = 0;
+    virtual std::string getType() = 0;
 
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-    void setIntValue(int value);
-    int getIntValue()
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
+    virtual void doSend(bool isWrite) = 0;
+    void setIntValue(uint32_t value);
+    uint32_t getIntValue()
     {
         if (!init_m)
             read();
         return value_m;
     };
 protected:
-    int value_m;
+    uint32_t value_m;
 };
 
-class HeatingModeObject : public ScalingObject
+class U8Object : public UIntObject
+{
+public:
+    U8Object();
+    virtual ~U8Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "5.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
+class ScalingObject : public U8Object
+{
+public:
+    ScalingObject();
+    virtual ~ScalingObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "5.001"; };
+};
+
+class AngleObject : public U8Object
+{
+public:
+    AngleObject();
+    virtual ~AngleObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "5.003"; };
+};
+
+class HeatingModeObject : public U8Object
 {
 public:
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "heat-mode"; };
+    virtual std::string getType() { return "20.102"; };
+};
+
+class U16Object : public UIntObject
+{
+public:
+    U16Object();
+    virtual ~U16Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "7.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
+class U32Object : public UIntObject
+{
+public:
+    U32Object();
+    virtual ~U32Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "12.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
+class IntObject : public Object
+{
+public:
+    IntObject();
+    virtual ~IntObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getValue() = 0;
+    virtual std::string getType() = 0;
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
+    virtual void doSend(bool isWrite) = 0;
+    void setIntValue(int32_t value);
+    int32_t getIntValue()
+    {
+        if (!init_m)
+            read();
+        return value_m;
+    };
+protected:
+    int32_t value_m;
+};
+
+class S8Object : public IntObject
+{
+public:
+    S8Object();
+    virtual ~S8Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "6.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
+class S16Object : public IntObject
+{
+public:
+    S16Object();
+    virtual ~S16Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "8.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+};
+
+class S32Object : public IntObject
+{
+public:
+    S32Object();
+    virtual ~S32Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "13.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
 };
 
 class StringObject : public Object
@@ -305,7 +445,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "EIS15"; };
+    virtual std::string getType() { return "16.000"; };
 
     void setStringValue(const std::string& val);
 
@@ -396,27 +536,145 @@ protected:
     double value_m;
 };
 
-class ScalingObjectValue : public ObjectValue
+class ValueObject32Value : public ObjectValue
+{
+public:
+    ValueObject32Value(const std::string& value);
+    virtual ~ValueObject32Value() {};
+    virtual std::string toString();
+protected:
+    ValueObject32Value(double value) : value_m(value) {};
+    friend class ValueObject32;
+    double value_m;
+};
+
+class UIntObjectValue : public ObjectValue
+{
+public:
+    UIntObjectValue(const std::string& value);
+    virtual ~UIntObjectValue() {};
+    virtual std::string toString();
+protected:
+    UIntObjectValue(uint32_t value) : value_m(value) {};
+    UIntObjectValue() {};
+    friend class UIntObject;
+    uint32_t value_m;
+};
+
+class U8ObjectValue : public UIntObjectValue
+{
+public:
+    U8ObjectValue(const std::string& value);
+    virtual ~U8ObjectValue() {};
+    virtual std::string toString();
+protected:
+    U8ObjectValue(uint32_t value) : UIntObjectValue(value) {};
+    U8ObjectValue() {};
+    friend class U8Object;
+};
+
+class ScalingObjectValue : public U8ObjectValue
 {
 public:
     ScalingObjectValue(const std::string& value);
     virtual ~ScalingObjectValue() {};
     virtual std::string toString();
 protected:
-    ScalingObjectValue(int value) : value_m(value) {};
-    ScalingObjectValue() {};
+    ScalingObjectValue(uint32_t value) : U8ObjectValue(value) {};
     friend class ScalingObject;
-    int value_m;
 };
 
-class HeatingModeObjectValue : public ScalingObjectValue
+class AngleObjectValue : public U8ObjectValue
+{
+public:
+    AngleObjectValue(const std::string& value);
+    virtual std::string toString();
+protected:
+    AngleObjectValue(uint32_t value) : U8ObjectValue(value) {};
+    friend class AngleObject;
+};
+
+class HeatingModeObjectValue : public U8ObjectValue
 {
 public:
     HeatingModeObjectValue(const std::string& value);
     virtual std::string toString();
 protected:
-    HeatingModeObjectValue(int value) : ScalingObjectValue(value) {};
+    HeatingModeObjectValue(uint32_t value) : U8ObjectValue(value) {};
     friend class HeatingModeObject;
+};
+
+class U16ObjectValue : public UIntObjectValue
+{
+public:
+    U16ObjectValue(const std::string& value);
+    virtual ~U16ObjectValue() {};
+    virtual std::string toString();
+protected:
+    U16ObjectValue(uint32_t value) : UIntObjectValue(value) {};
+    U16ObjectValue() {};
+    friend class U16Object;
+};
+
+class U32ObjectValue : public UIntObjectValue
+{
+public:
+    U32ObjectValue(const std::string& value);
+    virtual ~U32ObjectValue() {};
+    virtual std::string toString();
+protected:
+    U32ObjectValue(uint32_t value) : UIntObjectValue(value) {};
+    U32ObjectValue() {};
+    friend class U32Object;
+};
+
+class IntObjectValue : public ObjectValue
+{
+public:
+    IntObjectValue(const std::string& value);
+    virtual ~IntObjectValue() {};
+    virtual std::string toString();
+protected:
+    IntObjectValue(int32_t value) : value_m(value) {};
+    IntObjectValue() {};
+    friend class IntObject;
+    int32_t value_m;
+};
+
+class S8ObjectValue : public IntObjectValue
+{
+public:
+    S8ObjectValue(const std::string& value);
+    virtual ~S8ObjectValue() {};
+    virtual std::string toString();
+protected:
+    S8ObjectValue(int32_t value) : IntObjectValue(value) {};
+    S8ObjectValue() {};
+    friend class S8Object;
+};
+
+class S16ObjectValue : public IntObjectValue
+{
+public:
+    S16ObjectValue(const std::string& value);
+    virtual ~S16ObjectValue() {};
+    virtual std::string toString();
+protected:
+    S16ObjectValue(int32_t value) : IntObjectValue(value) {};
+    S16ObjectValue() {};
+    friend class S16Object;
+};
+
+class S32ObjectValue : public IntObjectValue
+{
+public:
+    S32ObjectValue(const std::string& value);
+    virtual ~S32ObjectValue() {};
+    virtual std::string toString();
+protected:
+    S32ObjectValue(int32_t value) : IntObjectValue(value) {};
+    S32ObjectValue() {};
+    friend class S32Object;
 };
 
 class StringObjectValue : public ObjectValue
