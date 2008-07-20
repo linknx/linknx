@@ -170,7 +170,7 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
-    ScalingObject* object_m;
+    U8Object* object_m;
     int start_m, stop_m, duration_m;
 };
 

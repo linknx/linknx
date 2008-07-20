@@ -343,7 +343,7 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     std::string id;
     id = pConfig->GetAttribute("id");
     Object* obj = ObjectController::instance()->getObject(id); 
-    object_m = dynamic_cast<ScalingObject*>(obj); 
+    object_m = dynamic_cast<U8Object*>(obj); 
     if (!object_m)
     {
         std::stringstream msg;
