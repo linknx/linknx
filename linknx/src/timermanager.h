@@ -124,6 +124,20 @@ protected:
     time_t findNext(time_t start, TimeSpec* next);
 };
 
+class FixedTimeTask : public TimerTask
+{
+public:
+    FixedTimeTask();
+    virtual ~FixedTimeTask();
+
+    virtual void onTimer(time_t time) = 0;
+    virtual void reschedule(time_t from);
+    virtual time_t getExecTime() { return execTime_m; };
+
+protected:
+    time_t execTime_m;
+};
+
 class TimerManager : protected Thread
 {
 public:

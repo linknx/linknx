@@ -694,6 +694,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new TimerCondition(cl);
     else if (type == "object-src")
         return new ObjectSourceCondition(cl);
+    else if (type == "time-counter")
+        return new TimeCounterCondition(cl);
     else
         return 0;
 }
@@ -1050,6 +1052,75 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
         ticpp::Element pDuring("during");
         pDuring.SetText(RuleServer::formatDuration(during_m));
         pConfig->LinkEndChild(&pDuring);
+    }
+}
+
+TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : cl_m(cl), condition_m(0), threshold_m(0), resetDelay_m(0), lastVal_m(false), lastTime_m(0), counter_m(0)
+{}
+
+TimeCounterCondition::~TimeCounterCondition()
+{
+    if (condition_m)
+        delete condition_m;
+}
+
+bool TimeCounterCondition::evaluate()
+{
+    time_t now = time(0);
+    bool val = condition_m->evaluate(); 
+    if (lastVal_m)
+    {
+        counter_m += now - lastTime_m;
+        std::cout << "TimeCounterCondition: counter is now  '" << counter_m << "'" << std::endl;
+    }
+    if (val)
+    {
+        lastTime_m = now;
+        lastVal_m = true;
+        execTime_m = now + (threshold_m - counter_m) + 1;
+        reschedule(0);
+    }
+    else if (lastVal_m)
+    {
+        lastTime_m = now;
+        lastVal_m = false;
+        execTime_m = now + resetDelay_m + 1;
+        reschedule(0);
+    }
+
+    if (lastVal_m == false && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m)
+    {
+        counter_m = 0;
+        lastTime_m = 0;
+    }
+    return (counter_m >= threshold_m);
+}
+
+void TimeCounterCondition::onTimer(time_t time)
+{
+    cl_m->onChange(0);
+}
+
+void TimeCounterCondition::importXml(ticpp::Element* pConfig)
+{
+    threshold_m = RuleServer::parseDuration(pConfig->GetAttribute("threshold"));
+    resetDelay_m = RuleServer::parseDuration(pConfig->GetAttribute("reset-delay"));
+    condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);
+}
+
+void TimeCounterCondition::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "time-counter");
+    if (threshold_m != 0)
+        pConfig->SetAttribute("threshold", RuleServer::formatDuration(threshold_m));
+    if (resetDelay_m != 0)
+        pConfig->SetAttribute("reset-delay", RuleServer::formatDuration(resetDelay_m));
+
+    if (condition_m)
+    {
+        ticpp::Element pElem("condition");
+        condition_m->exportXml(&pElem);
+        pConfig->LinkEndChild(&pElem);
     }
 }
 

@@ -139,6 +139,27 @@ private:
     bool trigger_m;
 };
 
+class TimeCounterCondition : public Condition, public FixedTimeTask
+{
+public:
+    TimeCounterCondition(ChangeListener* cl);
+    virtual ~TimeCounterCondition();
+
+    virtual void onTimer(time_t time);
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    Condition* condition_m;
+    ChangeListener* cl_m;
+    time_t lastTime_m;
+    bool lastVal_m;
+    int counter_m;
+    int threshold_m;
+    int resetDelay_m;
+};
+
 class Action : protected Thread
 {
 public:

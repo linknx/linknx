@@ -3,6 +3,7 @@ Release 0.0.1.25:
 2008-07-20  J-F Meessen
 
 	* Add new KNX data-types (8, 16 and 32 bit signed/unsigned int and IEEE754 32 bit float)
+	* Add time-counter condition
 
 2008-07-05  J-F Meessen
 

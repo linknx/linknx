@@ -555,6 +555,35 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     return nextExecTime;
 }
 
+FixedTimeTask::FixedTimeTask() : execTime_m(0)
+{}
+
+FixedTimeTask::~FixedTimeTask()
+{
+    Services::instance()->getTimerManager()->removeTask(this);
+}
+
+void FixedTimeTask::reschedule(time_t now)
+{
+    if (now == 0)
+        now = time(0);
+    if (execTime_m > now)
+    {
+        struct tm * timeinfo = localtime(&execTime_m);
+        std::cout << "FixedTimeTask: rescheduled at "
+        << timeinfo->tm_year + 1900 << "-"
+        << timeinfo->tm_mon + 1 << "-"
+        << timeinfo->tm_mday << " "
+        << timeinfo->tm_hour << ":"
+        << timeinfo->tm_min << ":"
+        << timeinfo->tm_sec << " ("
+        << execTime_m << ")" << std::endl;
+        Services::instance()->getTimerManager()->addTask(this);
+    }
+    else
+        std::cout << "FixedTimeTask: not rescheduled" << std::endl;
+}
+
 void DaySpec::importXml(ticpp::Element* pConfig)
 {
     pConfig->GetAttributeOrDefault("year", &(year_m), -1);
