@@ -208,42 +208,11 @@ main (int ac, char *ag[])
     signal (SIGINT, SIG_IGN);
     signal (SIGTERM, SIG_IGN);
 
+    services->setConfigFile(arg.writeconfig);
     services->getKnxConnection()->addTelegramListener(objects);
     services->start();
     int x;
     pth_sigwait (&t1, &x);
-
-    if (arg.writeconfig)
-    {
-        try
-        {
-            // Save a document
-            ticpp::Document doc;
-            ticpp::Declaration decl("1.0", "", "");
-            doc.LinkEndChild(&decl);
-    
-            ticpp::Element pConfig("config");
-    
-            ticpp::Element pServices("services");
-            services->exportXml(&pServices);
-            pConfig.LinkEndChild(&pServices);
-            ticpp::Element pObjects("objects");
-            objects->exportXml(&pObjects);
-            pConfig.LinkEndChild(&pObjects);
-            ticpp::Element pRules("rules");
-            rules->exportXml(&pRules);
-            pConfig.LinkEndChild(&pRules);
-    
-            doc.LinkEndChild(&pConfig);
-            doc.SaveFile(arg.writeconfig);
-        }
-        catch( ticpp::Exception& ex )
-        {
-            // If any function has an error, execution will enter here.
-            // Report the error
-            std::cerr << "ERROR writing config to file: " << ex.m_details << std::endl;
-        }
-    }
 
     signal (SIGINT, SIG_DFL);
     signal (SIGTERM, SIG_DFL);

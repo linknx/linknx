@@ -55,6 +55,8 @@ public:
     ExceptionDays* getExceptionDays() { return &exceptionDays_m; };
     PersistentStorage* getPersistentStorage() { return persistentStorage_m; };
     LocationInfo* getLocationInfo() { return &locationInfo_m; };
+    void setConfigFile(const char* filename) { if (filename) configFile_m = filename; };
+    std::string getConfigFile() { return configFile_m; };
     void createDefault();
 
 private:
@@ -71,6 +73,8 @@ private:
     KnxConnection knxConnection_m;
     ExceptionDays exceptionDays_m;
     LocationInfo locationInfo_m;
+    
+    std::string configFile_m;
 };
 
 #endif

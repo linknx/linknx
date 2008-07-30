@@ -1,5 +1,9 @@
 Release 0.0.1.25:
 
+2008-07-30  J-F Meessen
+
+	* Add XML command to save current config to a file
+
 2008-07-20  J-F Meessen
 
 	* Add new KNX data-types (8, 16 and 32 bit signed/unsigned int and IEEE754 32 bit float)

@@ -286,6 +286,53 @@ void ClientConnection::Run (pth_sem_t * stop1)
                 }
                 sendmessage ("<write status='success'/>\n", stop);
             }
+            else if (msgType == "admin")
+            {
+                ticpp::Iterator< ticpp::Element > pAdmin;
+                for ( pAdmin = pMsg->FirstChildElement(); pAdmin != pAdmin.end(); pAdmin++ )
+                {
+                    if (pAdmin->Value() == "save")
+                    {
+                        std::string filename = pAdmin->GetAttribute("file");
+                        if (filename == "")
+                            filename = Services::instance()->getConfigFile();
+                        if (filename == "")
+                            throw "No file to write config to";
+                        try
+                        {
+                            // Save a document
+                            ticpp::Document doc;
+                            ticpp::Declaration decl("1.0", "", "");
+                            doc.LinkEndChild(&decl);
+                    
+                            ticpp::Element pConfig("config");
+                    
+                            ticpp::Element pServices("services");
+                            Services::instance()->exportXml(&pServices);
+                            pConfig.LinkEndChild(&pServices);
+                            ticpp::Element pObjects("objects");
+                            ObjectController::instance()->exportXml(&pObjects);
+                            pConfig.LinkEndChild(&pObjects);
+                            ticpp::Element pRules("rules");
+                            RuleServer::instance()->exportXml(&pRules);
+                            pConfig.LinkEndChild(&pRules);
+                    
+                            doc.LinkEndChild(&pConfig);
+                            doc.SaveFile(filename);
+                        }
+                        catch( ticpp::Exception& ex )
+                        {
+                            // If any function has an error, execution will enter here.
+                            // Report the error
+                            std::cerr << "ERROR writing config to file: " << ex.m_details << std::endl;
+                            throw "Error writing config to file";
+                        }
+                    }
+                    else
+                        throw "Unknown admin element";
+                }
+                sendmessage ("<admin status='success'/>\n", stop);
+            }
             else
                 throw "Unknown element";
         }
