@@ -934,7 +934,8 @@ void SwitchingObject::setValue(ObjectValue* value)
     SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
     if (val == 0)
         std::cout << "SwitchingObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setBoolValue(val->value_m);
+    else
+        setBoolValue(val->value_m);
 }
 
 void SwitchingObject::setValue(const std::string& value)
@@ -982,48 +983,43 @@ void SwitchingObject::setBoolValue(bool value)
     }
 }
 
-DimmingObject::DimmingObject() : direction_m(0), stepcode_m(0)
+StepDirObject::StepDirObject() : direction_m(0), stepcode_m(0)
 {}
 
-DimmingObject::~DimmingObject()
+StepDirObject::~StepDirObject()
 {}
 
-ObjectValue* DimmingObject::createObjectValue(const std::string& value)
-{
-    return new DimmingObjectValue(value);
-}
-
-bool DimmingObject::equals(ObjectValue* value)
+bool StepDirObject::equals(ObjectValue* value)
 {
     assert(value);
-    DimmingObjectValue* val = dynamic_cast<DimmingObjectValue*>(value);
+    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "DimmingObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        std::cout << "StepDirObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "DimmingObject (id=" << getID() << "): Compare object='"
-    << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='"
-    << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
+    std::cout << "StepDirObject (id=" << getID() << "): Compare object='"
+    << getValue() << "' to value='"
+    << val->toString() << "'" << std::endl;
     return (direction_m == val->direction_m) && (stepcode_m == val->stepcode_m);
 }
 
-int DimmingObject::compare(ObjectValue* value)
+int StepDirObject::compare(ObjectValue* value)
 {
     assert(value);
-    DimmingObjectValue* val = dynamic_cast<DimmingObjectValue*>(value);
+    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "DimmingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        std::cout << "StepDirObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "DimmingObject (id=" << getID() << "): Compare object='"
-    << (direction_m ? "up" : "down") << ":" << stepcode_m << "' to value='"
-    << (val->direction_m ? "up" : "down") << ":" << val->stepcode_m << "'" << std::endl;
+    std::cout << "StepDirObject (id=" << getID() << "): Compare object='"
+    << getValue() << "' to value='"
+    << val->toString() << "'" << std::endl;
 
     if (stepcode_m == 0 && val->stepcode_m == 0)
         return 0;
@@ -1039,29 +1035,17 @@ int DimmingObject::compare(ObjectValue* value)
     return direction_m ? 1 : -1;
 }
 
-void DimmingObject::setValue(ObjectValue* value)
+void StepDirObject::setValue(ObjectValue* value)
 {
     assert(value);
-    DimmingObjectValue* val = dynamic_cast<DimmingObjectValue*>(value);
+    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
-        std::cout << "DimmingObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setDimmerValue(val->direction_m, val->stepcode_m);
+        std::cout << "StepDirObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+    else
+        setStepValue(val->direction_m, val->stepcode_m);
 }
 
-void DimmingObject::setValue(const std::string& value)
-{
-    DimmingObjectValue val(value);
-    setDimmerValue(val.direction_m, val.stepcode_m);
-}
-
-std::string DimmingObject::getValue()
-{
-    if (!init_m)
-        read();
-    return DimmingObjectValue(direction_m, stepcode_m).toString();
-}
-
-void DimmingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int newValue;
     if (len == 2)
@@ -1075,21 +1059,21 @@ void DimmingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
     if (!init_m || stepcode != stepcode_m  || direction != direction_m)
     {
-        std::cout << "New value " << (direction ? "up" : "down") << ":" << stepcode << " for dimming object " << getID() << std::endl;
         stepcode_m = stepcode;
         direction_m = direction;
         init_m = true;
+        std::cout << "New value " << getValue() << " for object " << getID() << std::endl;
         onUpdate();
     }
 }
 
-void DimmingObject::doSend(bool isWrite)
+void StepDirObject::doSend(bool isWrite)
 {
     uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (direction_m ? 8 : 0) | (stepcode_m & 0x07) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
-void DimmingObject::setDimmerValue(int direction, int stepcode)
+void StepDirObject::setStepValue(int direction, int stepcode)
 {
     if (!init_m || stepcode_m != stepcode  || direction_m != direction || (flags_m & Force))
     {
@@ -1102,6 +1086,26 @@ void DimmingObject::setDimmerValue(int direction, int stepcode)
     }
 }
 
+ObjectValue* DimmingObject::createObjectValue(const std::string& value)
+{
+    return new DimmingObjectValue(value);
+}
+
+
+void DimmingObject::setValue(const std::string& value)
+{
+    DimmingObjectValue val(value);
+    setStepValue(val.direction_m, val.stepcode_m);
+}
+
+std::string DimmingObject::getValue()
+{
+    if (!init_m)
+        read();
+    return DimmingObjectValue(direction_m, stepcode_m).toString();
+}
+
+
 ObjectValue* BlindsObject::createObjectValue(const std::string& value)
 {
     return new BlindsObjectValue(value);
@@ -1110,7 +1114,7 @@ ObjectValue* BlindsObject::createObjectValue(const std::string& value)
 void BlindsObject::setValue(const std::string& value)
 {
     BlindsObjectValue val(value);
-    setDimmerValue(val.direction_m, val.stepcode_m);
+    setStepValue(val.direction_m, val.stepcode_m);
 }
 
 std::string BlindsObject::getValue()
@@ -1192,8 +1196,11 @@ void TimeObject::setValue(ObjectValue* value)
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
         std::cout << "TimeObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    val->getTimeValue(&wday, &hour, &min, &sec);
-    setTime(wday, hour, min, sec);
+    else
+    {
+        val->getTimeValue(&wday, &hour, &min, &sec);
+        setTime(wday, hour, min, sec);
+    }
 }
 
 void TimeObject::setValue(const std::string& value)
@@ -1352,8 +1359,11 @@ void DateObject::setValue(ObjectValue* value)
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
         std::cout << "DateObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    val->getDateValue(&day, &month, &year);
-    setDate(day, month, year);
+    else
+    {
+        val->getDateValue(&day, &month, &year);
+        setDate(day, month, year);
+    }
 }
 
 void DateObject::setValue(const std::string& value)
@@ -1499,7 +1509,8 @@ void ValueObject::setValue(ObjectValue* value)
     ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
     if (val == 0)
         std::cout << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setFloatValue(val->value_m);
+    else
+        setFloatValue(val->value_m);
 }
 
 void ValueObject::setValue(const std::string& value)
@@ -1589,7 +1600,8 @@ void ValueObject32::setValue(ObjectValue* value)
     ValueObject32Value* val = dynamic_cast<ValueObject32Value*>(value);
     if (val == 0)
         std::cout << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setFloatValue(val->value_m);
+    else
+        setFloatValue(val->value_m);
 }
 
 void ValueObject32::setValue(const std::string& value)
@@ -1683,7 +1695,8 @@ void UIntObject::setValue(ObjectValue* value)
     UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
         std::cout << "UIntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setIntValue(val->value_m);
+    else
+        setIntValue(val->value_m);
 }
 
 void UIntObject::setIntValue(uint32_t value)
@@ -1932,7 +1945,8 @@ void IntObject::setValue(ObjectValue* value)
     IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
     if (val == 0)
         std::cout << "IntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setIntValue(val->value_m);
+    else
+        setIntValue(val->value_m);
 }
 
 void IntObject::setIntValue(int32_t value)
@@ -2130,7 +2144,8 @@ void StringObject::setValue(ObjectValue* value)
     StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
     if (val == 0)
         std::cout << "StringObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
-    setStringValue(val->value_m);
+    else
+        setStringValue(val->value_m);
 }
 
 void StringObject::setValue(const std::string& value)

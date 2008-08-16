@@ -16,6 +16,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testDimmingObjectUpdate );
     CPPUNIT_TEST( testDimmingExportImport );
     CPPUNIT_TEST( testDimmingPersist );
+    CPPUNIT_TEST( testBlindsObject );
+    CPPUNIT_TEST( testBlindsObjectWrite );
+    CPPUNIT_TEST( testBlindsObjectUpdate );
+    CPPUNIT_TEST( testBlindsExportImport );
+    CPPUNIT_TEST( testBlindsPersist );
     CPPUNIT_TEST( testTimeObject );
     CPPUNIT_TEST( testTimeObjectWrite );
     CPPUNIT_TEST( testTimeObjectUpdate );
@@ -465,6 +470,216 @@ public:
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "down:3");
+        delete res3;
+    }
+    
+    void testBlindsObject()
+    {
+        const std::string close = "close";
+        const std::string open = "open";
+        const std::string stop = "stop";
+        ObjectValue* val;
+        BlindsObject dim;
+        dim.setValue("stop");
+        CPPUNIT_ASSERT(dim.getValue() == "stop");
+        dim.setValue("close");
+        CPPUNIT_ASSERT(dim.getValue() == "close");
+        dim.setValue("open");
+        CPPUNIT_ASSERT(dim.getValue() == "open");
+        dim.setValue("close:2");
+        CPPUNIT_ASSERT(dim.getValue() == "close:2");
+        dim.setValue("open:7");
+        CPPUNIT_ASSERT(dim.getValue() == "open:7");
+        dim.setValue("close:1");
+        CPPUNIT_ASSERT(dim.getValue() == "close");
+        CPPUNIT_ASSERT_THROW(dim.setValue("open:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(dim.setValue("close:8"), ticpp::Exception);
+
+        BlindsObjectValue dimval("close");
+        BlindsObjectValue dimval2("close:3");
+        BlindsObjectValue dimval3("open");
+        BlindsObjectValue dimval4("stop");
+        CPPUNIT_ASSERT(dim.equals(&dimval));
+        CPPUNIT_ASSERT(!dim.equals(&dimval2));
+        CPPUNIT_ASSERT(!dim.equals(&dimval3));
+        CPPUNIT_ASSERT(!dim.equals(&dimval4));
+
+        dim.setValue("close:3");
+
+        CPPUNIT_ASSERT(!dim.equals(&dimval));
+        CPPUNIT_ASSERT(dim.equals(&dimval2));
+        CPPUNIT_ASSERT(!dim.equals(&dimval3));
+        CPPUNIT_ASSERT(!dim.equals(&dimval4));
+
+        dim.setValue("open");
+
+        CPPUNIT_ASSERT(!dim.equals(&dimval));
+        CPPUNIT_ASSERT(!dim.equals(&dimval2));
+        CPPUNIT_ASSERT(dim.equals(&dimval3));
+        CPPUNIT_ASSERT(!dim.equals(&dimval4));
+
+        dim.setValue("stop");
+
+        CPPUNIT_ASSERT(!dim.equals(&dimval));
+        CPPUNIT_ASSERT(!dim.equals(&dimval2));
+        CPPUNIT_ASSERT(!dim.equals(&dimval3));
+        CPPUNIT_ASSERT(dim.equals(&dimval4));
+
+        BlindsObject dim2;
+        dim2.setValue("open:5");
+
+        val = dim.createObjectValue("open:5");
+        CPPUNIT_ASSERT(!dim.equals(val));
+        CPPUNIT_ASSERT(dim2.equals(val));
+        delete val;      
+
+        val = dim.createObjectValue("stop");
+        CPPUNIT_ASSERT(dim.equals(val));
+        CPPUNIT_ASSERT(!dim2.equals(val));
+        delete val;      
+    }
+
+    void testBlindsObjectWrite()
+    {
+        BlindsObject dim;
+        dim.setValue("stop");
+        dim.addChangeListener(this);
+
+        uint8_t buf[3] = {0, 0x8b, 0};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 2, src);        
+        CPPUNIT_ASSERT(dim.getValue() == "close:3");
+        BlindsObjectValue dimval1("close:3");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[1] = 0x80;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 2, src);       
+        CPPUNIT_ASSERT(dim.getValue() == "stop");
+        BlindsObjectValue dimval2("stop");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0x08;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(dim.getValue() == "stop");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0x04;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(dim.getValue() == "open:4");
+        BlindsObjectValue dimval3("open:4");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[1] = 0x8f;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 2, src);       
+        CPPUNIT_ASSERT(dim.getValue() == "close:7");
+        BlindsObjectValue dimval4("close:7");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval4));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[1] = 0x81;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 2, src);       
+        CPPUNIT_ASSERT(dim.getValue() == "open");
+        BlindsObjectValue dimval5("open");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval5));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[1] = 0x89;
+        isOnChangeCalled_m = false;
+        dim.onWrite(buf, 2, src);       
+        CPPUNIT_ASSERT(dim.getValue() == "close");
+        BlindsObjectValue dimval6("close");
+        CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval6));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+    }
+
+    void testBlindsObjectUpdate()
+    {
+        BlindsObject dim;
+        dim.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("open");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("close");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("close:1");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("stop");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("open:7");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        dim.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        dim.setValue("close:3");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testBlindsExportImport()
+    {
+        BlindsObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<BlindsObject*>(res));
+        delete res;
+    }
+    
+    void testBlindsPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_dim");
+        pConfig.SetAttribute("type", "3.008");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("close");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "close");
+        res->setValue("stop");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "stop");
+        res2->setValue("open:3");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "open:3");
         delete res3;
     }
     
