@@ -20,6 +20,7 @@
 #include "ruleserver.h"
 #include "services.h"
 #include "smsgateway.h"
+#include "luacondition.h"
 
 extern "C"
 {
@@ -696,6 +697,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectSourceCondition(cl);
     else if (type == "time-counter")
         return new TimeCounterCondition(cl);
+    else if (type == "lua")
+        return new LuaCondition(cl);
     else
         return 0;
 }
