@@ -21,6 +21,9 @@
 /* Build with libesmtp email support. */
 #undef HAVE_LIBESMTP
 
+/* Build with lua scripting support. */
+#undef HAVE_LUA
+
 /* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
 
@@ -63,6 +66,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define if the tm_gmtoff member is present in struct tm. */
+#undef HAVE_TM_GMTOFF
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -83,6 +89,9 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
+
+/* Define if the __tm_gmtoff member is present in struct tm. */
+#undef HAVE___TM_GMTOFF
 
 /* Defined if libcurl supports AsynchDNS */
 #undef LIBCURL_FEATURE_ASYNCHDNS
