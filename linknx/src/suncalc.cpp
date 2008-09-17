@@ -525,7 +525,7 @@ bool SolarTimeSpec::adjustTime(struct tm * timeinfo)
     LocationInfo* params = Services::instance()->getLocationInfo();
     double lon, lat;
     params->getCoord(&lon, &lat);
-    long tz_offset = timeinfo->tm_gmtoff;
+    long tz_offset = params->getGmtOffset(timeinfo);
     
     double rise, set;
     
@@ -566,3 +566,50 @@ void LocationInfo::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("lat", lat_m);
 }
 
+/* The GMT offset calculation code below has been borrowed from the APR library
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+LocationInfo::LocationInfo() : lon_m(0), lat_m(0)
+{
+#if defined(HAVE_TM_GMTOFF) || defined(HAVE___TM_GMTOFF)
+    gmtOffset_m = 0;
+#else
+    struct timeval now;
+    time_t t1, t2;
+    struct tm t;
+
+    gettimeofday(&now, NULL);
+    t1 = now.tv_sec;
+    t2 = 0;
+
+    t = *gmtime(&t1);
+    t.tm_isdst = 0; /* we know this GMT time isn't daylight-savings */
+    t2 = mktime(&t);
+    gmtOffset_m = (long)difftime(t1, t2);
+#endif
+}
+
+long LocationInfo::getGmtOffset(struct tm* timeinfo)
+{
+#if defined(HAVE_TM_GMTOFF)
+    return timeinfo->tm_gmtoff;
+#elif defined(HAVE___TM_GMTOFF)
+    return timeinfo->__tm_gmtoff;
+#else
+    return gmtOffset_m + (timeinfo->tm_isdst ? 3600 : 0);
+#endif
+}

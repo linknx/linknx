@@ -23,6 +23,24 @@ LIBCURL_CHECK_CONFIG([yes], [7.14.0])
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h stddef.h stdlib.h unistd.h])
 
+AC_CHECK_MEMBER(struct tm.tm_gmtoff,
+    [member_struct_tm_tm_gmtoff=yes],
+    [member_struct_tm_tm_gmtoff=no],
+    [#include <time.h>])
+if test "$member_struct_tm_tm_gmtoff" = yes; then
+    AC_DEFINE(HAVE_TM_GMTOFF,1,
+        [Define if the tm_gmtoff member is present in struct tm.])
+else
+    AC_CHECK_MEMBER(struct tm.__tm_gmtoff,
+        [member_struct_tm___tm_gmtoff=yes],
+        [member_struct_tm___tm_gmtoff=no],
+        [#include <time.h>])
+    if test "$member_struct_tm___tm_gmtoff" = yes; then
+        AC_DEFINE(HAVE___TM_GMTOFF,1,
+            [Define if the __tm_gmtoff member is present in struct tm.])
+    fi
+fi
+
 WITH_MYSQL()
 
 dnl #########################################################################
@@ -52,6 +70,38 @@ if test x"$enable_smtp" != xno ; then
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	LIBS="$ESMTP_LIBS $LIBS"
 	AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+dnl #########################################################################
+dnl Check if using lua
+dnl #########################################################################
+
+AC_ARG_ENABLE([lua],
+	AC_HELP_STRING([--enable-lua], [build with lua scripting support (default=auto)]),
+	,
+	enable_lua=auto)
+ 
+if test x"$enable_lua" != xno ; then
+	AC_CHECK_HEADER([lua.h],
+		enable_lua=yes,
+		if test x"$enable_lua" = xyes ; then
+			AC_MSG_ERROR([Cannot find lua header file.])
+		else
+			enable_lua=no
+		fi
+	)
+fi
+
+AC_MSG_CHECKING(whether to use lua)
+if test x"$enable_lua" != xno ; then
+	LUA_CFLAGS="`pkg-config lua  --cflags`"
+	LUA_LIBS="`pkg-config lua --libs`"
+	CFLAGS="$LUA_CFLAGS $CFLAGS"
+	LIBS="$LUA_LIBS $LIBS"
+	AC_DEFINE([HAVE_LUA], [1], [Build with lua scripting support.])
 	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])

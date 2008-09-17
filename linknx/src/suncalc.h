@@ -73,13 +73,15 @@ protected:
 class LocationInfo
 {
 public:
-    LocationInfo() : lon_m(0), lat_m(0) {};
+    LocationInfo();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
+    long getGmtOffset(struct tm* timeinfo);
     bool isEmpty() { return lon_m==0 && lat_m==0; };
 protected:
     double lon_m, lat_m;
+    long gmtOffset_m;
 };
 
 #endif
