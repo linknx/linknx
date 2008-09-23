@@ -221,7 +221,7 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset)
+void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
 {
     *min = min_m;
     *hour = hour_m;
@@ -289,7 +289,7 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("date", date_m->getID());
 }
 
-void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset)
+void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
 {
     *min = min_m;
     *hour = hour_m;
@@ -430,12 +430,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     
     int min, hour, mday, mon, year, wdays;
     TimeSpec::ExceptionDays exception;
-    min  = timeinfo->tm_min;
-    hour = timeinfo->tm_hour;
-    mday = timeinfo->tm_mday;
-    mon  = timeinfo->tm_mon;
-    year = timeinfo->tm_year;
-    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, timeinfo->tm_gmtoff);
+    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, timeinfo);
     
     if (min != -1)
     {

@@ -69,7 +69,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset);
+    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
     virtual bool adjustTime(struct tm * timeinfo) { return false; };
 protected:
     //		int sec_m;
@@ -92,7 +92,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset);
+    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
 protected:
     TimeObject* time_m;
     DateObject* date_m;

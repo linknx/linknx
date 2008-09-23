@@ -482,17 +482,18 @@ double SolarNoonTimeSpec::computeTime(double rise, double set)
     return (rise+set)/2.0;
 }
 
-void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset)
+void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
 {
     LocationInfo* params = Services::instance()->getLocationInfo();
     double lon, lat;
     params->getCoord(&lon, &lat);
+    long tzOffset = params->getGmtOffset(timeinfo);
     
     double rise, set;
     
     int    rs;
-    std::cout << "sun_rise_set date " << *year+1900<< "-" <<*mon+1 << "-" << *mday<<std::endl;
-    rs   = suncalc::sun_rise_set( *year+1900, *mon+1, *mday, lon, lat, &rise, &set );
+    std::cout << "sun_rise_set date " << timeinfo->tm_year+1900<< "-" << timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday <<std::endl;
+    rs   = suncalc::sun_rise_set( timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday, lon, lat, &rise, &set );
 
     if (rs == 0)
     {
@@ -603,7 +604,7 @@ LocationInfo::LocationInfo() : lon_m(0), lat_m(0)
 #endif
 }
 
-long LocationInfo::getGmtOffset(struct tm* timeinfo)
+long LocationInfo::getGmtOffset(const struct tm* timeinfo)
 {
 #if defined(HAVE_TM_GMTOFF)
     return timeinfo->tm_gmtoff;

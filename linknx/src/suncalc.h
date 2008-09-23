@@ -35,7 +35,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, long tzOffset);
+    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
     virtual bool adjustTime(struct tm * timeinfo);
 protected:
     virtual double computeTime(double rise, double set) = 0;
@@ -77,7 +77,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
-    long getGmtOffset(struct tm* timeinfo);
+    long getGmtOffset(const struct tm* timeinfo);
     bool isEmpty() { return lon_m==0 && lat_m==0; };
 protected:
     double lon_m, lat_m;
