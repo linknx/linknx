@@ -21,6 +21,9 @@
 /* Build with libesmtp email support. */
 #undef HAVE_LIBESMTP
 
+/* libesmtp is compiled with pthread support. */
+#undef HAVE_LIBESMTP_PTHREAD
+
 /* Build with lua scripting support. */
 #undef HAVE_LUA
 

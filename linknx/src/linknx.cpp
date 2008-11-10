@@ -66,6 +66,9 @@ const char *argp_program_version = PACKAGE_STRING
 #endif
 #ifdef HAVE_LIBESMTP
     "\n- E-mail gateway enabled"
+#ifdef HAVE_LIBESMTP_PTHREAD
+    " (with pthread support)"
+#endif
 #endif
 #ifdef HAVE_MYSQL
     "\n- MySQL support enabled"

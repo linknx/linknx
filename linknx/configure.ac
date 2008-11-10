@@ -67,6 +67,10 @@ AC_MSG_CHECKING(whether to use libesmtp)
 if test x"$enable_smtp" != xno ; then
 	ESMTP_CFLAGS="`libesmtp-config --cflags`"
 	ESMTP_LIBS="`libesmtp-config --libs`"
+	if test x"`libesmtp-config --libs | grep pthread`" != x ; then
+		AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
+		AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
+	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	LIBS="$ESMTP_LIBS $LIBS"
 	AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])

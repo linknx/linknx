@@ -8603,6 +8603,15 @@ echo $ECHO_N "checking whether to use libesmtp... $ECHO_C" >&6; }
 if test x"$enable_smtp" != xno ; then
 	ESMTP_CFLAGS="`libesmtp-config --cflags`"
 	ESMTP_LIBS="`libesmtp-config --libs`"
+	if test x"`libesmtp-config --libs | grep pthread`" != x ; then
+		{ echo "$as_me:$LINENO: WARNING: libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled" >&5
+echo "$as_me: WARNING: libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled" >&2;}
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBESMTP_PTHREAD 1
+_ACEOF
+
+	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	LIBS="$ESMTP_LIBS $LIBS"
 
