@@ -1,3 +1,8 @@
+Release 0.0.1.26:
+	* Fix sunrise/sunset compilation issues on platforms without tm_gmtoff
+	* Add warning message if libesmtp is compiled with pthread support
+	* Fix bug in blinds object
+
 Release 0.0.1.25:
 
 2008-07-30  J-F Meessen
