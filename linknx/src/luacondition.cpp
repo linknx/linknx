@@ -26,7 +26,7 @@ extern "C"
 #include "lauxlib.h"
 }
 
-LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), condition_m(0)
+LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl) //, condition_m(0)
 {
     lua_State *l;
     l = lua_open();
@@ -46,8 +46,8 @@ LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), condition_m(0)
 
 LuaCondition::~LuaCondition()
 {
-    if (condition_m)
-        delete condition_m;
+//    if (condition_m)
+//        delete condition_m;
 }
 
 bool LuaCondition::evaluate()
@@ -67,11 +67,13 @@ void LuaCondition::importXml(ticpp::Element* pConfig)
 void LuaCondition::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "lua");
-    if (condition_m)
+    if (code_m.length())
+        pConfig->SetText(code_m);
+/*    if (condition_m)
     {
         ticpp::Element pElem("condition");
         condition_m->exportXml(&pElem);
         pConfig->LinkEndChild(&pElem);
-    }
+    }*/
 }
 

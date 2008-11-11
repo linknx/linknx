@@ -36,7 +36,7 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
 private:
-    Condition* condition_m;
+//    Condition* condition_m;
     ChangeListener* cl_m;
     std::string code_m;
 };
