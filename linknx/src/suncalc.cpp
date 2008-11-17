@@ -435,6 +435,8 @@ double GMST0( double d )
 
 }
 
+Logger& SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
+
 void SolarTimeSpec::importXml(ticpp::Element* pConfig)
 {
     TimeSpec::importXml(pConfig);
@@ -492,7 +494,7 @@ void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year,
     double rise, set;
     
     int    rs;
-    std::cout << "sun_rise_set date " << timeinfo->tm_year+1900<< "-" << timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday <<std::endl;
+    logger_m.infoStream() << "sun_rise_set date " << timeinfo->tm_year+1900<< "-" << timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday << endlog;
     rs   = suncalc::sun_rise_set( timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday, lon, lat, &rise, &set );
 
     if (rs == 0)
@@ -506,13 +508,13 @@ void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year,
             *min = 0;
             *hour = 0;
         }
-        std::cout << "sun_rise_set returned " << *hour<< ":" <<*min << std::endl;
+        logger_m.infoStream() << "sun_rise_set returned " << *hour<< ":" <<*min << endlog;
     }
     else
     {
         *min = 0;
         *hour = 0;
-        std::cout << "sun_rise_set returned error." << std::endl;
+        logger_m.errorStream() << "sun_rise_set returned error." << endlog;
     }
     *mday = mday_m;
     *mon = mon_m;
@@ -531,7 +533,7 @@ bool SolarTimeSpec::adjustTime(struct tm * timeinfo)
     double rise, set;
     
     int    rs;
-    std::cout << "adjustTime date " << timeinfo->tm_year+1900<< "-" <<timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday<<std::endl;
+    logger_m.infoStream() << "adjustTime date " << timeinfo->tm_year+1900<< "-" <<timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday << endlog;
     rs   = suncalc::sun_rise_set( timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday, lon, lat, &rise, &set );
 
     if (rs == 0)
@@ -545,11 +547,11 @@ bool SolarTimeSpec::adjustTime(struct tm * timeinfo)
             timeinfo->tm_min = 0;
             timeinfo->tm_hour = 0;
         }
-        std::cout << "adjustTime returned " << timeinfo->tm_hour<< ":" <<timeinfo->tm_min << std::endl;
+        logger_m.infoStream() << "adjustTime returned " << timeinfo->tm_hour<< ":" <<timeinfo->tm_min << endlog;
     }
     else
     {
-        std::cout << "adjustTime returned error." << std::endl;
+        logger_m.errorStream() << "adjustTime returned error." << endlog;
         return false;
     }
     return true;

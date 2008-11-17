@@ -25,6 +25,7 @@
 #include <map>
 #include <stdint.h>
 #include "config.h"
+#include "logger.h"
 #include "ticpp.h"
 #include "knxconnection.h"
 
@@ -94,6 +95,7 @@ protected:
         Default = Comm | Write | Transmit | Update
     };
     int flags_m;
+    static Logger& logger_m;
 private:
     std::string id_m;
     eibaddr_t gad_m;
@@ -134,6 +136,7 @@ public:
     };
 protected:
     bool value_m;
+    static Logger& logger_m;
 };
 
 class StepDirObject : public Object
@@ -156,6 +159,7 @@ public:
 protected:
     int direction_m;
     int stepcode_m;
+    static Logger& logger_m;
 };
 
 class DimmingObject : public StepDirObject
@@ -165,6 +169,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
     virtual std::string getType() { return "3.007"; };
+protected:
+    static Logger& logger_m;
 };
 
 class BlindsObject : public StepDirObject
@@ -174,6 +180,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
     virtual std::string getType() { return "3.008"; };
+protected:
+    static Logger& logger_m;
 };
 
 class TimeObject : public Object
@@ -200,6 +208,7 @@ protected:
     int hour_m;
     int min_m;
     int sec_m;
+    static Logger& logger_m;
 };
 
 class DateObject : public Object
@@ -225,6 +234,7 @@ protected:
     int day_m;
     int month_m;
     int year_m;
+    static Logger& logger_m;
 };
 
 class ValueObject : public Object
@@ -252,6 +262,7 @@ public:
     };
 protected:
     double value_m;
+    static Logger& logger_m;
 };
 
 class ValueObject32 : public ValueObject
@@ -268,6 +279,8 @@ public:
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 
@@ -296,6 +309,7 @@ public:
     };
 protected:
     uint32_t value_m;
+    static Logger& logger_m;
 };
 
 class U8Object : public UIntObject
@@ -310,6 +324,8 @@ public:
     virtual std::string getType() { return "5.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class ScalingObject : public U8Object
@@ -322,6 +338,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
     virtual std::string getType() { return "5.001"; };
+protected:
+    static Logger& logger_m;
 };
 
 class AngleObject : public U8Object
@@ -334,6 +352,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
     virtual std::string getType() { return "5.003"; };
+protected:
+    static Logger& logger_m;
 };
 
 class HeatingModeObject : public U8Object
@@ -343,6 +363,8 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
     virtual std::string getType() { return "20.102"; };
+protected:
+    static Logger& logger_m;
 };
 
 class U16Object : public UIntObject
@@ -357,6 +379,8 @@ public:
     virtual std::string getType() { return "7.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class U32Object : public UIntObject
@@ -371,6 +395,8 @@ public:
     virtual std::string getType() { return "12.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class IntObject : public Object
@@ -398,6 +424,7 @@ public:
     };
 protected:
     int32_t value_m;
+    static Logger& logger_m;
 };
 
 class S8Object : public IntObject
@@ -412,6 +439,8 @@ public:
     virtual std::string getType() { return "6.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class S16Object : public IntObject
@@ -426,6 +455,8 @@ public:
     virtual std::string getType() { return "8.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class S32Object : public IntObject
@@ -440,6 +471,8 @@ public:
     virtual std::string getType() { return "13.xxx"; };
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
 };
 
 class StringObject : public Object
@@ -462,6 +495,7 @@ public:
     virtual void doSend(bool isWrite);
 protected:
     std::string value_m;
+    static Logger& logger_m;
 };
 
 class SwitchingObjectValue : public ObjectValue

@@ -22,6 +22,7 @@
 
 #include <string>
 #include "config.h"
+#include "logger.h"
 #include "ticpp.h"
 
 #ifdef HAVE_LIBESMTP
@@ -69,6 +70,7 @@ private:
     static int authCallback(auth_client_request_t request, char **result, int fields, void *arg);
 #endif
 
+    static Logger& logger_m;
 };
 
 #endif

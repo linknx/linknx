@@ -24,6 +24,7 @@
 #define KNXCONNECTION_H
 
 #include "config.h"
+#include "logger.h"
 #include "threads.h"
 #include <string>
 #include "ticpp.h"
@@ -63,6 +64,7 @@ private:
     TelegramListener *listener_m;
 
     void Run (pth_sem_t * stop);
+    static Logger& logger_m;
 };
 
 #endif

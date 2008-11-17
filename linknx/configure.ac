@@ -80,6 +80,33 @@ else
 fi
 
 dnl #########################################################################
+dnl Check if using log4cpp
+dnl #########################################################################
+AC_PATH_PROG(LOG4CPP_CONFIG,log4cpp-config)
+AC_ARG_WITH(log4cpp,
+    AC_HELP_STRING([--with-log4cpp=PATH], [where log4cpp-config is installed]),
+    [
+    LOG4CPP_CONFIG="${with_log4cpp}"
+    if ! test -f "${LOG4CPP_CONFIG}" ; then
+    	LOG4CPP_CONFIG="${with_log4cpp}/bin/log4cpp-config"
+    fi
+    ])
+if test -f "${LOG4CPP_CONFIG}"; then
+    LDFLAGS="`${LOG4CPP_CONFIG} --libs` $LDFLAGS"
+    CPPFLAGS="`${LOG4CPP_CONFIG} --cflags` $CPPFLAGS"
+	AC_LANG([C++])
+	AC_CHECK_HEADER([log4cpp/CategoryStream.hh],,AC_MSG_ERROR([unable to find log4cpp header files]))
+	AC_TRY_LINK(
+		[#include <log4cpp/Category.hh>
+#include <log4cpp/CategoryStream.hh>],
+		[log4cpp::Category::getInstance("foo").errorStream() << log4cpp::eol],
+		[AC_DEFINE(HAVE_LOG4CPP,1,[Define if log4cpp library is used.])],
+		[AC_MSG_ERROR([unable to link with log4cpp, need version 1.0 or later])])
+else
+    AC_MSG_ERROR([log4cpp-config not found, may need to use --with-log4cpp option])
+fi
+
+dnl #########################################################################
 dnl Check if using lua
 dnl #########################################################################
 

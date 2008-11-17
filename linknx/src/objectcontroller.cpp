@@ -29,6 +29,8 @@ extern "C"
 
 ObjectController* ObjectController::instance_m;
 
+Logger& Object::logger_m(Logger::getInstance("Object"));
+
 Object::Object() : gad_m(0), init_m(false), readPending_m(false), persist_m(false), writeLog_m(false), flags_m(Default)
 {}
 
@@ -199,7 +201,7 @@ void Object::importXml(ticpp::Element* pConfig)
     else if (initValue_m != "" && initValue_m != "request")
         setValue(initValue_m);
 
-    std::cout << "Configured object '" << id_m << "': gad='" << gad_m << "'" << std::endl;
+    logger_m.infoStream() << "Configured object '" << id_m << "': gad='" << gad_m << "'" << endlog;
 }
 
 void Object::exportXml(ticpp::Element* pConfig)
@@ -277,7 +279,7 @@ void Object::onUpdate()
     ListenerList_t::iterator it;
     for (it = listenerList_m.begin(); it != listenerList_m.end(); it++)
     {
-        // std::cout << "Calling onChange on listener for " << id_m << std::endl;
+        logger_m.debugStream() << "Calling onChange on listener for " << id_m << endlog;
         (*it)->onChange(this);
     }
     if (persist_m || writeLog_m)
@@ -320,7 +322,7 @@ void Object::onResponse(const uint8_t* buf, int len, eibaddr_t src)
 
 void Object::addChangeListener(ChangeListener* listener)
 {
-    std::cout << "Adding listener to object '" << id_m << "'" << std::endl;
+    logger_m.debugStream()  << "Adding listener to object '" << id_m << "'" << endlog;
     listenerList_m.push_back(listener);
 }
 void Object::removeChangeListener(ChangeListener* listener)
@@ -874,7 +876,7 @@ StringObjectValue::StringObjectValue(const std::string& value)
         ++it;
     }
     value_m = value;
-    std::cout << "StringObjectValue: Value: '" << value_m << "'" << std::endl;
+//    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
 }
 
 std::string StringObjectValue::toString()
@@ -893,18 +895,20 @@ ObjectValue* SwitchingObject::createObjectValue(const std::string& value)
     return new SwitchingObjectValue(value);
 }
 
+Logger& SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
+
 bool SwitchingObject::equals(ObjectValue* value)
 {
     assert(value);
     SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "SwitchingObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "SwitchingObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "SwitchingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "SwitchingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     return value_m == val->value_m;
 }
 
@@ -914,12 +918,12 @@ int SwitchingObject::compare(ObjectValue* value)
     SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "SwitchingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream()  << "SwitchingObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "SwitchingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "SwitchingObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     if (value_m == val->value_m)
         return 0;
     else if (value_m)
@@ -933,7 +937,7 @@ void SwitchingObject::setValue(ObjectValue* value)
     assert(value);
     SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
     if (val == 0)
-        std::cout << "SwitchingObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "SwitchingObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setBoolValue(val->value_m);
 }
@@ -958,7 +962,7 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = buf[2] != 0;
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for switching object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for switching object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -983,6 +987,8 @@ void SwitchingObject::setBoolValue(bool value)
     }
 }
 
+Logger& StepDirObject::logger_m(Logger::getInstance("StepDirObject"));
+
 StepDirObject::StepDirObject() : direction_m(0), stepcode_m(0)
 {}
 
@@ -995,14 +1001,14 @@ bool StepDirObject::equals(ObjectValue* value)
     StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "StepDirObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "StepDirObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "StepDirObject (id=" << getID() << "): Compare object='"
+    logger_m.infoStream() << "StepDirObject (id=" << getID() << "): Compare object='"
     << getValue() << "' to value='"
-    << val->toString() << "'" << std::endl;
+    << val->toString() << "'" << endlog;
     return (direction_m == val->direction_m) && (stepcode_m == val->stepcode_m);
 }
 
@@ -1012,14 +1018,14 @@ int StepDirObject::compare(ObjectValue* value)
     StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "StepDirObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream()  << "StepDirObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "StepDirObject (id=" << getID() << "): Compare object='"
+    logger_m.infoStream() << "StepDirObject (id=" << getID() << "): Compare object='"
     << getValue() << "' to value='"
-    << val->toString() << "'" << std::endl;
+    << val->toString() << "'" << endlog;
 
     if (stepcode_m == 0 && val->stepcode_m == 0)
         return 0;
@@ -1040,7 +1046,7 @@ void StepDirObject::setValue(ObjectValue* value)
     assert(value);
     StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
     if (val == 0)
-        std::cout << "StepDirObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream()  << "StepDirObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setStepValue(val->direction_m, val->stepcode_m);
 }
@@ -1062,7 +1068,7 @@ void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         stepcode_m = stepcode;
         direction_m = direction;
         init_m = true;
-        std::cout << "New value " << getValue() << " for object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << getValue() << " for object " << getID() << endlog;
         onUpdate();
     }
 }
@@ -1086,6 +1092,8 @@ void StepDirObject::setStepValue(int direction, int stepcode)
     }
 }
 
+Logger& DimmingObject::logger_m(Logger::getInstance("DimmingObject"));
+
 ObjectValue* DimmingObject::createObjectValue(const std::string& value)
 {
     return new DimmingObjectValue(value);
@@ -1106,6 +1114,8 @@ std::string DimmingObject::getValue()
 }
 
 
+Logger& BlindsObject::logger_m(Logger::getInstance("BlindsObject"));
+
 ObjectValue* BlindsObject::createObjectValue(const std::string& value)
 {
     return new BlindsObjectValue(value);
@@ -1123,6 +1133,8 @@ std::string BlindsObject::getValue()
         read();
     return BlindsObjectValue(direction_m, stepcode_m).toString();
 }
+
+Logger& TimeObject::logger_m(Logger::getInstance("TimeObject"));
 
 TimeObject::TimeObject() : wday_m(0), hour_m(0), min_m(0), sec_m(0)
 {}
@@ -1142,12 +1154,12 @@ bool TimeObject::equals(ObjectValue* value)
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "TimeObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "TimeObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    // logger_m.debugStream() << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     val->getTimeValue(&wday, &hour, &min, &sec);
     return (sec_m == sec) && (min_m == min) && (hour_m == hour) && (wday_m == wday);
 }
@@ -1159,12 +1171,12 @@ int TimeObject::compare(ObjectValue* value)
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "TimeObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "TimeObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    //    std::cout << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    // logger_m.debugStream() << "TimeObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     val->getTimeValue(&wday, &hour, &min, &sec);
 
     if (wday_m > wday)
@@ -1195,7 +1207,7 @@ void TimeObject::setValue(ObjectValue* value)
     assert(value);
     TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
     if (val == 0)
-        std::cout << "TimeObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "TimeObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
     {
         val->getTimeValue(&wday, &hour, &min, &sec);
@@ -1222,7 +1234,7 @@ void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
-        std::cout << "Invlalid packet received for TimeObject (too short)" << std::endl;
+        logger_m.errorStream() << "Invalid packet received for TimeObject (too short)" << endlog;
         return;
     }
     int wday, hour, min, sec;
@@ -1233,7 +1245,7 @@ void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     sec = buf[4];
     if (!init_m || wday != wday_m || hour != hour_m || min != min_m || sec != sec_m)
     {
-        std::cout << "New value " << wday << " " << hour << ":" << min << ":" << sec << " for time object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << wday << " " << hour << ":" << min << ":" << sec << " for time object " << getID() << endlog;
         wday_m = wday;
         hour_m = hour;
         min_m = min;
@@ -1267,11 +1279,11 @@ void TimeObject::setTime(int wday, int hour, int min, int sec)
             sec_m != sec ||
             (flags_m & Force))
     {
-        std::cout << "TimeObject: setTime "
+        logger_m.infoStream() << "TimeObject: setTime "
         << wday << " "
         << hour << ":"
         << min << ":"
-        << sec << std::endl;
+        << sec << endlog;
         wday_m = wday;
         hour_m = hour;
         min_m = min;
@@ -1292,6 +1304,8 @@ void TimeObject::getTime(int *wday, int *hour, int *min, int *sec)
     *sec = sec_m;
 }
 
+Logger& DateObject::logger_m(Logger::getInstance("DateObject"));
+
 DateObject::DateObject() : day_m(0), month_m(0), year_m(0)
 {}
 
@@ -1310,12 +1324,12 @@ bool DateObject::equals(ObjectValue* value)
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "DateObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream()  << "DateObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    //    std::cout << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    // logger_m.debugStream() << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     val->getDateValue(&day, &month, &year);
     return (day_m == day) && (month_m == month) && (year_m == year);
 }
@@ -1327,12 +1341,12 @@ int DateObject::compare(ObjectValue* value)
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "DateObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "DateObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    //    std::cout << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    // logger_m.debugStream() << "DateObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     val->getDateValue(&day, &month, &year);
 
     if (year_m > year)
@@ -1358,7 +1372,7 @@ void DateObject::setValue(ObjectValue* value)
     assert(value);
     DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
     if (val == 0)
-        std::cout << "DateObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "DateObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
     {
         val->getDateValue(&day, &month, &year);
@@ -1385,7 +1399,7 @@ void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
-        std::cout << "Invlalid packet received for DateObject (too short)" << std::endl;
+        logger_m.errorStream() << "Invalid packet received for DateObject (too short)" << endlog;
         return;
     }
     int day, month, year;
@@ -1397,7 +1411,7 @@ void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         year += 100;
     if (!init_m || day != day_m || month != month_m || year != year_m)
     {
-        std::cout << "New value " << year+1900 << "-" << month << "-" << day << " for date object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << year+1900 << "-" << month << "-" << day << " for date object " << getID() << endlog;
         day_m = day;
         month_m = month;
         year_m = year;
@@ -1431,10 +1445,10 @@ void DateObject::setDate(int day, int month, int year)
             year_m != year ||
             (flags_m & Force))
     {
-        std::cout << "DateObject: setDate "
+        logger_m.infoStream() << "DateObject: setDate "
         << year + 1900 << "-"
         << month << "-"
-        << day << std::endl;
+        << day << endlog;
         day_m = day;
         month_m = month;
         year_m = year;
@@ -1456,6 +1470,8 @@ void DateObject::getDate(int *day, int *month, int *year)
         *year = 1900;
 }
 
+Logger& ValueObject::logger_m(Logger::getInstance("ValueObject"));
+
 ValueObject::ValueObject() : value_m(0)
 {}
 
@@ -1473,12 +1489,12 @@ bool ValueObject::equals(ObjectValue* value)
     ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "ValueObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "ValueObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "ValueObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "ValueObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     return value_m == val->value_m;
 }
 
@@ -1488,12 +1504,12 @@ int ValueObject::compare(ObjectValue* value)
     ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "ValueObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "ValueObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "ValueObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "ValueObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     
     if (value_m == val->value_m)
         return 0;
@@ -1508,7 +1524,7 @@ void ValueObject::setValue(ObjectValue* value)
     assert(value);
     ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
     if (val == 0)
-        std::cout << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setFloatValue(val->value_m);
 }
@@ -1528,7 +1544,7 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 4)
     {
-        std::cout << "Invlalid packet received for ValueObject (too short)" << std::endl;
+        logger_m.errorStream() << "Invalid packet received for ValueObject (too short)" << endlog;
         return;
     }
     double newValue;
@@ -1540,7 +1556,7 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     newValue = ((double)m * (1 << ex) / 100);
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for value object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for value object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -1589,6 +1605,8 @@ void ValueObject::setFloatValue(double value)
     }
 }
 
+Logger& ValueObject32::logger_m(Logger::getInstance("valueObject32"));
+
 ObjectValue* ValueObject32::createObjectValue(const std::string& value)
 {
     return new ValueObject32Value(value);
@@ -1599,7 +1617,7 @@ void ValueObject32::setValue(ObjectValue* value)
     assert(value);
     ValueObject32Value* val = dynamic_cast<ValueObject32Value*>(value);
     if (val == 0)
-        std::cout << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setFloatValue(val->value_m);
 }
@@ -1619,7 +1637,7 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 6)
     {
-        std::cout << "Invlalid packet received for ValueObject32 (too short)" << std::endl;
+        logger_m.errorStream() << "Invalid packet received for ValueObject32 (too short)" << endlog;
         return;
     }
 
@@ -1627,7 +1645,7 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     double newValue = *reinterpret_cast<const float*>(&tmp);
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for ValueObject32 " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for ValueObject32 " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -1647,6 +1665,8 @@ void ValueObject32::doSend(bool isWrite)
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
 
+Logger& UIntObject::logger_m(Logger::getInstance("UIntObject"));
+
 UIntObject::UIntObject() : value_m(0)
 {}
 
@@ -1659,12 +1679,12 @@ bool UIntObject::equals(ObjectValue* value)
     UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "UIntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "UIntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     return value_m == val->value_m;
 }
 
@@ -1674,12 +1694,12 @@ int UIntObject::compare(ObjectValue* value)
     UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "UIntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "UIntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "UIntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -1694,7 +1714,7 @@ void UIntObject::setValue(ObjectValue* value)
     assert(value);
     UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
     if (val == 0)
-        std::cout << "UIntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "UIntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setIntValue(val->value_m);
 }
@@ -1710,6 +1730,8 @@ void UIntObject::setIntValue(uint32_t value)
         onUpdate();
     }
 }
+
+Logger& U8Object::logger_m(Logger::getInstance("U8Object"));
 
 U8Object::U8Object()
 {}
@@ -1742,7 +1764,7 @@ void U8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = buf[2];
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for U8 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for U8 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -1754,6 +1776,8 @@ void U8Object::doSend(bool isWrite)
     uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
 }
+
+Logger& ScalingObject::logger_m(Logger::getInstance("ScalingObject"));
 
 ScalingObject::ScalingObject()
 {}
@@ -1777,6 +1801,8 @@ std::string ScalingObject::getValue()
     return ScalingObjectValue(getIntValue()).toString();
 }
 
+Logger& AngleObject::logger_m(Logger::getInstance("AngleObject"));
+
 AngleObject::AngleObject()
 {}
 
@@ -1799,6 +1825,8 @@ std::string AngleObject::getValue()
     return AngleObjectValue(getIntValue()).toString();
 }
 
+Logger& HeatingModeObject::logger_m(Logger::getInstance("HeatingModeObject"));
+
 ObjectValue* HeatingModeObject::createObjectValue(const std::string& value)
 {
     return new HeatingModeObjectValue(value);
@@ -1814,6 +1842,8 @@ std::string HeatingModeObject::getValue()
 {
     return HeatingModeObjectValue(getIntValue()).toString();
 }
+
+Logger& U16Object::logger_m(Logger::getInstance("U16Object"));
 
 U16Object::U16Object()
 {}
@@ -1843,7 +1873,7 @@ void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     newValue = (buf[2]<<8) | buf[3];
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for U16 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for U16 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -1855,6 +1885,8 @@ void U16Object::doSend(bool isWrite)
     uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
 }
+
+Logger& U32Object::logger_m(Logger::getInstance("U32Object"));
 
 U32Object::U32Object()
 {}
@@ -1884,7 +1916,7 @@ void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for U32 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for U32 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -1896,6 +1928,8 @@ void U32Object::doSend(bool isWrite)
     uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
+
+Logger& IntObject::logger_m(Logger::getInstance("IntObject"));
 
 IntObject::IntObject() : value_m(0)
 {}
@@ -1909,12 +1943,12 @@ bool IntObject::equals(ObjectValue* value)
     IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "IntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "IntObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     return value_m == val->value_m;
 }
 
@@ -1924,12 +1958,12 @@ int IntObject::compare(ObjectValue* value)
     IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "IntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "IntObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "IntObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -1944,7 +1978,7 @@ void IntObject::setValue(ObjectValue* value)
     assert(value);
     IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
     if (val == 0)
-        std::cout << "IntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "IntObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setIntValue(val->value_m);
 }
@@ -1960,6 +1994,8 @@ void IntObject::setIntValue(int32_t value)
         onUpdate();
     }
 }
+
+Logger& S8Object::logger_m(Logger::getInstance("S8Object"));
 
 S8Object::S8Object()
 {}
@@ -1994,7 +2030,7 @@ void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue -= 256;
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for S8 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for S8 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -2006,6 +2042,8 @@ void S8Object::doSend(bool isWrite)
     uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
 }
+
+Logger& S16Object::logger_m(Logger::getInstance("S16Object"));
 
 S16Object::S16Object()
 {}
@@ -2037,7 +2075,7 @@ void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue -= 65536;
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for S16 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for S16 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -2049,6 +2087,8 @@ void S16Object::doSend(bool isWrite)
     uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
 }
+
+Logger& S32Object::logger_m(Logger::getInstance("S32Object"));
 
 S32Object::S32Object()
 {}
@@ -2078,7 +2118,7 @@ void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
     if (!init_m || newValue != value_m)
     {
-        std::cout << "New value " << newValue << " for S32 object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << newValue << " for S32 object " << getID() << endlog;
         value_m = newValue;
         init_m = true;
         onUpdate();
@@ -2090,6 +2130,8 @@ void S32Object::doSend(bool isWrite)
     uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
+
+Logger& StringObject::logger_m(Logger::getInstance("StringObject"));
 
 StringObject::StringObject()
 {}
@@ -2108,12 +2150,12 @@ bool StringObject::equals(ObjectValue* value)
     StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "StringObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "StringObject: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (!init_m)
         read();
-    std::cout << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     return value_m == val->value_m;
 }
 
@@ -2123,12 +2165,12 @@ int StringObject::compare(ObjectValue* value)
     StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
     if (val == 0)
     {
-        std::cout << "StringObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "StringObject: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return -1;
     }
     if (!init_m)
         read();
-    std::cout << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << std::endl;
+    logger_m.infoStream() << "StringObject (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -2143,7 +2185,7 @@ void StringObject::setValue(ObjectValue* value)
     assert(value);
     StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
     if (val == 0)
-        std::cout << "StringObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << std::endl;
+        logger_m.errorStream() << "StringObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
         setStringValue(val->value_m);
 }
@@ -2163,7 +2205,7 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 2)
     {
-        std::cout << "Invlalid packet received for StringObject (too short)" << std::endl;
+        logger_m.errorStream() << "Invalid packet received for StringObject (too short)" << endlog;
         return;
     }
     std::string value;
@@ -2172,7 +2214,7 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
     if (!init_m || value != value_m)
     {
-        std::cout << "New value " << value << " for string object " << getID() << std::endl;
+        logger_m.infoStream() << "New value " << value << " for string object " << getID() << endlog;
         value_m = value;
         init_m = true;
         onUpdate();
@@ -2181,7 +2223,7 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void StringObject::doSend(bool isWrite)
 {
-    std::cout << "StringObject: Value: " << value_m << std::endl;
+    logger_m.debugStream() << "StringObject: Value: " << value_m << endlog;
     uint8_t buf[16];
     memset(buf,0,sizeof(buf));
     buf[1] = (isWrite ? 0x80 : 0x40);

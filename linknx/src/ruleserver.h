@@ -23,6 +23,7 @@
 #include <list>
 #include <string>
 #include "config.h"
+#include "logger.h"
 #include "objectcontroller.h"
 #include "timermanager.h"
 #include "ticpp.h"
@@ -40,6 +41,8 @@ public:
     virtual void exportXml(ticpp::Element* pConfig) = 0;
 
     typedef std::list<Condition*> ConditionsList_t;
+protected:
+    static Logger& logger_m;
 };
 
 class AndCondition : public Condition
@@ -177,6 +180,7 @@ private:
     virtual void Run (pth_sem_t * stop) = 0;
 protected:
     int delay_m;
+    static Logger& logger_m;
 };
 
 class DimUpAction : public Action
@@ -317,6 +321,8 @@ private:
     ActionsList_t actionsListFalse_m;
     bool prevValue_m;
     bool isActive_m;
+protected:
+    static Logger& logger_m;
 };
 
 class RuleServer

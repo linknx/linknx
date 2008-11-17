@@ -131,6 +131,8 @@ std::string RuleServer::formatDuration(int duration)
     return output.str();
 }
 
+Logger& Rule::logger_m(Logger::getInstance("Rule"));
+
 Rule::Rule() : condition_m(0), prevValue_m(false), isActive_m(false)
 {}
 
@@ -153,7 +155,7 @@ void Rule::importXml(ticpp::Element* pConfig)
     std::string value = pConfig->GetAttribute("active");
     isActive_m = !(value == "off" || value == "false" || value == "no");
 
-    std::cout << "Rule: Configuring " << getID() << " (active=" << isActive_m << ")" << std::endl;
+    logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << isActive_m << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
     condition_m = Condition::create(pCondition, this);
@@ -162,7 +164,7 @@ void Rule::importXml(ticpp::Element* pConfig)
     for ( actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++ )
     {
         bool isFalse = (*actionListIt).GetAttribute("type") == "on-false";
-        std::cout << "ActionList: Configuring " << (isFalse ? "'on-false'" : "" ) << std::endl;
+        logger_m.infoStream() << "ActionList: Configuring " << (isFalse ? "'on-false'" : "" ) << endlog;
         ticpp::Iterator<ticpp::Element> actionIt("action");
         for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
         {
@@ -173,7 +175,7 @@ void Rule::importXml(ticpp::Element* pConfig)
                 actionsList_m.push_back(action);
         }
     }
-    std::cout << "Rule: Configuration done" << std::endl;
+    logger_m.infoStream() << "Rule: Configuration done" << endlog;
 }
 
 void Rule::updateXml(ticpp::Element* pConfig)
@@ -182,14 +184,14 @@ void Rule::updateXml(ticpp::Element* pConfig)
     if (value != "")
         isActive_m = !(value == "off" || value == "false" || value == "no");
 
-    std::cout << "Rule: Reconfiguring " << getID() << " (active=" << isActive_m << ")" << std::endl;
+    logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << isActive_m << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition", false);
     if (pCondition != NULL)
     {
         if (condition_m != 0)
             delete condition_m;
-        std::cout << "Rule: Reconfiguring condition " << getID() << std::endl;
+        logger_m.infoStream() << "Rule: Reconfiguring condition " << getID() << endlog;
         condition_m = Condition::create(pCondition, this);
     }
 
@@ -209,7 +211,7 @@ void Rule::updateXml(ticpp::Element* pConfig)
         for ( actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++ )
         {
             bool isFalse = (*actionListIt).GetAttribute("type") == "on-false";
-            std::cout << "ActionList: Reconfiguring " << (isFalse ? "'on-false'" : "" ) << std::endl;
+            logger_m.infoStream() << "ActionList: Reconfiguring " << (isFalse ? "'on-false'" : "" ) << endlog;
             ticpp::Iterator<ticpp::Element> actionIt("action");
             for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++ )
             {
@@ -221,7 +223,7 @@ void Rule::updateXml(ticpp::Element* pConfig)
             }
         }
     }
-    std::cout << "Rule: Reconfiguration done" << std::endl;
+    logger_m.infoStream() << "Rule: Reconfiguration done" << endlog;
 }
 
 void Rule::exportXml(ticpp::Element* pConfig)
@@ -290,6 +292,8 @@ void Rule::evaluate()
     }
 }
 
+Logger& Action::logger_m(Logger::getInstance("Action"));
+
 Action* Action::create(const std::string& type)
 {
     if (type == "dim-up")
@@ -354,10 +358,10 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("start", &start_m);
     pConfig->GetAttribute("stop", &stop_m);
     duration_m = RuleServer::parseDuration(pConfig->GetAttribute("duration"));
-    std::cout << "DimUpAction: Configured for object " << object_m->getID()
+    logger_m.infoStream() << "DimUpAction: Configured for object " << object_m->getID()
     << " with start=" << start_m
     << "; stop=" << stop_m
-    << "; duration=" << duration_m << std::endl;
+    << "; duration=" << duration_m << endlog;
 }
 
 void DimUpAction::exportXml(ticpp::Element* pConfig)
@@ -376,7 +380,7 @@ void DimUpAction::Run (pth_sem_t * stop)
     pth_sleep(delay_m);
     if (stop_m > start_m)
     {
-        std::cout << "Execute DimUpAction" << std::endl;
+        logger_m.infoStream() << "Execute DimUpAction" << endlog;
 
         unsigned long step = ((duration_m * 1000) / (stop_m - start_m)) * 1000;
         for (int idx=start_m; idx < stop_m; idx++)
@@ -385,14 +389,14 @@ void DimUpAction::Run (pth_sem_t * stop)
             pth_usleep(step);
             if (object_m->getIntValue() < idx)
             {
-                std::cout << "Abort DimUpAction" << std::endl;
+                logger_m.infoStream() << "Abort DimUpAction" << endlog;
                 return;
             }
         }
     }
     else
     {
-        std::cout << "Execute DimUpAction (decrease)" << std::endl;
+        logger_m.infoStream() << "Execute DimUpAction (decrease)" << endlog;
 
         unsigned long step = ((duration_m * 1000) / (start_m - stop_m)) * 1000;
         for (int idx=start_m; idx > stop_m; idx--)
@@ -401,7 +405,7 @@ void DimUpAction::Run (pth_sem_t * stop)
             pth_usleep(step);
             if (object_m->getIntValue() > idx)
             {
-                std::cout << "Abort DimUpAction" << std::endl;
+                logger_m.infoStream() << "Abort DimUpAction" << endlog;
                 return;
             }
         }
@@ -427,7 +431,7 @@ void SetValueAction::importXml(ticpp::Element* pConfig)
     value = pConfig->GetAttribute("value");
 
     value_m = object_m->createObjectValue(value);
-    std::cout << "SetValueAction: Configured for object " << object_m->getID() << " with value " << value_m->toString() << std::endl;
+    logger_m.infoStream() << "SetValueAction: Configured for object " << object_m->getID() << " with value " << value_m->toString() << endlog;
 }
 
 void SetValueAction::exportXml(ticpp::Element* pConfig)
@@ -442,7 +446,7 @@ void SetValueAction::exportXml(ticpp::Element* pConfig)
 void SetValueAction::Run (pth_sem_t * stop)
 {
     pth_sleep(delay_m);
-    std::cout << "Execute SetValueAction with value " << value_m->toString() << std::endl;
+    logger_m.infoStream() << "Execute SetValueAction with value " << value_m->toString() << endlog;
     if (object_m)
         object_m->setValue(value_m);
 }
@@ -467,7 +471,7 @@ void CopyValueAction::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
     }
 
-    std::cout << "CopyValueAction: Configured to copy value from " << from_m->getID() << " to " << to_m->getID() << std::endl;
+    logger_m.infoStream() << "CopyValueAction: Configured to copy value from " << from_m->getID() << " to " << to_m->getID() << endlog;
 }
 
 void CopyValueAction::exportXml(ticpp::Element* pConfig)
@@ -487,12 +491,12 @@ void CopyValueAction::Run (pth_sem_t * stop)
         try
         {
             std::string value = from_m->getValue();
-            std::cout << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << std::endl;
+            logger_m.infoStream() << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << endlog;
             to_m->setValue(value);
         }
         catch( ticpp::Exception& ex )
         {
-            std::cout << "Error in CopyValueAction: " << ex.m_details << std::endl;
+            logger_m.warnStream() << "Error in CopyValueAction: " << ex.m_details << endlog;
         }
     }
 }
@@ -530,10 +534,10 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
         stopCondition_m = Condition::create(pStopCondition, this);
     }
 
-    std::cout << "CycleOnOffAction: Configured for object " << object_m->getID()
+    logger_m.infoStream() << "CycleOnOffAction: Configured for object " << object_m->getID()
     << " with delay_on=" << delayOn_m
     << "; delay_off=" << delayOff_m
-    << "; count=" << count_m << std::endl;
+    << "; count=" << count_m << endlog;
 }
 
 void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
@@ -566,7 +570,7 @@ void CycleOnOffAction::Run (pth_sem_t * stop)
         return;
     running_m = true;
     pth_sleep(delay_m);
-    std::cout << "Execute CycleOnOffAction" << std::endl;
+    logger_m.infoStream() << "Execute CycleOnOffAction" << endlog;
     for (int i=0; i<count_m; i++)
     {
         if (!running_m)
@@ -581,7 +585,7 @@ void CycleOnOffAction::Run (pth_sem_t * stop)
     if (running_m)
         running_m = false;
     else
-        std::cout << "CycleOnOffAction stopped by condition" << std::endl;
+        logger_m.infoStream() << "CycleOnOffAction stopped by condition" << endlog;
 }
 
 SendSmsAction::SendSmsAction()
@@ -595,7 +599,7 @@ void SendSmsAction::importXml(ticpp::Element* pConfig)
     id_m = pConfig->GetAttribute("id");
     value_m = pConfig->GetAttribute("value");
 
-    std::cout << "SendSmsAction: Configured for id " << id_m << " with value " << value_m << std::endl;
+    logger_m.infoStream() << "SendSmsAction: Configured for id " << id_m << " with value " << value_m << endlog;
 }
 
 void SendSmsAction::exportXml(ticpp::Element* pConfig)
@@ -610,7 +614,7 @@ void SendSmsAction::exportXml(ticpp::Element* pConfig)
 void SendSmsAction::Run (pth_sem_t * stop)
 {
     pth_sleep(delay_m);
-    std::cout << "Execute SendSmsAction with value " << value_m << std::endl;
+    logger_m.infoStream() << "Execute SendSmsAction with value " << value_m << endlog;
 
     Services::instance()->getSmsGateway()->sendSms(id_m, value_m);
 }
@@ -627,7 +631,7 @@ void SendEmailAction::importXml(ticpp::Element* pConfig)
     subject_m = pConfig->GetAttribute("subject");
     text_m = pConfig->GetText();
 
-    std::cout << "SendEmailAction: Configured to=" << to_m << " subject=" << subject_m << std::endl;
+    logger_m.infoStream() << "SendEmailAction: Configured to=" << to_m << " subject=" << subject_m << endlog;
 }
 
 void SendEmailAction::exportXml(ticpp::Element* pConfig)
@@ -644,7 +648,7 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
 void SendEmailAction::Run (pth_sem_t * stop)
 {
     pth_sleep(delay_m);
-    std::cout << "Execute SendEmailAction: to=" << to_m << " subject=" << subject_m << std::endl;
+    logger_m.infoStream() << "Execute SendEmailAction: to=" << to_m << " subject=" << subject_m << endlog;
 
     Services::instance()->getEmailGateway()->sendEmail(to_m, subject_m, text_m);
 }
@@ -659,7 +663,7 @@ void ShellCommandAction::importXml(ticpp::Element* pConfig)
 {
     cmd_m = pConfig->GetAttribute("cmd");
 
-    std::cout << "ShellCommandAction: Configured" << std::endl;
+    logger_m.infoStream() << "ShellCommandAction: Configured" << endlog;
 }
 
 void ShellCommandAction::exportXml(ticpp::Element* pConfig)
@@ -673,13 +677,15 @@ void ShellCommandAction::exportXml(ticpp::Element* pConfig)
 void ShellCommandAction::Run (pth_sem_t * stop)
 {
     pth_sleep(delay_m);
-    std::cout << "Execute ShellCommandAction: " << cmd_m << std::endl;
+    logger_m.infoStream() << "Execute ShellCommandAction: " << cmd_m << endlog;
 
     int ret = pth_system(cmd_m.c_str());
     if (ret != 0)
-        std::cout << "Execute ShellCommandAction: returned " << ret << std::endl;
+        logger_m.infoStream() << "Execute ShellCommandAction: returned " << ret << endlog;
 }
 
+
+Logger& Condition::logger_m(Logger::getInstance("Condition"));
 
 Condition* Condition::create(const std::string& type, ChangeListener* cl)
 {
@@ -848,9 +854,9 @@ bool ObjectCondition::evaluate()
         int res = object_m->compare(value_m);
         val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
     }
-    std::cout << "ObjectCondition (id='" << object_m->getID()
+    logger_m.infoStream() << "ObjectCondition (id='" << object_m->getID()
     << "') evaluated as '" << val
-    << "'" << std::endl;
+    << "'" << endlog;
     return val;
 }
 
@@ -873,11 +879,11 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
     if (value != "")
     {
         value_m = object_m->createObjectValue(value);
-        std::cout << "ObjectCondition: configured value_m='" << value_m->toString() << "'" << std::endl;
+        logger_m.infoStream() << "ObjectCondition: configured value_m='" << value_m->toString() << "'" << endlog;
     }
     else
     {
-        std::cout << "ObjectCondition: configured, no value specified" << std::endl;
+        logger_m.infoStream() << "ObjectCondition: configured, no value specified" << endlog;
     }
 
     std::string op;
@@ -935,9 +941,9 @@ ObjectSourceCondition::~ObjectSourceCondition()
 bool ObjectSourceCondition::evaluate()
 {
     bool val = (src_m == object_m->getLastTx()) && ObjectCondition::evaluate();
-    std::cout << "ObjectSourceCondition (id='" << object_m->getID()
+    logger_m.infoStream() << "ObjectSourceCondition (id='" << object_m->getID()
     << "') evaluated as '" << val
-    << "'" << std::endl;
+    << "'" << endlog;
     return val;
 }
 
@@ -967,7 +973,7 @@ TimerCondition::~TimerCondition()
 
 bool TimerCondition::evaluate()
 {
-    std::cout << "TimerCondition evaluated as '" << value_m << "'" << std::endl;
+    Condition::logger_m.infoStream() << "TimerCondition evaluated as '" << value_m << "'" << endlog;
     return value_m;
 }
 
@@ -1074,7 +1080,7 @@ bool TimeCounterCondition::evaluate()
     if (lastVal_m)
     {
         counter_m += now - lastTime_m;
-        std::cout << "TimeCounterCondition: counter is now  '" << counter_m << "'" << std::endl;
+        Condition::logger_m.infoStream() << "TimeCounterCondition: counter is now  '" << counter_m << "'" << endlog;
     }
     if (val)
     {

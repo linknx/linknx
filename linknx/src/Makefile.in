@@ -54,7 +54,7 @@ am_linknx_OBJECTS = linknx.$(OBJEXT) ruleserver.$(OBJEXT) \
 	persistentstorage.$(OBJEXT) xmlserver.$(OBJEXT) \
 	smsgateway.$(OBJEXT) emailgateway.$(OBJEXT) \
 	knxconnection.$(OBJEXT) services.$(OBJEXT) suncalc.$(OBJEXT) \
-	luacondition.$(OBJEXT)
+	luacondition.$(OBJEXT) logger.$(OBJEXT)
 linknx_OBJECTS = $(am_linknx_OBJECTS)
 am__DEPENDENCIES_1 =
 linknx_DEPENDENCIES = ../ticpp/libticpp.a $(am__DEPENDENCIES_1) \
@@ -95,6 +95,7 @@ CPPUNIT_FALSE = @CPPUNIT_FALSE@
 CPPUNIT_LIBS = @CPPUNIT_LIBS@
 CPPUNIT_TRUE = @CPPUNIT_TRUE@
 CXX = @CXX@
+CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
@@ -115,6 +116,7 @@ LIBCURL = @LIBCURL@
 LIBCURL_CPPFLAGS = @LIBCURL_CPPFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LOG4CPP_CONFIG = @LOG4CPP_CONFIG@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 OBJEXT = @OBJEXT@
@@ -175,7 +177,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS)
 linknx_LDADD = ../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LUA_LIBS) -lm
-linknx_SOURCES = linknx.cpp ruleserver.cpp objectcontroller.cpp common.c eibclient.c threads.cpp timermanager.cpp  persistentstorage.cpp xmlserver.cpp smsgateway.cpp emailgateway.cpp knxconnection.cpp services.cpp suncalc.cpp  luacondition.cpp common.h ruleserver.h objectcontroller.h threads.h timermanager.h persistentstorage.h xmlserver.h smsgateway.h emailgateway.h knxconnection.h services.h suncalc.h luacondition.h
+linknx_SOURCES = linknx.cpp ruleserver.cpp objectcontroller.cpp common.c eibclient.c threads.cpp timermanager.cpp  persistentstorage.cpp xmlserver.cpp smsgateway.cpp emailgateway.cpp knxconnection.cpp services.cpp suncalc.cpp  luacondition.cpp logger.cpp common.h ruleserver.h objectcontroller.h threads.h timermanager.h persistentstorage.h xmlserver.h smsgateway.h emailgateway.h knxconnection.h services.h suncalc.h luacondition.h logger.h
 all: all-am
 
 .SUFFIXES:
@@ -247,6 +249,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/emailgateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/knxconnection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linknx.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/luacondition.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/objectcontroller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/persistentstorage.Po@am__quote@

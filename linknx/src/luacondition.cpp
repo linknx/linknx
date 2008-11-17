@@ -60,7 +60,7 @@ void LuaCondition::importXml(ticpp::Element* pConfig)
 {
     code_m = pConfig->GetText();
 
-    std::cout << "LuaCondition: Configured code=" << code_m << std::endl;
+    infoStream("LuaCondition") << "LuaCondition: Configured code=" << code_m << endlog;
 //    condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);
 }
 

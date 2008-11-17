@@ -24,6 +24,7 @@
 #include <string>
 #include <map>
 #include "config.h"
+#include "logger.h"
 #include "threads.h"
 #include "ticpp.h"
 #include "objectcontroller.h"
@@ -122,6 +123,7 @@ protected:
     bool value_m;
 
     time_t findNext(time_t start, TimeSpec* next);
+    static Logger& logger_m;
 };
 
 class FixedTimeTask : public TimerTask
@@ -136,6 +138,7 @@ public:
 
 protected:
     time_t execTime_m;
+    static Logger& logger_m;
 };
 
 class TimerManager : protected Thread
@@ -164,6 +167,7 @@ private:
 
     typedef std::list<TimerTask*> TaskList_t;
     TaskList_t taskList_m;
+    static Logger& logger_m;
 };
 
 class DaySpec

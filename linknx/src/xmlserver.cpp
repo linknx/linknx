@@ -80,7 +80,7 @@ XmlInetServer::XmlInetServer (int port)
     int reuse = 1;
 
     port_m = port;
-    std::cout << "XmlInetServer " << port_m << std::endl;
+    infoStream("XmlInetServer") << "Starting on port " << port_m << endlog;
 
     memset (&addr, 0, sizeof (addr));
     addr.sin_family = AF_INET;
@@ -115,7 +115,7 @@ XmlUnixServer::XmlUnixServer (const char *path)
     strncpy (addr.sun_path, path, sizeof (addr.sun_path));
 
     path_m = path;
-    std::cout << "XmlUnixServer " << path_m << std::endl;
+    infoStream("XmlUnixServer") << "Starting on socket " << path_m << endlog;
 
     fd_m = socket (AF_LOCAL, SOCK_STREAM, 0);
     if (fd_m == -1)
@@ -179,7 +179,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
         {
             // Load a document
             ticpp::Document doc;
-            //        std::cout << "PROCESSING MESSAGE:" << std::endl << msg_m << std::endl << "END OF MESSAGE" << std::endl;
+            debugStream("ClientConnection") << "PROCESSING MESSAGE:" << endlog << msg_m << endlog << "END OF MESSAGE" << endlog;
             doc.LoadFromString(msg_m);
 
             ticpp::Element* pMsg = doc.FirstChildElement();
@@ -193,7 +193,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     Object* obj = ObjectController::instance()->getObject(id);
                     std::stringstream msg;
                     msg << "<read status='success'>" << obj->getValue() << "</read>" << std::endl;
-                    //            std::cout << "SENDING MESSAGE:" << std::endl << msg.str() << std::endl << "END OF MESSAGE" << std::endl;
+                    debugStream("ClientConnection") << "SENDING MESSAGE:" << endlog << msg.str() << endlog << "END OF MESSAGE" << endlog;
                     sendmessage (msg.str(), stop);
                 }
                 else if (pRead->Value() == "objects")
@@ -324,7 +324,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                         {
                             // If any function has an error, execution will enter here.
                             // Report the error
-                            std::cerr << "ERROR writing config to file: " << ex.m_details << std::endl;
+                            errorStream("ClientConnection") << "Unable to write config to file: " << ex.m_details << endlog;
                             throw "Error writing config to file";
                         }
                     }

@@ -23,6 +23,8 @@
 #include <curl/curl.h>
 #endif
 
+Logger& SmsGateway::logger_m(Logger::getInstance("SmsGateway"));
+
 SmsGateway::SmsGateway() : type_m(Unknown)
 {}
 
@@ -91,17 +93,16 @@ void SmsGateway::sendSms(std::string &id, std::string &value)
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             res = curl_easy_perform(curl);
 
-            std::cout << "curl_easy_perform returned: " << res ;
+            logger_m.infoStream() << "curl_easy_perform returned: " << res << endlog;
             if (res != 0)
-                std::cout << "; msg=" << curl_easy_strerror(res);
-            std::cout << std::endl;
+                logger_m.infoStream() << "msg=" << curl_easy_strerror(res) << endlog;
 
             curl_easy_cleanup(curl);
         }
         else
-            std::cout << "Unable to execute SendSmsAction. Curl not available" << std::endl;
+            logger_m.errorStream() << "Unable to execute SendSmsAction. Curl not available" << endlog;
 #endif
     }
     else
-        std::cout << "SmsGateway: Unable to send SMS, gateway not set." << std::endl;
+        logger_m.errorStream() << "Unable to send SMS, gateway not set." << endlog;
 }

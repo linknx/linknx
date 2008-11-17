@@ -48,7 +48,7 @@ void Services::start()
 
 void Services::stop()
 {
-    std::cout << "Services: stopping services" << std::endl;
+    infoStream("Services") << "Stopping services" << endlog;
     timers_m.stopManager();
     knxConnection_m.stopConnection();
 }

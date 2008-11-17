@@ -28,6 +28,8 @@ extern "C"
 #include "common.h"
 }
 
+Logger& KnxConnection::logger_m(Logger::getInstance("KnxConnection"));
+
 KnxConnection::KnxConnection() : con_m(0), listener_m(0), stop_m(0), isRunning_m(false)
 {}
 
@@ -71,9 +73,11 @@ void KnxConnection::write(eibaddr_t gad, uint8_t* buf, int len)
 {
     if(gad == 0)
         return;
-    printf ("ObjectController::write(gad=%d, buf, len=%d):", gad, len);
-    printHex (len, buf);
-    printf ("\n");
+    logger_m.infoStream() << "write(gad=" << gad << ", buf, len=" << len << "):"
+        << buf << endlog;
+//    printf ("ObjectController::write(gad=%d, buf, len=%d):", gad, len);
+//    printHex (len, buf);
+//    printf ("\n");
     if (con_m)
     {
         len = EIBSendGroup (con_m, gad, len, buf);
@@ -97,7 +101,7 @@ void KnxConnection::Run (pth_sem_t * stop1)
             EIBSetEvent (con_m, stop_m);
             if (EIBOpen_GroupSocket (con_m, 0) != -1)
             {
-                std::cout << "KnxConnection: Group socket opened. Waiting for messages." << std::endl;
+                logger_m.infoStream() << "KnxConnection: Group socket opened. Waiting for messages." << endlog;
                 int retval;
                 while ((retval = checkInput()) > 0)
                 {
@@ -112,14 +116,14 @@ void KnxConnection::Run (pth_sem_t * stop1)
                     retry = false;
             }
             else
-                std::cout << "KnxConnection: Failed to open group socket." << std::endl;
+                logger_m.errorStream() << "Failed to open group socket." << endlog;
 
             if (con_m)
                 EIBClose(con_m);
             con_m = 0;
         }
         else
-            std::cout << "KnxConnection: Failed to open knxConnection url." << std::endl;
+            logger_m.errorStream() << "Failed to open knxConnection url." << endlog;
         if (retry)
         {
             struct timeval tv;
@@ -130,7 +134,7 @@ void KnxConnection::Run (pth_sem_t * stop1)
                 retry = false;
         }
     }
-    std::cout << "Out of KnxConnection loop." << std::endl;
+    logger_m.infoStream() << "Out of KnxConnection loop." << endlog;
     pth_event_free (stop_m, PTH_FREE_THIS);
     stop_m = 0;
 }
@@ -152,13 +156,14 @@ int KnxConnection::checkInput()
         die ("Invalid Packet");
     if (buf[0] & 0x3 || (buf[1] & 0xC0) == 0xC0)
     {
-        printf ("Unknown APDU from ");
+        logger_m.warnStream() << "Unknown APDU from "<< src << " to " << dest << endlog;
+/*        printf ("Unknown APDU from ");
         printIndividual (src);
         printf (" to ");
         printGroup (dest);
         printf (": ");
         printHex (len, buf);
-        printf ("\n");
+        printf ("\n");*/
     }
     else
     {

@@ -52,6 +52,8 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
     }
 }
 
+Logger& FilePersistentStorage::logger_m(Logger::getInstance("FilePersistentStorage"));
+
 FilePersistentStorage::FilePersistentStorage(std::string &path, std::string &logPath) : path_m(path), logPath_m(logPath)
 {
     int  len = path_m.size();
@@ -86,7 +88,7 @@ void FilePersistentStorage::exportXml(ticpp::Element* pConfig)
 
 void FilePersistentStorage::write(const std::string& id, const std::string& value)
 {
-    std::cout << "PersistentStorage: writing '" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "Writing '" << value << "' for object '" << id << "'" << endlog;
     std::string filename = path_m+id;
     std::ofstream fp_out(filename.c_str(), std::ios::out);
     fp_out << value;
@@ -102,13 +104,13 @@ std::string FilePersistentStorage::read(const std::string& id, const std::string
     if (fp_in.fail())
         value = defval;
     fp_in.close();
-    std::cout << "PersistentStorage: reading '" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "Reading '" << value << "' for object '" << id << "'" << endlog;
     return value;
 }
 
 void FilePersistentStorage::writelog(const std::string& id, const std::string& value)
 {
-    std::cout << "PersistentStorage: writing log'" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "Writing log'" << value << "' for object '" << id << "'" << endlog;
     std::string filename = logPath_m+id+".log";
     std::ofstream fp_out(filename.c_str(), std::ios::app);
 
@@ -123,6 +125,8 @@ void FilePersistentStorage::writelog(const std::string& id, const std::string& v
 
 
 #ifdef HAVE_MYSQL
+Logger& MysqlPersistentStorage::logger_m(Logger::getInstance("MysqlPersistentStorage"));
+
 MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
 {
     host_m = pConfig->GetAttribute("host");
@@ -165,7 +169,7 @@ void MysqlPersistentStorage::write(const std::string& id, const std::string& val
 {
     if (table_m == "")
         return;
-    std::cout << "MysqlPersistentStorage: writing '" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "Writing '" << value << "' for object '" << id << "'" << endlog;
 
     std::stringstream sql;
     sql << "UPDATE `" << table_m << "` SET value = '" << value << "' WHERE object = '" << id << "';";
@@ -183,7 +187,7 @@ std::string MysqlPersistentStorage::read(const std::string& id, const std::strin
     std::string value = defval;
     if (table_m == "")
         return value;
-    std::cout << "MysqlPersistentStorage: TODO: reading '" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "TODO: reading '" << value << "' for object '" << id << "'" << endlog;
     return value;
 }
 
@@ -191,7 +195,7 @@ void MysqlPersistentStorage::writelog(const std::string& id, const std::string& 
 {
     if (logtable_m == "")
         return;
-    std::cout << "MysqlPersistentStorage: writing log'" << value << "' for object '" << id << "'" << std::endl;
+    logger_m.infoStream() << "Writing log'" << value << "' for object '" << id << "'" << endlog;
 
     std::stringstream sql;
     sql << "INSERT INTO `" << logtable_m << "` (ts, object, value) VALUES (NOW(), '" << id << "','" << value << "');";

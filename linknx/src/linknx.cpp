@@ -158,6 +158,7 @@ main (int ac, char *ag[])
         setsid ();
     }
 
+    initLogging();
 
     FILE *pidf;
     if (arg.pidfile)
@@ -194,7 +195,7 @@ main (int ac, char *ag[])
         {
             // If any function has an error, execution will enter here.
             // Report the error
-            std::cout << ex.m_details << std::endl;
+            Logger::getInstance("main").errorStream() << "unable to load config: " << ex.m_details << endlog;
             die ("initialisation failed");
         }
         if (arg.writeconfig && arg.writeconfig[0] == 0)

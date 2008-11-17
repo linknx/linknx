@@ -24,6 +24,9 @@
 /* libesmtp is compiled with pthread support. */
 #undef HAVE_LIBESMTP_PTHREAD
 
+/* Define if log4cpp library is used. */
+#undef HAVE_LOG4CPP
+
 /* Build with lua scripting support. */
 #undef HAVE_LUA
 

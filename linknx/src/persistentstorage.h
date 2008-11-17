@@ -22,6 +22,7 @@
 
 #include <string>
 #include "config.h"
+#include "logger.h"
 #include "ticpp.h"
 
 #ifdef HAVE_MYSQL
@@ -56,6 +57,8 @@ public:
 private:
     std::string path_m;
     std::string logPath_m;
+protected:
+    static Logger& logger_m;
 };
 
 #ifdef HAVE_MYSQL
@@ -79,6 +82,8 @@ private:
     std::string db_m;
     std::string table_m;
     std::string logtable_m;
+protected:
+    static Logger& logger_m;
 };
 #endif // HAVE_MYSQL
 

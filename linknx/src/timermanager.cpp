@@ -23,6 +23,8 @@
 #include <iostream>
 #include <ctime>
 
+Logger& TimerManager::logger_m(Logger::getInstance("TimerManager"));
+
 TimerManager::TimerManager()
 {}
 
@@ -43,11 +45,11 @@ TimerManager::TimerCheck TimerManager::checkTaskList(time_t now)
     
     if (nextExec > now-60)
     {
-        std::cout << "TimerTask execution. " << nextExec << std::endl;
+        logger_m.infoStream() << "TimerTask execution. " << nextExec << endlog;
         first->onTimer(now);
     }
     else
-        std::cout << "TimerTask skipped due to clock skew or heavy load. " << nextExec << std::endl;
+        logger_m.warnStream() << "TimerTask skipped due to clock skew or heavy load. " << nextExec << endlog;
     taskList_m.pop_front();
     first->reschedule(now);
     return Immediate;
@@ -56,7 +58,7 @@ TimerManager::TimerCheck TimerManager::checkTaskList(time_t now)
 void TimerManager::Run (pth_sem_t * stop1)
 {
     pth_event_t stop = pth_event (PTH_EVENT_SEM, stop1);
-    std::cout << "Starting TimerManager loop." << std::endl;
+    logger_m.debugStream() << "Starting TimerManager loop." << endlog;
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 0;
@@ -71,7 +73,7 @@ void TimerManager::Run (pth_sem_t * stop1)
             tv.tv_sec = 10;
         pth_select_ev(0,0,0,0,&tv,stop);
     }
-    std::cout << "Out of TimerManager loop." << std::endl;
+    logger_m.debugStream() << "Out of TimerManager loop." << endlog;
     pth_event_free (stop, PTH_FREE_THIS);
 }
 
@@ -175,13 +177,13 @@ void TimeSpec::importXml(ticpp::Element* pConfig)
     else
         exception_m = DontCare;
 
-    std::cout << "TimeSpec "
+    infoStream("TimeSpec")
     << year_m+1900 << "-"
     << mon_m+1 << "-"
     << mday_m << " "
     << hour_m << ":"
     << min_m << ":0 (wdays="
-    << wdays_m << "; exception=" << exception_m << ")" << std::endl;
+    << wdays_m << "; exception=" << exception_m << ")" << endlog;
 }
 
 void TimeSpec::exportXml(ticpp::Element* pConfig)
@@ -324,6 +326,8 @@ void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *ye
 
 }
 
+Logger& PeriodicTask::logger_m(Logger::getInstance("PeriodicTask"));
+
 PeriodicTask::PeriodicTask(ChangeListener* cl)
         : cl_m(cl), nextExecTime_m(0), value_m(false), during_m(0), after_m(-1), at_m(0), until_m(0)
 {}
@@ -397,18 +401,18 @@ void PeriodicTask::reschedule(time_t now)
     if (nextExecTime_m != 0)
     {
         struct tm * timeinfo = localtime(&nextExecTime_m);
-        std::cout << "PeriodicTask: rescheduled at "
+        logger_m.infoStream() << "Rescheduled at "
         << timeinfo->tm_year + 1900 << "-"
         << timeinfo->tm_mon + 1 << "-"
         << timeinfo->tm_mday << " "
         << timeinfo->tm_hour << ":"
         << timeinfo->tm_min << ":"
         << timeinfo->tm_sec << " ("
-        << nextExecTime_m << ")" << std::endl;
+        << nextExecTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
     }
     else
-        std::cout << "PeriodicTask: not rescheduled" << std::endl;
+        logger_m.infoStream() << "Not rescheduled" << endlog;
 
 }
 
@@ -417,7 +421,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     struct tm * timeinfo;
     if (!next)
     {
-        std::cout << "PeriodicTask: no more schedule available" << std::endl;
+        logger_m.infoStream() << "PeriodicTask: no more schedule available" << endlog;
         return 0;
     }
     timeinfo = localtime(&start);
@@ -499,7 +503,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         {
             if (timeinfo->tm_year > year)
             {
-                std::cout << "PeriodicTask: no more schedule available" << std::endl;
+                logger_m.infoStream() << "No more schedule available" << endlog;
                 return 0;
             }
         }
@@ -513,7 +517,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
             timeinfo->tm_mday++;
             if (timeinfo->tm_mday > 40)
             {
-                std::cout << "PeriodicTask: wrong weekday specification" << std::endl;
+                logger_m.infoStream() << "Wrong weekday specification" << endlog;
                 return 0;
             }
             wd = (wd+1) % 7;
@@ -532,7 +536,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     
     if (nextExecTime < 0)
     {
-        std::cout << "PeriodicTask: no more schedule available" << std::endl;
+        logger_m.infoStream() << "No more schedule available" << endlog;
         return 0;
     }
     if (exception != TimeSpec::DontCare)
@@ -540,7 +544,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         bool isException = Services::instance()->getExceptionDays()->isException(nextExecTime);
         if (isException && exception == TimeSpec::No || !isException && exception == TimeSpec::Yes)
         {
-            std::cout << "PeriodicTask: calling findNext recursively! (" << nextExecTime << ")" << std::endl;
+            logger_m.debugStream() << "Calling findNext recursively! (" << nextExecTime << ")" << endlog;
             return findNext(nextExecTime, next);
         }
     }
@@ -549,6 +553,8 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         nextExecTime = mktime(timeinfo);
     return nextExecTime;
 }
+
+Logger& FixedTimeTask::logger_m(Logger::getInstance("FixedTimeTask"));
 
 FixedTimeTask::FixedTimeTask() : execTime_m(0)
 {}
@@ -565,18 +571,18 @@ void FixedTimeTask::reschedule(time_t now)
     if (execTime_m > now)
     {
         struct tm * timeinfo = localtime(&execTime_m);
-        std::cout << "FixedTimeTask: rescheduled at "
+        logger_m.infoStream() << "Rescheduled at "
         << timeinfo->tm_year + 1900 << "-"
         << timeinfo->tm_mon + 1 << "-"
         << timeinfo->tm_mday << " "
         << timeinfo->tm_hour << ":"
         << timeinfo->tm_min << ":"
         << timeinfo->tm_sec << " ("
-        << execTime_m << ")" << std::endl;
+        << execTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
     }
     else
-        std::cout << "FixedTimeTask: not rescheduled" << std::endl;
+        logger_m.infoStream() << "Not rescheduled" << endlog;
 }
 
 void DaySpec::importXml(ticpp::Element* pConfig)
@@ -589,10 +595,10 @@ void DaySpec::importXml(ticpp::Element* pConfig)
     if (mon_m >= 0)
         mon_m--;
 
-    std::cout << "DaySpec "
+    debugStream("DaySpec")
     << year_m+1900 << "-"
     << mon_m+1 << "-"
-    << mday_m << std::endl;
+    << mday_m << endlog;
 }
 
 void DaySpec::exportXml(ticpp::Element* pConfig)
@@ -611,7 +617,6 @@ ExceptionDays::ExceptionDays()
 
 ExceptionDays::~ExceptionDays()
 {
-    std::cout << "ExceptionDays: DELETE" << std::endl;
     DaysList_t::iterator it;
     for (it = daysList_m.begin(); it != daysList_m.end(); it++)
         delete (*it);
@@ -657,10 +662,10 @@ bool ExceptionDays::isException(time_t time)
                 ((*it)->mon_m == -1 || (*it)->mon_m == timeinfo->tm_mon) &&
                 ((*it)->mday_m == -1 || (*it)->mday_m == timeinfo->tm_mday))
         {
-            std::cout << "ExceptionDays: "
+            infoStream("ExceptionDays")
             << timeinfo->tm_year+1900 << "-"
             << timeinfo->tm_mon+1 << "-"
-            << timeinfo->tm_mday << " is an exception day!" << std::endl;
+            << timeinfo->tm_mday << " is an exception day!" << endlog;
             return true;
         }
     }

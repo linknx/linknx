@@ -22,6 +22,7 @@
 
 #include <string>
 #include "config.h"
+#include "logger.h"
 #include "ticpp.h"
 
 class SmsGateway
@@ -48,6 +49,7 @@ private:
     std::string pass_m;
     std::string data_m;
 
+    static Logger& logger_m;
 };
 
 #endif

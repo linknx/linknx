@@ -23,6 +23,7 @@
 #include <list>
 #include <string>
 #include "config.h"
+#include "logger.h"
 #include "objectcontroller.h"
 #include "ruleserver.h"
 #include "ticpp.h"
@@ -41,6 +42,7 @@ protected:
     virtual double computeTime(double rise, double set) = 0;
 private:
     int offset_m;
+    static Logger& logger_m;
 };
 
 class SunriseTimeSpec : public SolarTimeSpec

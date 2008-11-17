@@ -24,6 +24,8 @@
 #include <signal.h>
 #endif
 
+Logger& EmailGateway::logger_m(Logger::getInstance("EmailGateway"));
+
 EmailGateway::EmailGateway() : type_m(Unknown)
 {}
 
@@ -77,7 +79,7 @@ const char *EmailGateway::callback(void **buf, int *len, void *arg)
 {
     MessageBody* body = static_cast<MessageBody*>(arg);
     const char *tmp = body->getData(len);
-    std::cout << "EmailGateway: callback " << (tmp ? tmp : "") << " len=" << len << std::endl;
+    logger_m.infoStream() << "EmailGateway: callback " << (tmp ? tmp : "") << " len=" << len << endlog;
     return tmp;
 }
 
@@ -207,18 +209,16 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
         if (!smtp_start_session (session))
         {
             char buf[128];
-            std::cout << "EmailGateway: SMTP server problem "
-            << smtp_strerror (smtp_errno (), buf, sizeof buf) << std::endl;
+            logger_m.errorStream() << "EmailGateway: SMTP server problem "
+            << smtp_strerror (smtp_errno (), buf, sizeof buf) << endlog;
         }
         else
         {
             /* Report on the success or otherwise of the mail transfer.
              */
             status = smtp_message_transfer_status (message);
-            std::cout << "EmailGateway: Done " << status->code;
-            if (status->text != NULL)
-                std::cout << " => " << status->text;
-            std::cout << std::endl;
+            logger_m.infoStream() << "EmailGateway: Done " << status->code
+            << " => " << (status->text? status->text : "") << endlog;
         }
 
         /* Free resources consumed by the program.
@@ -229,5 +229,5 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
 #endif
     }
     else
-        std::cout << "EmailGateway: Unable to send Email, gateway not set." << std::endl;
+        logger_m.errorStream() << "EmailGateway: Unable to send Email, gateway not set." << endlog;
 }
