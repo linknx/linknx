@@ -20,6 +20,8 @@
 #ifndef LUACONDITION_H
 #define LUACONDITION_H
 
+#ifdef HAVE_LUA
+
 #include <string>
 #include "config.h"
 #include "ruleserver.h"
@@ -40,5 +42,7 @@ private:
     ChangeListener* cl_m;
     std::string code_m;
 };
+
+#endif // HAVE_LUA
 
 #endif

@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef HAVE_LUA
+
 #include "luacondition.h"
 
 extern "C"
@@ -76,4 +78,6 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
         pConfig->LinkEndChild(&pElem);
     }*/
 }
+
+#endif // HAVE_LUA
 

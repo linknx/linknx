@@ -706,8 +706,10 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectSourceCondition(cl);
     else if (type == "time-counter")
         return new TimeCounterCondition(cl);
+#ifdef HAVE_LUA
     else if (type == "lua")
         return new LuaCondition(cl);
+#endif
     else
         return 0;
 }
