@@ -20,12 +20,12 @@
 #ifndef LUACONDITION_H
 #define LUACONDITION_H
 
-#ifdef HAVE_LUA
-
 #include <string>
 #include "config.h"
 #include "ruleserver.h"
 #include "ticpp.h"
+
+#ifdef HAVE_LUA
 
 class LuaCondition : public Condition
 {
