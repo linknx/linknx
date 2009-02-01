@@ -18,6 +18,7 @@
 */
 
 #include "services.h"
+#include "ioport.h"
 
 Services* Services::instance_m;
 
@@ -31,6 +32,7 @@ Services::~Services()
         delete xmlServer_m;
     if (persistentStorage_m)
         delete persistentStorage_m;
+    IOPortManager::reset();
 }
 
 Services* Services::instance()
@@ -91,6 +93,9 @@ void Services::importXml(ticpp::Element* pConfig)
             delete persistentStorage_m;
         persistentStorage_m = PersistentStorage::create(pPersistence);
     }
+    ticpp::Element* pIOPorts = pConfig->FirstChildElement("ioports", false);
+    if (pIOPorts)
+        IOPortManager::instance()->importXml(pIOPorts);
 }
 
 void Services::exportXml(ticpp::Element* pConfig)
@@ -131,4 +136,8 @@ void Services::exportXml(ticpp::Element* pConfig)
         persistentStorage_m->exportXml(&pPersistence);
         pConfig->LinkEndChild(&pPersistence);
     }
+
+    ticpp::Element pIOPorts("ioports");
+    IOPortManager::instance()->exportXml(&pIOPorts);
+    pConfig->LinkEndChild(&pIOPorts);
 }

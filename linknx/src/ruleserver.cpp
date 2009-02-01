@@ -21,6 +21,7 @@
 #include "services.h"
 #include "smsgateway.h"
 #include "luacondition.h"
+#include "ioport.h"
 
 extern "C"
 {
@@ -310,6 +311,8 @@ Action* Action::create(const std::string& type)
         return new SendEmailAction();
     else if (type == "shell-cmd")
         return new ShellCommandAction();
+    else if (type == "tx")
+        return new TxAction();
     else
         return 0;
 }

@@ -1,4 +1,5 @@
 Release 0.0.1.26:
+	* Added io port for UDP datagram transmission
 	* Improve the logging capabilities
 	* Fix sunrise/sunset compilation issues on platforms without tm_gmtoff
 	* Add warning message if libesmtp is compiled with pthread support
