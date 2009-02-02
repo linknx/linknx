@@ -145,6 +145,7 @@ public:
 
 private:
     std::string host_m;
+    int sockfd_m;
     int port_m;
     struct sockaddr_in addr_m;
     static Logger& logger_m;
@@ -164,6 +165,25 @@ private:
 
     std::string data_m;
     IOPort* port_m;
+};
+
+class RxCondition : public Condition, public IOPortListener
+{
+public:
+    RxCondition(ChangeListener* cl);
+    virtual ~RxCondition();
+
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void onDataReceived(const uint8_t* buf, int len);
+
+private:
+    IOPort* port_m;
+    std::string exp_m;
+    bool value_m;
+    ChangeListener* cl_m;
 };
 
 

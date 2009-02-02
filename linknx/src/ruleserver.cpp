@@ -311,7 +311,7 @@ Action* Action::create(const std::string& type)
         return new SendEmailAction();
     else if (type == "shell-cmd")
         return new ShellCommandAction();
-    else if (type == "tx")
+    else if (type == "ioport-tx")
         return new TxAction();
     else
         return 0;
@@ -706,6 +706,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectSourceCondition(cl);
     else if (type == "time-counter")
         return new TimeCounterCondition(cl);
+    else if (type == "ioport-rx")
+        return new RxCondition(cl);
 #ifdef HAVE_LUA
     else if (type == "lua")
         return new LuaCondition(cl);
