@@ -125,7 +125,8 @@ private:
     IOPort *port_m;
     bool isRunning_m;
     pth_event_t stop_m;
-    IOPortListener *listener_m;
+    typedef std::list<IOPortListener*> ListenerList_t;
+    ListenerList_t listenerList_m;
 
     void Run (pth_sem_t * stop);
     static Logger& logger_m;

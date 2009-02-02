@@ -186,7 +186,7 @@ bool IOPort::removeListener(IOPortListener *l)
         return false;
 }
 
-RxThread::RxThread(IOPort *port) : port_m(port), listener_m(0), stop_m(0), isRunning_m(false)
+RxThread::RxThread(IOPort *port) : port_m(port), stop_m(0), isRunning_m(false)
 {}
 
 RxThread::~RxThread()
@@ -195,17 +195,16 @@ RxThread::~RxThread()
 
 void RxThread::addListener(IOPortListener *listener)
 {
-    if (listener_m)
-        throw ticpp::Exception("KnxPort: TelegramListener already registered");
-    listener_m = listener;
-    Start();
+    if (listenerList_m.empty())
+        Start();
+    listenerList_m.push_back(listener);
 }
 
 bool RxThread::removeListener(IOPortListener *listener)
 {
-    if (listener_m != listener)
-        return false;
-    listener_m = 0;
+    listenerList_m.remove(listener);
+    if (listenerList_m.empty())
+        Stop();
     return true;
 }
 
@@ -218,8 +217,12 @@ void RxThread::Run (pth_sem_t * stop1)
     logger_m.debugStream() << "Start IO Port loop." << endlog;
     while ((retval = port_m->get(buf, sizeof(buf))) > 0)
     {
-        if (listener_m)
-            listener_m->onDataReceived(buf, retval);
+        ListenerList_t::iterator it;
+        for (it = listenerList_m.begin(); it != listenerList_m.end(); it++)
+        {
+            logger_m.debugStream() << "Calling onDataReceived on listener for " << port_m->getID() << endlog;
+            (*it)->onDataReceived(buf, retval);
+        }
     }
     logger_m.debugStream() << "Out of IO Port loop." << endlog;
     pth_event_free (stop_m, PTH_FREE_THIS);
