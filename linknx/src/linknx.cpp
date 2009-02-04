@@ -159,6 +159,7 @@ main (int ac, char *ag[])
     }
 
     initLogging();
+    Logger& logger = Logger::getInstance("main");
 
     FILE *pidf;
     if (arg.pidfile)
@@ -173,6 +174,7 @@ main (int ac, char *ag[])
     Services* services = Services::instance();
     if (arg.configfile)
     {
+        logger.infoStream() << "Loading config file " << arg.configfile << endlog;
         try
         {
             // Load a document
@@ -195,7 +197,7 @@ main (int ac, char *ag[])
         {
             // If any function has an error, execution will enter here.
             // Report the error
-            Logger::getInstance("main").errorStream() << "unable to load config: " << ex.m_details << endlog;
+            logger.errorStream() << "unable to load config: " << ex.m_details << endlog;
             die ("initialisation failed");
         }
         if (arg.writeconfig && arg.writeconfig[0] == 0)
@@ -203,6 +205,7 @@ main (int ac, char *ag[])
     }
     else 
     {
+        logger.debugStream() << "No config file, using default values" << endlog;
         services->createDefault();
     }
     sigset_t t1;
@@ -218,6 +221,8 @@ main (int ac, char *ag[])
     int x;
     pth_sigwait (&t1, &x);
 
+    logger.debugStream() << "Signal received, terminating" << endlog;
+
     signal (SIGINT, SIG_DFL);
     signal (SIGTERM, SIG_DFL);
 
@@ -225,8 +230,11 @@ main (int ac, char *ag[])
         unlink (arg.pidfile);
 
     Services::reset();
+    logger.debugStream() << "Services reset" << endlog;
     RuleServer::reset();
+    logger.debugStream() << "RuleServer reset" << endlog;
     ObjectController::reset();
+    logger.debugStream() << "ObjectController reset" << endlog;
 
     pth_exit (0);
     return 0;
