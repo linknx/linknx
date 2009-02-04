@@ -32,8 +32,9 @@ IOPortManager::IOPortManager()
 IOPortManager::~IOPortManager()
 {
     IOPortMap_t::iterator it;
-    for (it = portMap_m.begin(); it != portMap_m.end(); it++)
+    for (it = portMap_m.begin(); it != portMap_m.end(); it++) {
         delete (*it).second;
+    }
 }
 
 IOPortManager* IOPortManager::instance()
@@ -47,11 +48,7 @@ IOPort* IOPortManager::getPort(const std::string& id)
 {
     IOPortMap_t::iterator it = portMap_m.find(id);
     if (it == portMap_m.end())
-    {
-        std::stringstream msg;
-        msg << "IOPortManager: IO Port ID not found: '" << id << "'" << std::endl;
-        throw ticpp::Exception(msg.str());
-    }
+        return 0;
     return (*it).second;
 }
 
@@ -116,20 +113,6 @@ void IOPortManager::exportXml(ticpp::Element* pConfig)
     }
 }
 
-/*
-void IOPortManager::exportObjectValues(ticpp::Element* pObjects)
-{
-    ObjectIdMap_t::iterator it;
-    for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
-    {
-        ticpp::Element pElem("object");
-        pElem.SetAttribute("id", (*it).second->getID());
-        pElem.SetAttribute("value", (*it).second->getValue());
-        pObjects->LinkEndChild(&pElem);
-    }
-}
-*/
-
 IOPort::IOPort()
 {}
 
@@ -163,7 +146,8 @@ void IOPort::importXml(ticpp::Element* pConfig)
 {
     id_m = pConfig->GetAttribute("id");
     url_m = pConfig->GetAttribute("url");
-    rxThread_m.reset(new RxThread(this));
+    if (isRxEnabled())
+        rxThread_m.reset(new RxThread(this));
 }
 
 void IOPort::exportXml(ticpp::Element* pConfig)
@@ -191,6 +175,7 @@ RxThread::RxThread(IOPort *port) : port_m(port), stop_m(0), isRunning_m(false)
 
 RxThread::~RxThread()
 {
+    Stop();
 }
 
 void RxThread::addListener(IOPortListener *listener)
@@ -215,12 +200,12 @@ void RxThread::Run (pth_sem_t * stop1)
     uint8_t buf[1024];
     int retval;
     logger_m.debugStream() << "Start IO Port loop." << endlog;
-    while ((retval = port_m->get(buf, sizeof(buf))) > 0)
+    while ((retval = port_m->get(buf, sizeof(buf), stop_m)) > 0)
     {
         ListenerList_t::iterator it;
         for (it = listenerList_m.begin(); it != listenerList_m.end(); it++)
         {
-            logger_m.debugStream() << "Calling onDataReceived on listener for " << port_m->getID() << endlog;
+//            logger_m.debugStream() << "Calling onDataReceived on listener for " << port_m->getID() << endlog;
             (*it)->onDataReceived(buf, retval);
         }
     }
@@ -229,13 +214,16 @@ void RxThread::Run (pth_sem_t * stop1)
     stop_m = 0;
 }
 
-UdpIOPort::UdpIOPort() : port_m(0), sockfd_m(-1)
+UdpIOPort::UdpIOPort() : port_m(0), rxport_m(0), sockfd_m(-1)
 {
     memset (&addr_m, 0, sizeof (addr_m));
 }
 
 UdpIOPort::~UdpIOPort()
 {
+    if (sockfd_m >= 0)
+        close(sockfd_m);
+    Logger::getInstance("UdpIOPort").debugStream() << "Deleting UdpIOPort " << endlog;
 }
 
 void UdpIOPort::importXml(ticpp::Element* pConfig)
@@ -246,14 +234,15 @@ void UdpIOPort::importXml(ticpp::Element* pConfig)
     addr_m.sin_port = htons(port_m);
     host_m = pConfig->GetAttribute("host");
     addr_m.sin_addr.s_addr = inet_addr(host_m.c_str());
+    pConfig->GetAttributeOrDefault("rxport", &rxport_m, 0);
     IOPort::importXml(pConfig);
 
     sockfd_m = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd_m >= 0) {
+    if (sockfd_m >= 0 && rxport_m > 0) {
         struct sockaddr_in addr;
         bzero(&addr,sizeof(addr));
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(21001);
+        addr.sin_port = htons(rxport_m);
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
         if (bind(sockfd_m, (struct sockaddr *)&addr,sizeof(addr)) < 0) /* error */
         {
@@ -272,6 +261,8 @@ void UdpIOPort::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("host", host_m);
     pConfig->SetAttribute("port", port_m);
+    if (rxport_m > 0)
+        pConfig->SetAttribute("rxport", rxport_m);
     IOPort::exportXml(pConfig);
 }
 
@@ -292,7 +283,7 @@ void UdpIOPort::send(const uint8_t* buf, int len)
     }
 }
 
-int UdpIOPort::get(uint8_t* buf, int len)
+int UdpIOPort::get(uint8_t* buf, int len, pth_event_t stop)
 {
     logger_m.debugStream() << "get(buf, len=" << len << "):"
         << buf << endlog;
@@ -301,26 +292,20 @@ int UdpIOPort::get(uint8_t* buf, int len)
         sockaddr_in r;
         rl = sizeof (r);
         memset (&r, 0, sizeof (r));
-        size_t i = pth_recvfrom(sockfd_m, buf, len, 0,
-               (struct sockaddr *) &r, &rl);
+        ssize_t i = pth_recvfrom_ev(sockfd_m, buf, len, 0,
+               (struct sockaddr *) &r, &rl, stop);
+//        logger_m.debugStream() << "Out of recvfrom " << i << " rl=" << rl << endlog;
         if (i > 0 && rl == sizeof (r))
         {
             std::string msg(reinterpret_cast<const char*>(buf), i);
             logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
             return i;
         }
-        else {
-            logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
-        }
     }
-    else {
-        logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
-    }    
-
     return -1;
 }
 
-TxAction::TxAction() : port_m(0)
+TxAction::TxAction()
 {}
 
 TxAction::~TxAction()
@@ -328,50 +313,56 @@ TxAction::~TxAction()
 
 void TxAction::importXml(ticpp::Element* pConfig)
 {
-    std::string portId;
-    portId = pConfig->GetAttribute("ioport");
-    port_m = IOPortManager::instance()->getPort(portId);
-
+    port_m = pConfig->GetAttribute("ioport");
     data_m = pConfig->GetAttribute("data");
+    if (!IOPortManager::instance()->getPort(port_m))
+    {
+        std::stringstream msg;
+        msg << "TxAction: IO Port ID not found: '" << port_m << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
 
-    logger_m.infoStream() << "TxAction: Configured to send '" << data_m << "' to ioport " << port_m->getID() << endlog;
+    logger_m.infoStream() << "TxAction: Configured to send '" << data_m << "' to ioport " << port_m << endlog;
 }
 
 void TxAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "ioport-tx");
     pConfig->SetAttribute("data", data_m);
-    if (port_m)
-        pConfig->SetAttribute("ioport", port_m->getID());
+    pConfig->SetAttribute("ioport", port_m);
 
     Action::exportXml(pConfig);
 }
 
 void TxAction::Run (pth_sem_t * stop)
 {
-    if (port_m)
+    pth_sleep(delay_m);
+    try
     {
-        pth_sleep(delay_m);
-        try
+        IOPort* port = IOPortManager::instance()->getPort(port_m);
+        if (!port)
         {
-            port_m->send(reinterpret_cast<const uint8_t*>(data_m.c_str()), data_m.length());
-            logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port_m->getID() << endlog;
+            std::stringstream msg;
+            msg << "IO Port ID not found: '" << port_m << "'" << std::endl;
+            throw ticpp::Exception(msg.str());
         }
-        catch( ticpp::Exception& ex )
-        {
-            logger_m.warnStream() << "Error in TxAction: " << ex.m_details << endlog;
-        }
+        port->send(reinterpret_cast<const uint8_t*>(data_m.c_str()), data_m.length());
+        logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port_m << endlog;
+    }
+    catch( ticpp::Exception& ex )
+    {
+       logger_m.warnStream() << "Error in TxAction: " << ex.m_details << endlog;
     }
 }
 
-RxCondition::RxCondition(ChangeListener* cl) : cl_m(cl), port_m(0), value_m(false)
+RxCondition::RxCondition(ChangeListener* cl) : cl_m(cl), value_m(false)
 {}
 
 RxCondition::~RxCondition()
 {
-    if (port_m)
-        port_m->removeListener(this);
-    port_m = 0;
+    IOPort* port = IOPortManager::instance()->getPort(port_m);
+    if (port)
+        port->removeListener(this);
 }
 
 bool RxCondition::evaluate()
@@ -381,20 +372,24 @@ bool RxCondition::evaluate()
 
 void RxCondition::importXml(ticpp::Element* pConfig)
 {
-    std::string portId;
-    portId = pConfig->GetAttribute("ioport");
-    port_m = IOPortManager::instance()->getPort(portId);
+    port_m = pConfig->GetAttribute("ioport");
     exp_m = pConfig->GetAttribute("expected");
-    if (port_m)
-        port_m->addListener(this);
+    IOPort* port = IOPortManager::instance()->getPort(port_m);
+    if (!port)
+    {
+        std::stringstream msg;
+        msg << "RxCondition: IO Port ID not found: '" << port_m << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    port->addListener(this);
+    logger_m.infoStream() << "RxCondition: configured to watch for '" << exp_m << "' on ioport " << port_m << endlog;
 }
 
 void RxCondition::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "ioport-rx");
-    if (port_m)
-        pConfig->SetAttribute("ioport", port_m->getID());
     pConfig->SetAttribute("expected", exp_m);
+    pConfig->SetAttribute("ioport", port_m);
 }
 
 void RxCondition::onDataReceived(const uint8_t* buf, int len)
@@ -402,7 +397,7 @@ void RxCondition::onDataReceived(const uint8_t* buf, int len)
     if (len > exp_m.length())
         len = exp_m.length();
     std::string rx(reinterpret_cast<const char*>(buf), len); 
-    logger_m.infoStream() << "RxCondition: Received data: '" << rx << "' "<< rx.length()<< " <> "<< exp_m.length() << " on ioport " << port_m->getID() << endlog;
+    logger_m.debugStream() << "RxCondition: Received data: '" << rx << "' "<< rx.length()<< " <> "<< exp_m.length() << " on ioport " << port_m << endlog;
     if (cl_m && exp_m == rx)
     {
         value_m = true;

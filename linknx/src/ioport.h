@@ -96,8 +96,9 @@ public:
 
     void addListener(IOPortListener *l); // { if (rxThread_m) rxThread_m->addListener(l); };
     bool removeListener(IOPortListener *l); // { if (rxThread_m) return (rxThread_m->removeListener(l)) else return false; };
+    virtual bool isRxEnabled() = 0;
     virtual void send(const uint8_t* buf, int len) = 0;
-    virtual int get(uint8_t* buf, int len) = 0;
+    virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
 
 private:
     std::auto_ptr<RxThread> rxThread_m;
@@ -142,12 +143,14 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     void send(const uint8_t* buf, int len);
-    int get(uint8_t* buf, int len);
+    int get(uint8_t* buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled() { return rxport_m > 0; };
 
 private:
     std::string host_m;
     int sockfd_m;
     int port_m;
+    int rxport_m;
     struct sockaddr_in addr_m;
     static Logger& logger_m;
 };
@@ -165,7 +168,7 @@ private:
     virtual void Run (pth_sem_t * stop);
 
     std::string data_m;
-    IOPort* port_m;
+    std::string port_m;
 };
 
 class RxCondition : public Condition, public IOPortListener
@@ -181,7 +184,7 @@ public:
     virtual void onDataReceived(const uint8_t* buf, int len);
 
 private:
-    IOPort* port_m;
+    std::string port_m;
     std::string exp_m;
     bool value_m;
     ChangeListener* cl_m;
