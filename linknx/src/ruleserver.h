@@ -175,7 +175,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig) = 0;
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void execute() { Start(); };
+    virtual void execute() { Start(true); };
 private:
     virtual void Run (pth_sem_t * stop) = 0;
 protected:

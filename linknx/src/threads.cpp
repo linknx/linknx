@@ -32,6 +32,7 @@ Thread::ThreadWrapper (void *arg)
 Thread::Thread (int Priority, Runable * o, THREADENTRY t)
 {
     autodel = false;
+    joinable = true;
     obj = o;
     entry = t;
     pth_sem_init (&should_stop);
@@ -51,7 +52,7 @@ Thread::Stop ()
         return;
     pth_sem_inc (&should_stop, TRUE);
 
-    if (pth_join (tid, 0))
+    if (!joinable || pth_join (tid, 0))
         tid = 0;
 }
 
@@ -68,7 +69,7 @@ Thread::StopDelete ()
 }
 
 void
-Thread::Start ()
+Thread::Start (bool detach)
 {
     if (tid)
     {
@@ -83,6 +84,9 @@ Thread::Start ()
     pth_sem_init (&should_stop);
     pth_attr_t attr = pth_attr_new ();
     pth_attr_set (attr, PTH_ATTR_PRIO, prio);
+    joinable = !detach;
+    if (detach)
+        pth_attr_set (attr, PTH_ATTR_JOINABLE, FALSE);
     tid = pth_spawn (attr, &ThreadWrapper, this);
     pth_attr_destroy (attr);
 }

@@ -38,6 +38,8 @@ class Thread
 {
     /** delete at stop */
     bool autodel;
+    /** is thread joinable */
+    bool joinable;
     /** C entry point for the threads */
     static void *ThreadWrapper (void *arg);
     /** thread id */
@@ -66,7 +68,7 @@ public:
     virtual ~ Thread ();
 
     /** starts the thread*/
-    void Start ();
+    void Start (bool detach = false);
     /** stops the thread, if it is running */
     void Stop ();
     /** stops the thread and delete it asynchronous */
