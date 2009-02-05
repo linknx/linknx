@@ -27,6 +27,8 @@
 
 #ifdef HAVE_LUA
 
+struct lua_State;
+
 class LuaCondition : public Condition
 {
 public:
@@ -36,11 +38,13 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    static int obj(lua_State *L);
 
 private:
 //    Condition* condition_m;
     ChangeListener* cl_m;
     std::string code_m;
+    lua_State *l_m;
 };
 
 #endif // HAVE_LUA

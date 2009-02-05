@@ -28,34 +28,27 @@ extern "C"
 #include "lauxlib.h"
 }
 
-LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl) //, condition_m(0)
+LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0) //, condition_m(0)
 {
-    lua_State *l;
-    l = lua_open();
-//    lua_baselibopen(l);
-//    luaopen_table(l);
-//    luaopen_io(l);
-//    luaopen_string(l);
-//    luaopen_math(l);
-    luaL_openlibs(l);  
-    //run a Lua scrip here  
-    luaL_dofile(l,"foo.lua");  
-    
-    lua_close(l);
-    printf("\nBack to C again\n\n");
-
+    l_m = luaL_newstate();  
+    luaL_openlibs(l_m);
+    lua_register(l_m, "obj", LuaCondition::obj);  
 }
 
 LuaCondition::~LuaCondition()
 {
 //    if (condition_m)
 //        delete condition_m;
+    lua_close(l_m);
 }
 
 bool LuaCondition::evaluate()
 {
-    
-    return true;
+    luaL_dostring(l_m, code_m.c_str());  
+    int ret = lua_toboolean(l_m, -1);  
+    logger_m.infoStream() << "LuaCondition evaluated as " << (ret? "true":"false") << endlog;
+    lua_settop(l_m, 0);      
+    return ret;
 }
 
 void LuaCondition::importXml(ticpp::Element* pConfig)
@@ -77,6 +70,28 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
         condition_m->exportXml(&pElem);
         pConfig->LinkEndChild(&pElem);
     }*/
+}
+
+int LuaCondition::obj(lua_State *L)
+{
+    if (lua_gettop(L) != 1 || !lua_isstring(L, 1))
+    {
+        lua_pushstring(L, "Incorrect argument to 'obj'");
+        lua_error(L);
+    }
+    std::string id(lua_tostring(L, 1));
+    debugStream("LuaCondition") << "Getting object with id=" << id << endlog;
+    Object* object = ObjectController::instance()->getObject(id);
+    if (!object) 
+    {
+        lua_pushstring(L, "Object id not found");
+        lua_error(L);
+    }
+    std::string ret = object->getValue();
+    debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
+    lua_pushstring(L, ret.c_str());
+
+    return 1;
 }
 
 #endif // HAVE_LUA
