@@ -397,9 +397,9 @@ void RxCondition::onDataReceived(const uint8_t* buf, int len)
     if (len > exp_m.length())
         len = exp_m.length();
     std::string rx(reinterpret_cast<const char*>(buf), len); 
-    logger_m.debugStream() << "RxCondition: Received data: '" << rx << "' "<< rx.length()<< " <> "<< exp_m.length() << " on ioport " << port_m << endlog;
     if (cl_m && exp_m == rx)
     {
+        logger_m.debugStream() << "RxCondition: expected message received: '" << exp_m << "'" << endlog;
         value_m = true;
         cl_m->onChange(0);
         value_m = false;
