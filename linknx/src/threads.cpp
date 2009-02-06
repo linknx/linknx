@@ -71,7 +71,7 @@ Thread::StopDelete ()
 void
 Thread::Start (bool detach)
 {
-    if (tid)
+    if (joinable && tid)
     {
         pth_attr_t a = pth_attr_of (tid);
         int state;
