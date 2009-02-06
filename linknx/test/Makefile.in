@@ -59,11 +59,12 @@ am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
 	testmain-emailgateway.$(OBJEXT) \
 	testmain-knxconnection.$(OBJEXT) testmain-services.$(OBJEXT) \
 	testmain-suncalc.$(OBJEXT) testmain-luacondition.$(OBJEXT) \
-	testmain-logger.$(OBJEXT)
+	testmain-ioport.$(OBJEXT) testmain-logger.$(OBJEXT)
 testmain_OBJECTS = $(am_testmain_OBJECTS)
 am__DEPENDENCIES_1 =
 testmain_DEPENDENCIES = ../ticpp/libticpp.a $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -186,11 +187,11 @@ target_alias = @target_alias@
 
 # Rules for the test code (use `make check` to execute)
 TESTS = testmain
-testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/logger.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/logger.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
-testmain_LDADD = ../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL)
+testmain_LDADD = ../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LUA_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -246,6 +247,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimeSpecTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimerManagerTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-emailgateway.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ioport.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-knxconnection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-logger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-luacondition.Po@am__quote@
@@ -581,6 +583,20 @@ testmain-luacondition.obj: ../src/luacondition.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/luacondition.cpp' object='testmain-luacondition.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-luacondition.obj `if test -f '../src/luacondition.cpp'; then $(CYGPATH_W) '../src/luacondition.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/luacondition.cpp'; fi`
+
+testmain-ioport.o: ../src/ioport.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-ioport.o -MD -MP -MF "$(DEPDIR)/testmain-ioport.Tpo" -c -o testmain-ioport.o `test -f '../src/ioport.cpp' || echo '$(srcdir)/'`../src/ioport.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-ioport.Tpo" "$(DEPDIR)/testmain-ioport.Po"; else rm -f "$(DEPDIR)/testmain-ioport.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ioport.cpp' object='testmain-ioport.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-ioport.o `test -f '../src/ioport.cpp' || echo '$(srcdir)/'`../src/ioport.cpp
+
+testmain-ioport.obj: ../src/ioport.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-ioport.obj -MD -MP -MF "$(DEPDIR)/testmain-ioport.Tpo" -c -o testmain-ioport.obj `if test -f '../src/ioport.cpp'; then $(CYGPATH_W) '../src/ioport.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ioport.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-ioport.Tpo" "$(DEPDIR)/testmain-ioport.Po"; else rm -f "$(DEPDIR)/testmain-ioport.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../src/ioport.cpp' object='testmain-ioport.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-ioport.obj `if test -f '../src/ioport.cpp'; then $(CYGPATH_W) '../src/ioport.cpp'; else $(CYGPATH_W) '$(srcdir)/../src/ioport.cpp'; fi`
 
 testmain-logger.o: ../src/logger.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-logger.o -MD -MP -MF "$(DEPDIR)/testmain-logger.Tpo" -c -o testmain-logger.o `test -f '../src/logger.cpp' || echo '$(srcdir)/'`../src/logger.cpp; \
