@@ -73,6 +73,12 @@ const char *argp_program_version = PACKAGE_STRING
 #ifdef HAVE_MYSQL
     "\n- MySQL support enabled"
 #endif
+#ifdef HAVE_LUA
+    "\n- LUA scripting support enabled"
+#endif
+#ifdef HAVE_LOG4CPP
+    "\n- Log4cpp logging enabled"
+#endif
 ;
 
 /** documentation */
