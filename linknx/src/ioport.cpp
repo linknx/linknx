@@ -23,6 +23,7 @@
 Logger& IOPort::logger_m(Logger::getInstance("IOPort"));
 Logger& RxThread::logger_m(Logger::getInstance("RxThread"));
 Logger& UdpIOPort::logger_m(Logger::getInstance("UdpIOPort"));
+Logger& TcpClientIOPort::logger_m(Logger::getInstance("TcpClientIOPort"));
 
 IOPortManager* IOPortManager::instance_m;
 
@@ -124,6 +125,8 @@ IOPort* IOPort::create(const std::string& type)
 {
     if (type == "" || type == "udp")
         return new UdpIOPort();
+    else if (type == "tcp")
+        return new TcpClientIOPort();
     else
         return 0;
 }
@@ -296,6 +299,101 @@ int UdpIOPort::get(uint8_t* buf, int len, pth_event_t stop)
                (struct sockaddr *) &r, &rl, stop);
 //        logger_m.debugStream() << "Out of recvfrom " << i << " rl=" << rl << endlog;
         if (i > 0 && rl == sizeof (r))
+        {
+            std::string msg(reinterpret_cast<const char*>(buf), i);
+            logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
+            return i;
+        }
+    }
+    return -1;
+}
+
+TcpClientIOPort::TcpClientIOPort() : port_m(0), sockfd_m(-1)
+{
+    memset (&addr_m, 0, sizeof (addr_m));
+}
+
+TcpClientIOPort::~TcpClientIOPort()
+{
+    if (sockfd_m >= 0)
+        close(sockfd_m);
+    Logger::getInstance("TcpClientIOPort").debugStream() << "Deleting TcpClientIOPort " << endlog;
+}
+
+void TcpClientIOPort::importXml(ticpp::Element* pConfig)
+{
+    memset (&addr_m, 0, sizeof (addr_m));
+    addr_m.sin_family = AF_INET;
+    pConfig->GetAttribute("port", &port_m);
+    addr_m.sin_port = htons(port_m);
+    host_m = pConfig->GetAttribute("host");
+    addr_m.sin_addr.s_addr = inet_addr(host_m.c_str());
+    std::string perm = pConfig->GetAttribute("permanent");
+    permanent_m = (perm == "true" || perm == "yes");
+    IOPort::importXml(pConfig);
+
+    logger_m.infoStream() << "TcpClientIOPort " << (permanent_m?"(permanent) ":"") << "configured for host " << host_m << " and port " << port_m << endlog;
+}
+
+void TcpClientIOPort::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("host", host_m);
+    pConfig->SetAttribute("port", port_m);
+    if (permanent_m)
+        pConfig->SetAttribute("permanent", "true");
+    IOPort::exportXml(pConfig);
+}
+
+void TcpClientIOPort::send(const uint8_t* buf, int len)
+{
+    logger_m.infoStream() << "send(buf, len=" << len << "):"
+        << buf << endlog;
+
+    if (sockfd_m < 0) {
+        sockfd_m = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd_m >= 0) {
+            if (pth_connect(sockfd_m, (const struct sockaddr *) &addr_m, sizeof (addr_m)) >= 0) {
+                int nbytes = pth_write(sockfd_m, buf, len);
+                if (nbytes < 0) {
+                    logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
+                }
+                if (!permanent_m) {
+                    if (close(sockfd_m) < 0) {
+                        logger_m.errorStream() << "Unable to close connection to server for ioport " << getID() << endlog;
+                    }
+                    sockfd_m = -1;
+                }
+            }
+            else {
+                logger_m.errorStream() << "Unable to connect to server for ioport " << getID() << endlog;
+            }
+        }
+        else {
+            logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
+        }    
+    }
+    else {
+                int nbytes = pth_write(sockfd_m, buf, len);
+                if (nbytes < 0) {
+                    logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
+                }
+    }
+}
+
+int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
+{
+    logger_m.debugStream() << "get(buf, len=" << len << "):"
+        << buf << endlog;
+    while (sockfd_m < 0)
+        pth_sleep(1);
+    if (sockfd_m >= 0) {
+        socklen_t rl;
+        sockaddr_in r;
+        rl = sizeof (r);
+        memset (&r, 0, sizeof (r));
+        ssize_t i = pth_read_ev(sockfd_m, buf, len, stop);
+        logger_m.debugStream() << "Out of read " << i << endlog;
+        if (i > 0)
         {
             std::string msg(reinterpret_cast<const char*>(buf), i);
             logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;

@@ -155,6 +155,28 @@ private:
     static Logger& logger_m;
 };
 
+class TcpClientIOPort : public IOPort
+{
+public:
+    TcpClientIOPort();
+    virtual ~TcpClientIOPort();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    void send(const uint8_t* buf, int len);
+    int get(uint8_t* buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled() { return permanent_m; };
+
+private:
+    std::string host_m;
+    int sockfd_m;
+    int port_m;
+    bool permanent_m;
+    struct sockaddr_in addr_m;
+    static Logger& logger_m;
+};
+
 class TxAction : public Action
 {
 public:
