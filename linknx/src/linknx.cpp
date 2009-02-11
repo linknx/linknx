@@ -148,7 +148,7 @@ main (int ac, char *ag[])
 
     if (arg.daemon)
     {
-        int fd = open (arg.daemon, O_WRONLY | O_APPEND | O_CREAT);
+        int fd = open (arg.daemon, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         if (fd == -1)
             die ("Can not open file %s", arg.daemon);
         int i = fork ();
