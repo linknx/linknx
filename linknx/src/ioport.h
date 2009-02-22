@@ -97,7 +97,7 @@ public:
     void addListener(IOPortListener *l); // { if (rxThread_m) rxThread_m->addListener(l); };
     bool removeListener(IOPortListener *l); // { if (rxThread_m) return (rxThread_m->removeListener(l)) else return false; };
     virtual bool isRxEnabled() = 0;
-    virtual void send(const uint8_t* buf, int len) = 0;
+    virtual int send(const uint8_t* buf, int len) = 0;
     virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
 
 private:
@@ -142,7 +142,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    void send(const uint8_t* buf, int len);
+    int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return rxport_m > 0; };
 
@@ -164,7 +164,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    void send(const uint8_t* buf, int len);
+    int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return permanent_m; };
 
@@ -175,6 +175,9 @@ private:
     bool permanent_m;
     struct sockaddr_in addr_m;
     static Logger& logger_m;
+    
+    void connectToServer();
+    void disconnectFromServer();
 };
 
 class TxAction : public Action

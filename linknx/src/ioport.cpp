@@ -269,21 +269,22 @@ void UdpIOPort::exportXml(ticpp::Element* pConfig)
     IOPort::exportXml(pConfig);
 }
 
-void UdpIOPort::send(const uint8_t* buf, int len)
+int UdpIOPort::send(const uint8_t* buf, int len)
 {
     logger_m.infoStream() << "send(buf, len=" << len << "):"
         << buf << endlog;
 
     if (sockfd_m >= 0) {
-        size_t i = pth_sendto(sockfd_m, buf, len, 0,
+        size_t nbytes = pth_sendto(sockfd_m, buf, len, 0,
                (const struct sockaddr *) &addr_m, sizeof (addr_m));
-        if (i > 0) {
-            
+        if (nbytes == len) {
+            return nbytes;
         }
         else {
             logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
         }
     }
+    return -1;
 }
 
 int UdpIOPort::get(uint8_t* buf, int len, pth_event_t stop)
@@ -344,63 +345,83 @@ void TcpClientIOPort::exportXml(ticpp::Element* pConfig)
     IOPort::exportXml(pConfig);
 }
 
-void TcpClientIOPort::send(const uint8_t* buf, int len)
+int TcpClientIOPort::send(const uint8_t* buf, int len)
 {
     logger_m.infoStream() << "send(buf, len=" << len << "):"
         << buf << endlog;
 
+    connectToServer();
+    if (sockfd_m >= 0) {
+        int nbytes = pth_write(sockfd_m, buf, len);
+        if (nbytes == len) {
+            if (!permanent_m)
+                disconnectFromServer();
+            return nbytes;
+        }
+        else {
+            logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
+            disconnectFromServer();
+        }
+    }
+    return -1;
+}
+
+int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
+{
+    logger_m.debugStream() << "get(buf, len=" << len << ")" << endlog;
+    bool retry = true;
+    while (retry) {
+        connectToServer();
+        if (sockfd_m >= 0) {
+            ssize_t i = pth_read_ev(sockfd_m, buf, len, stop);
+            logger_m.debugStream() << "Out of read " << i << endlog;
+            if (i > 0)
+            {
+                std::string msg(reinterpret_cast<const char*>(buf), i);
+                logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
+                return i;
+            }
+            else {
+                disconnectFromServer();
+                if (pth_event_status (stop) == PTH_STATUS_OCCURRED)
+                    retry = false;
+            }
+        }
+        else {
+            struct timeval tv;
+            tv.tv_sec = 60;
+            tv.tv_usec = 0;
+            pth_select_ev(0,0,0,0,&tv,stop);
+            if (pth_event_status (stop) == PTH_STATUS_OCCURRED)
+                retry = false;
+        }
+    }
+    logger_m.debugStream() << "Abort get() on ioport " << getID() << endlog;
+    return -1;
+}
+
+void TcpClientIOPort::connectToServer()
+{
     if (sockfd_m < 0) {
         sockfd_m = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd_m >= 0) {
-            if (pth_connect(sockfd_m, (const struct sockaddr *) &addr_m, sizeof (addr_m)) >= 0) {
-                int nbytes = pth_write(sockfd_m, buf, len);
-                if (nbytes < 0) {
-                    logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
-                }
-                if (!permanent_m) {
-                    if (close(sockfd_m) < 0) {
-                        logger_m.errorStream() << "Unable to close connection to server for ioport " << getID() << endlog;
-                    }
-                    sockfd_m = -1;
-                }
-            }
-            else {
+            if (pth_connect(sockfd_m, (const struct sockaddr *) &addr_m, sizeof (addr_m)) < 0) {
                 logger_m.errorStream() << "Unable to connect to server for ioport " << getID() << endlog;
+                disconnectFromServer();
             }
         }
         else {
             logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
         }    
     }
-    else {
-                int nbytes = pth_write(sockfd_m, buf, len);
-                if (nbytes < 0) {
-                    logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
-                }
-    }
 }
 
-int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
+void TcpClientIOPort::disconnectFromServer()
 {
-    logger_m.debugStream() << "get(buf, len=" << len << "):"
-        << buf << endlog;
-    while (sockfd_m < 0)
-        pth_sleep(1);
-    if (sockfd_m >= 0) {
-        socklen_t rl;
-        sockaddr_in r;
-        rl = sizeof (r);
-        memset (&r, 0, sizeof (r));
-        ssize_t i = pth_read_ev(sockfd_m, buf, len, stop);
-        logger_m.debugStream() << "Out of read " << i << endlog;
-        if (i > 0)
-        {
-            std::string msg(reinterpret_cast<const char*>(buf), i);
-            logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
-            return i;
-        }
+    if (close(sockfd_m) < 0) {
+        logger_m.errorStream() << "Unable to close connection to server for ioport " << getID() << endlog;
     }
-    return -1;
+    sockfd_m = -1;
 }
 
 TxAction::TxAction()
@@ -439,17 +460,21 @@ void TxAction::Run (pth_sem_t * stop)
     {
         IOPort* port = IOPortManager::instance()->getPort(port_m);
         if (!port)
-        {
-            std::stringstream msg;
-            msg << "IO Port ID not found: '" << port_m << "'" << std::endl;
-            throw ticpp::Exception(msg.str());
-        }
-        port->send(reinterpret_cast<const uint8_t*>(data_m.c_str()), data_m.length());
+            throw ticpp::Exception("IO Port ID not found.");
         logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port_m << endlog;
+        const uint8_t* data = reinterpret_cast<const uint8_t*>(data_m.c_str());
+        int len = data_m.length();
+        int ret = port->send(data, len);
+        if (ret != len) {
+            ret = port->send(data, len);
+            if (ret != len)
+                throw ticpp::Exception("Unable to send data.");
+        }
+        
     }
     catch( ticpp::Exception& ex )
     {
-       logger_m.warnStream() << "Error in TxAction: " << ex.m_details << endlog;
+       logger_m.warnStream() << "Error in TxAction on port '" << port_m << "': " << ex.m_details << endlog;
     }
 }
 
