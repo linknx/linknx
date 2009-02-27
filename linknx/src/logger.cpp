@@ -23,14 +23,49 @@
 
 #include    <log4cpp/BasicConfigurator.hh>
 #include    <log4cpp/PropertyConfigurator.hh>
+#include    <log4cpp/OstreamAppender.hh>
+#include    <log4cpp/FileAppender.hh>
+#include    <log4cpp/PatternLayout.hh>
 
-void initLogging() {
-    try{ 
-        log4cpp::PropertyConfigurator::configure("logging.conf"); // throw (ConfigureFailure)
-    }
-    catch (log4cpp::ConfigureFailure ex) {
+void initLogging(ticpp::Element* pConfig) {
+    if (!pConfig) {
         log4cpp::BasicConfigurator::configure();
-        errorStream("Logger") << "Unable to load logging.conf : " << ex.what() << endlog;        
+    }
+    else {
+        try{ 
+            std::string file = pConfig->GetAttribute("config");
+            if (file.length()) {
+                log4cpp::PropertyConfigurator::configure(file); // throw (ConfigureFailure)
+            }
+            else {
+                std::string output = pConfig->GetAttribute("output");
+                std::string format = pConfig->GetAttribute("format");
+                std::string level  = pConfig->GetAttribute("level");
+                log4cpp::Appender* app = NULL;
+                if (output.length())
+                    app = new log4cpp::FileAppender("FileAppender", output);
+                else
+                    app = new log4cpp::OstreamAppender("ConsoleAppender", &std::cout);
+                if (format == "")
+                    app->setLayout(new log4cpp::BasicLayout());
+                else {
+                    log4cpp::PatternLayout* patternLayout = new log4cpp::PatternLayout();
+                    patternLayout->setConversionPattern(format);
+                    app->setLayout(patternLayout);
+                }
+                if (level == "")
+                    level = "INFO";
+                log4cpp::Category::getRoot().setPriority(log4cpp::Priority::getPriorityValue(level));
+                
+                log4cpp::Category::getRoot().setAppender(app);
+            }
+        }
+        catch (log4cpp::ConfigureFailure ex) {
+            throw ticpp::Exception(ex.what());
+        }
+        catch (std::invalid_argument ex) {
+            throw ticpp::Exception(ex.what());
+        }
     }
 }
 
@@ -38,7 +73,7 @@ void initLogging() {
 
 Logger::LoggerMap_t Logger::loggerMap_m;
 
-void initLogging() {
+void initLogging(ticpp::Element* pConfig) {
 }
 
 Logger& Logger::getInstance(const char* cat) {

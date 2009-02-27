@@ -164,7 +164,6 @@ main (int ac, char *ag[])
         setsid ();
     }
 
-    initLogging();
     Logger& logger = Logger::getInstance("main");
 
     FILE *pidf;
@@ -180,38 +179,54 @@ main (int ac, char *ag[])
     Services* services = Services::instance();
     if (arg.configfile)
     {
-        logger.infoStream() << "Loading config file " << arg.configfile << endlog;
+        ticpp::Document doc;
+        ticpp::Element* pConfig = NULL;
         try
         {
             // Load a document
-            ticpp::Document doc(arg.configfile);
-            doc.LoadFile();
+            doc.LoadFile(arg.configfile);
 
-            ticpp::Element* pConfig = doc.FirstChildElement("config");
+            pConfig = doc.FirstChildElement("config");
 
-            ticpp::Element* pServices = pConfig->FirstChildElement("services", false);
-            if (pServices != NULL)
-                services->importXml(pServices);
-            ticpp::Element* pObjects = pConfig->FirstChildElement("objects", false);
-            if (pObjects != NULL)
-                objects->importXml(pObjects);
-            ticpp::Element* pRules = pConfig->FirstChildElement("rules", false);
-            if (pRules != NULL)
-                rules->importXml(pRules);
+            ticpp::Element* pLogging = pConfig->FirstChildElement("logging", false);
+            initLogging(pLogging);
+            logger.debugStream() << "Logging configured" << endlog;
         }
         catch( ticpp::Exception& ex )
         {
-            // If any function has an error, execution will enter here.
-            // Report the error
-            logger.errorStream() << "unable to load config: " << ex.m_details << endlog;
-            die ("initialisation failed");
+            initLogging();
+            logger.errorStream() << "Unable to load config: " << ex.m_details << endlog;
+            die ("Unable to load config");
+        }
+
+        try
+        {
+            ticpp::Element* pServices = pConfig->FirstChildElement("services", false);
+            if (pServices != NULL)
+                services->importXml(pServices);
+            logger.debugStream() << "Services loaded" << endlog;
+            ticpp::Element* pObjects = pConfig->FirstChildElement("objects", false);
+            if (pObjects != NULL)
+                objects->importXml(pObjects);
+            logger.debugStream() << "Objects loaded" << endlog;
+            ticpp::Element* pRules = pConfig->FirstChildElement("rules", false);
+            if (pRules != NULL)
+                rules->importXml(pRules);
+            logger.debugStream() << "Rules loaded" << endlog;
+        }
+        catch( ticpp::Exception& ex )
+        {
+            logger.errorStream() << "Error in config: " << ex.m_details << endlog;
+            die ("Error in config");
         }
         if (arg.writeconfig && arg.writeconfig[0] == 0)
             arg.writeconfig = arg.configfile;
+        logger.infoStream() << "Config file loaded: " << arg.configfile << endlog;
     }
     else 
     {
-        logger.debugStream() << "No config file, using default values" << endlog;
+        initLogging();
+        logger.infoStream() << "No config file, using default values" << endlog;
         services->createDefault();
     }
     sigset_t t1;

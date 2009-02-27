@@ -21,8 +21,9 @@
 #define LOGGER_H_
 
 #include "config.h"
+#include "ticpp.h"
 
-void initLogging();
+void initLogging(ticpp::Element* pConfig=NULL);
 
 #ifdef HAVE_LOG4CPP
 #include    <log4cpp/Category.hh>
