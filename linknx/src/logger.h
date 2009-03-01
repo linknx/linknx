@@ -80,6 +80,13 @@ public:
     static DummyStream dummy;
 };
 
+class NullStreamBuf : public std::streambuf
+{
+protected:
+    int_type overflow (int_type c) { return c; }
+    int sync () { return 0; }
+};
+
 class Logger
 {
 public:
@@ -89,11 +96,18 @@ public:
     WarnStream warnStream();
     LogStream infoStream();
     DbgStream debugStream();
+    friend void initLogging(ticpp::Element* pConfig);
 private:
     std::string cat_m;
     typedef std::pair<std::string ,Logger*> LoggerPair_t;
     typedef std::map<std::string ,Logger*> LoggerMap_t;
     static LoggerMap_t loggerMap_m;
+    static int level_m; // 10=DEBUG, 20=INFO, 30=NOTICE, 40=WARN, 50=ERROR, 
+    static bool timestamp_m;
+    static std::ostream nullStream_m;
+    static NullStreamBuf nullStreamBuf_m;
+
+    std::ostream& addPrefix(std::ostream &s, const char* level);
 };
 #endif
 

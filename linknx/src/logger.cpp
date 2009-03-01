@@ -25,6 +25,7 @@
 #include    <log4cpp/PropertyConfigurator.hh>
 #include    <log4cpp/OstreamAppender.hh>
 #include    <log4cpp/FileAppender.hh>
+#include    <log4cpp/SimpleLayout.hh>
 #include    <log4cpp/PatternLayout.hh>
 
 void initLogging(ticpp::Element* pConfig) {
@@ -46,9 +47,13 @@ void initLogging(ticpp::Element* pConfig) {
                     app = new log4cpp::FileAppender("FileAppender", output);
                 else
                     app = new log4cpp::OstreamAppender("ConsoleAppender", &std::cout);
-                if (format == "")
+                if (format == "basic")
                     app->setLayout(new log4cpp::BasicLayout());
+                else if (format == "simple")
+                    app->setLayout(new log4cpp::SimpleLayout());
                 else {
+                    if (format == "")
+                        format = "%d [%5p] %c: %m%n";
                     log4cpp::PatternLayout* patternLayout = new log4cpp::PatternLayout();
                     patternLayout->setConversionPattern(format);
                     app->setLayout(patternLayout);
@@ -72,8 +77,33 @@ void initLogging(ticpp::Element* pConfig) {
 #else
 
 Logger::LoggerMap_t Logger::loggerMap_m;
+int Logger::level_m;
+bool Logger::timestamp_m;
+NullStreamBuf Logger::nullStreamBuf_m;
+std::ostream Logger::nullStream_m(&Logger::nullStreamBuf_m);
 
 void initLogging(ticpp::Element* pConfig) {
+    if (!pConfig) {
+        Logger::level_m = 20;
+        Logger::timestamp_m = true;
+    }
+    else {
+//        std::string output = pConfig->GetAttribute("output");
+        std::string format = pConfig->GetAttribute("format");
+        std::string level  = pConfig->GetAttribute("level");
+        if (level == "" || level == "INFO")
+            Logger::level_m = 20;
+        else if (level == "NOTICE")
+            Logger::level_m = 30;
+        else if (level == "WARN")
+            Logger::level_m = 40;
+        else if (level == "ERROR")
+            Logger::level_m = 50;
+        else if (level == "DEBUG")
+            Logger::level_m = 10;
+
+        Logger::timestamp_m = (format != "simple");
+    }
 }
 
 Logger& Logger::getInstance(const char* cat) {
@@ -93,9 +123,26 @@ DummyStream DummyStream::dummy;
 Logger::Logger(const char* cat) : cat_m(cat) {
 }
 
+std::ostream& Logger::addPrefix(std::ostream &s, const char* level) {
+    if (timestamp_m) {
+        time_t now;
+        struct tm * timeinfo;
+        char buffer [32];
+
+        time ( &now );
+        timeinfo = localtime ( &now );
+        strftime (buffer,sizeof(buffer),"%Y-%m-%d %X ",timeinfo);
+        s << buffer;
+    }
+    return s << level << cat_m << ": ";
+}
+
 ErrStream Logger::errorStream() {
 #ifdef LOG_SHOW_ERROR
-    return std::cerr << "[ERROR] " << cat_m << ": ";
+    if (level_m <= 50)
+        return addPrefix(std::cerr, "[ERROR] ");
+    else
+        return nullStream_m;
 #else
     return DummyStream::dummy;
 #endif
@@ -103,7 +150,10 @@ ErrStream Logger::errorStream() {
 
 WarnStream Logger::warnStream()  {
 #ifdef LOG_SHOW_WARN
-    return std::cerr << "[WARN ] " << cat_m << ": ";
+    if (level_m <= 40) 
+        return addPrefix(std::cerr, "[ WARN] ");
+    else
+        return nullStream_m;
 #else
     return DummyStream::dummy;
 #endif
@@ -111,7 +161,10 @@ WarnStream Logger::warnStream()  {
 
 LogStream Logger::infoStream()  {
 #ifdef LOG_SHOW_INFO
-    return std::cout << "[INFO ] " << cat_m << ": ";
+    if (level_m <= 20) 
+        return addPrefix(std::cout, "[ INFO] ");
+    else
+        return nullStream_m;
 #else
     return DummyStream::dummy;
 #endif
@@ -119,7 +172,10 @@ LogStream Logger::infoStream()  {
 
 DbgStream Logger::debugStream() {
 #ifdef LOG_SHOW_DEBUG
-    return std::cout << "[DEBUG] " << cat_m << ": ";
+    if (level_m <= 10) 
+        return addPrefix(std::cout, "[DEBUG] ");
+    else
+        return nullStream_m;
 #else
     return DummyStream::dummy;
 #endif
