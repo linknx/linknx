@@ -25,6 +25,7 @@
 #include    <log4cpp/PropertyConfigurator.hh>
 #include    <log4cpp/OstreamAppender.hh>
 #include    <log4cpp/FileAppender.hh>
+#include    <log4cpp/RollingFileAppender.hh>
 #include    <log4cpp/SimpleLayout.hh>
 #include    <log4cpp/PatternLayout.hh>
 
@@ -43,8 +44,17 @@ void initLogging(ticpp::Element* pConfig) {
                 std::string format = pConfig->GetAttribute("format");
                 std::string level  = pConfig->GetAttribute("level");
                 log4cpp::Appender* app = NULL;
-                if (output.length())
-                    app = new log4cpp::FileAppender("FileAppender", output);
+                if (output.length()) {
+                    int maxSize;
+                    pConfig->GetAttributeOrDefault("maxfilesize", &maxSize, -1);
+                    if (maxSize > 0) {
+                        int maxIndex;
+                        pConfig->GetAttributeOrDefault("maxfileindex", &maxIndex, 10);
+                        app = new log4cpp::RollingFileAppender("RollingFileAppender", output, maxSize * 1024, maxIndex);
+                    }
+                    else
+                        app = new log4cpp::FileAppender("FileAppender", output);
+                }
                 else
                     app = new log4cpp::OstreamAppender("ConsoleAppender", &std::cout);
                 if (format == "basic")
