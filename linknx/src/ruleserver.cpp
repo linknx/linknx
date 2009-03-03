@@ -313,6 +313,10 @@ Action* Action::create(const std::string& type)
         return new ShellCommandAction();
     else if (type == "ioport-tx")
         return new TxAction();
+#ifdef HAVE_LUA
+    else if (type == "script")
+        return new LuaScriptAction();
+#endif
     else
         return 0;
 }
@@ -709,7 +713,7 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
     else if (type == "ioport-rx")
         return new RxCondition(cl);
 #ifdef HAVE_LUA
-    else if (type == "lua")
+    else if (type == "script")
         return new LuaCondition(cl);
 #endif
     else

@@ -61,7 +61,7 @@ void LuaCondition::importXml(ticpp::Element* pConfig)
 
 void LuaCondition::exportXml(ticpp::Element* pConfig)
 {
-    pConfig->SetAttribute("type", "lua");
+    pConfig->SetAttribute("type", "script");
     if (code_m.length())
         pConfig->SetText(code_m);
 /*    if (condition_m)
@@ -92,6 +92,85 @@ int LuaCondition::obj(lua_State *L)
     lua_pushstring(L, ret.c_str());
 
     return 1;
+}
+
+LuaScriptAction::LuaScriptAction()
+{
+    l_m = luaL_newstate();  
+    luaL_openlibs(l_m);
+    lua_register(l_m, "obj", LuaScriptAction::obj);  
+    lua_register(l_m, "set", LuaScriptAction::set);  
+}
+
+LuaScriptAction::~LuaScriptAction()
+{
+    lua_close(l_m);
+}
+
+void LuaScriptAction::importXml(ticpp::Element* pConfig)
+{
+    code_m = pConfig->GetText();
+    logger_m.infoStream() << "LuaScriptAction: Configured." << endlog;
+}
+
+void LuaScriptAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "script");
+    if (code_m.length())
+        pConfig->SetText(code_m);
+    Action::exportXml(pConfig);
+}
+
+void LuaScriptAction::Run (pth_sem_t * stop)
+{
+    pth_sleep(delay_m);
+    logger_m.infoStream() << "Execute LuaScriptAction" << endlog;
+    luaL_dostring(l_m, code_m.c_str());  
+    lua_settop(l_m, 0);      
+}
+
+int LuaScriptAction::obj(lua_State *L)
+{
+    if (lua_gettop(L) != 1 || !lua_isstring(L, 1))
+    {
+        lua_pushstring(L, "Incorrect argument to 'obj'");
+        lua_error(L);
+    }
+    std::string id(lua_tostring(L, 1));
+    debugStream("LuaCondition") << "Getting object with id=" << id << endlog;
+    Object* object = ObjectController::instance()->getObject(id);
+    if (!object) 
+    {
+        lua_pushstring(L, "Object id not found");
+        lua_error(L);
+    }
+    std::string ret = object->getValue();
+    debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
+    lua_pushstring(L, ret.c_str());
+
+    return 1;
+}
+
+int LuaScriptAction::set(lua_State *L)
+{
+    if (lua_gettop(L) != 2 || !lua_isstring(L, 1))
+    {
+        lua_pushstring(L, "Incorrect argument to 'set'");
+        lua_error(L);
+    }
+    std::string id(lua_tostring(L, 1));
+    std::string value(lua_tostring(L, 2));
+    debugStream("LuaCondition") << "Setting object with id=" << id << endlog;
+    Object* object = ObjectController::instance()->getObject(id);
+    if (!object) 
+    {
+        lua_pushstring(L, "Object id not found");
+        lua_error(L);
+    }
+    object->setValue(value);
+    debugStream("LuaCondition") << "Object '" << id << "' set to value '" << value << "'" << endlog;
+
+    return 0;
 }
 
 #endif // HAVE_LUA

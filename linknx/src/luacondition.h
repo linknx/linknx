@@ -47,6 +47,24 @@ private:
     lua_State *l_m;
 };
 
+class LuaScriptAction : public Action
+{
+public:
+    LuaScriptAction();
+    virtual ~LuaScriptAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+    static int obj(lua_State *L);
+    static int set(lua_State *L);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    lua_State *l_m;
+    std::string code_m;
+};
+
 #endif // HAVE_LUA
 
 #endif
