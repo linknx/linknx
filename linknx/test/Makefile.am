@@ -5,4 +5,4 @@ testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp Exce
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS=-I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
-testmain_LDADD=../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LUA_LIBS)
+testmain_LDADD=../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LOG4CPP_LIBS) $(LUA_LIBS)
