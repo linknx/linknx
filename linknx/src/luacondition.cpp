@@ -28,7 +28,7 @@ extern "C"
 #include "lauxlib.h"
 }
 
-LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0) //, condition_m(0)
+LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0)
 {
     l_m = luaL_newstate();  
     luaL_openlibs(l_m);
@@ -37,14 +37,17 @@ LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0) //, condition_
 
 LuaCondition::~LuaCondition()
 {
-//    if (condition_m)
-//        delete condition_m;
     lua_close(l_m);
 }
 
 bool LuaCondition::evaluate()
 {
     luaL_dostring(l_m, code_m.c_str());  
+    if (luaL_dostring(l_m, code_m.c_str()) != 0)
+    { 
+        logger_m.errorStream() << "LuaCondition error: " << lua_tostring(l_m, -1) << endlog;
+        return false;
+    }
     int ret = lua_toboolean(l_m, -1);  
     logger_m.infoStream() << "LuaCondition evaluated as " << (ret? "true":"false") << endlog;
     lua_settop(l_m, 0);      
@@ -56,7 +59,6 @@ void LuaCondition::importXml(ticpp::Element* pConfig)
     code_m = pConfig->GetText();
 
     infoStream("LuaCondition") << "LuaCondition: Configured code=" << code_m << endlog;
-//    condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);
 }
 
 void LuaCondition::exportXml(ticpp::Element* pConfig)
@@ -64,12 +66,6 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "script");
     if (code_m.length())
         pConfig->SetText(code_m);
-/*    if (condition_m)
-    {
-        ticpp::Element pElem("condition");
-        condition_m->exportXml(&pElem);
-        pConfig->LinkEndChild(&pElem);
-    }*/
 }
 
 int LuaCondition::obj(lua_State *L)
@@ -81,16 +77,17 @@ int LuaCondition::obj(lua_State *L)
     }
     std::string id(lua_tostring(L, 1));
     debugStream("LuaCondition") << "Getting object with id=" << id << endlog;
-    Object* object = ObjectController::instance()->getObject(id);
-    if (!object) 
+    try {
+        Object* object = ObjectController::instance()->getObject(id);
+        std::string ret = object->getValue();
+        debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
+        lua_pushstring(L, ret.c_str());
+    }
+    catch( ticpp::Exception& ex )
     {
-        lua_pushstring(L, "Object id not found");
+        lua_pushstring(L, "Error while retrieving object value");
         lua_error(L);
     }
-    std::string ret = object->getValue();
-    debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
-    lua_pushstring(L, ret.c_str());
-
     return 1;
 }
 
@@ -125,7 +122,8 @@ void LuaScriptAction::Run (pth_sem_t * stop)
 {
     pth_sleep(delay_m);
     logger_m.infoStream() << "Execute LuaScriptAction" << endlog;
-    luaL_dostring(l_m, code_m.c_str());  
+    if (luaL_dostring(l_m, code_m.c_str()) != 0) 
+        logger_m.errorStream() << "LuaScriptAction error: " << lua_tostring(l_m, -1) << endlog;
     lua_settop(l_m, 0);      
 }
 
@@ -137,17 +135,18 @@ int LuaScriptAction::obj(lua_State *L)
         lua_error(L);
     }
     std::string id(lua_tostring(L, 1));
-    debugStream("LuaCondition") << "Getting object with id=" << id << endlog;
-    Object* object = ObjectController::instance()->getObject(id);
-    if (!object) 
+    debugStream("LuaScriptAction") << "Getting object with id=" << id << endlog;
+    try {
+        Object* object = ObjectController::instance()->getObject(id);
+        std::string ret = object->getValue();
+        debugStream("LuaScriptAction") << "Object '" << id << "' has value '" << ret << "'" << endlog;
+        lua_pushstring(L, ret.c_str());
+    }
+    catch( ticpp::Exception& ex )
     {
-        lua_pushstring(L, "Object id not found");
+        lua_pushstring(L, "Error while retrieving object value");
         lua_error(L);
     }
-    std::string ret = object->getValue();
-    debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
-    lua_pushstring(L, ret.c_str());
-
     return 1;
 }
 
@@ -160,15 +159,17 @@ int LuaScriptAction::set(lua_State *L)
     }
     std::string id(lua_tostring(L, 1));
     std::string value(lua_tostring(L, 2));
-    debugStream("LuaCondition") << "Setting object with id=" << id << endlog;
-    Object* object = ObjectController::instance()->getObject(id);
-    if (!object) 
+    debugStream("LuaScriptAction") << "Setting object with id=" << id << endlog;
+    try {
+        Object* object = ObjectController::instance()->getObject(id);
+        object->setValue(value);
+        debugStream("LuaScriptAction") << "Object '" << id << "' set to value '" << value << "'" << endlog;
+    }
+    catch( ticpp::Exception& ex )
     {
-        lua_pushstring(L, "Object id not found");
+        lua_pushstring(L, "Error while setting object value");
         lua_error(L);
     }
-    object->setValue(value);
-    debugStream("LuaCondition") << "Object '" << id << "' set to value '" << value << "'" << endlog;
 
     return 0;
 }
