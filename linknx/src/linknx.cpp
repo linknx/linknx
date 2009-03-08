@@ -174,6 +174,7 @@ main (int ac, char *ag[])
             fclose (pidf);
         }
 
+    Logging* logging = Logging::instance();
     RuleServer* rules = RuleServer::instance();
     ObjectController* objects = ObjectController::instance();
     Services* services = Services::instance();
@@ -189,12 +190,12 @@ main (int ac, char *ag[])
             pConfig = doc.FirstChildElement("config");
 
             ticpp::Element* pLogging = pConfig->FirstChildElement("logging", false);
-            initLogging(pLogging);
+            logging->importXml(pLogging);
             logger.debugStream() << "Logging configured" << endlog;
         }
         catch( ticpp::Exception& ex )
         {
-            initLogging();
+            logging->defaultConfig();
             logger.errorStream() << "Unable to load config: " << ex.m_details << endlog;
             die ("Unable to load config");
         }
@@ -225,7 +226,7 @@ main (int ac, char *ag[])
     }
     else 
     {
-        initLogging();
+        logging->defaultConfig();
         logger.infoStream() << "No config file, using default values" << endlog;
         services->createDefault();
     }

@@ -19,6 +19,8 @@
 
 #include "logger.h"
 
+Logging* Logging::instance_m;
+
 #ifdef HAVE_LOG4CPP
 
 #include    <log4cpp/BasicConfigurator.hh>
@@ -29,50 +31,54 @@
 #include    <log4cpp/SimpleLayout.hh>
 #include    <log4cpp/PatternLayout.hh>
 
-void initLogging(ticpp::Element* pConfig) {
+void Logging::importXml(ticpp::Element* pConfig)
+{
     if (!pConfig) {
         log4cpp::BasicConfigurator::configure();
     }
     else {
         try{ 
-            std::string file = pConfig->GetAttribute("config");
-            if (file.length()) {
-                log4cpp::PropertyConfigurator::configure(file); // throw (ConfigureFailure)
+            conffile_m = pConfig->GetAttribute("config");
+            if (conffile_m.length()) {
+                log4cpp::PropertyConfigurator::configure(conffile_m); // throw (ConfigureFailure)
             }
             else {
-                std::string output = pConfig->GetAttribute("output");
-                std::string format = pConfig->GetAttribute("format");
-                std::string level  = pConfig->GetAttribute("level");
+                output_m = pConfig->GetAttribute("output");
+                format_m = pConfig->GetAttribute("format");
+                level_m  = pConfig->GetAttribute("level");
                 log4cpp::Appender* app = NULL;
-                if (output.length()) {
-                    int maxSize;
-                    pConfig->GetAttributeOrDefault("maxfilesize", &maxSize, -1);
-                    if (maxSize > 0) {
-                        int maxIndex;
-                        pConfig->GetAttributeOrDefault("maxfileindex", &maxIndex, 10);
-                        app = new log4cpp::RollingFileAppender("RollingFileAppender", output, maxSize * 1024, maxIndex);
+                if (output_m.length()) {
+                    pConfig->GetAttributeOrDefault("maxfilesize", &maxSize_m, -1);
+                    if (maxSize_m > 0) {
+                        pConfig->GetAttributeOrDefault("maxfileindex", &maxIndex_m, 10);
+                        app = new log4cpp::RollingFileAppender("RollingFileAppender", output_m, maxSize_m * 1024, maxIndex_m);
                     }
                     else
-                        app = new log4cpp::FileAppender("FileAppender", output);
+                        app = new log4cpp::FileAppender("FileAppender", output_m);
                 }
                 else
                     app = new log4cpp::OstreamAppender("ConsoleAppender", &std::cout);
-                if (format == "basic")
+                if (format_m == "basic")
                     app->setLayout(new log4cpp::BasicLayout());
-                else if (format == "simple")
+                else if (format_m == "simple")
                     app->setLayout(new log4cpp::SimpleLayout());
                 else {
-                    if (format == "")
-                        format = "%d [%5p] %c: %m%n";
                     log4cpp::PatternLayout* patternLayout = new log4cpp::PatternLayout();
-                    patternLayout->setConversionPattern(format);
+                    if (format_m == "")
+                        patternLayout->setConversionPattern("%d [%5p] %c: %m%n");
+                    else
+                        patternLayout->setConversionPattern(format_m);
                     app->setLayout(patternLayout);
                 }
-                if (level == "")
-                    level = "INFO";
-                log4cpp::Category::getRoot().setPriority(log4cpp::Priority::getPriorityValue(level));
+                log4cpp::Priority::Value prio = log4cpp::Priority::INFO;
+                if (level_m != "")
+                    prio = log4cpp::Priority::getPriorityValue(level_m);
+                    
+                log4cpp::Category& root = log4cpp::Category::getRoot();
+                root.setPriority(prio);
                 
-                log4cpp::Category::getRoot().setAppender(app);
+                root.removeAllAppenders();
+                root.addAppender(app);
             }
         }
         catch (log4cpp::ConfigureFailure ex) {
@@ -84,6 +90,30 @@ void initLogging(ticpp::Element* pConfig) {
     }
 }
 
+void Logging::exportXml(ticpp::Element* pConfig)
+{
+    if (conffile_m != "")
+    {
+        pConfig->SetAttribute("config", conffile_m);
+    }
+    else
+    {
+        if (output_m != "")
+        {
+            pConfig->SetAttribute("output", output_m);
+            if (maxSize_m != -1)
+            {
+                pConfig->SetAttribute("maxfilesize", maxSize_m);
+                pConfig->SetAttribute("maxfileindex", maxIndex_m);
+            }
+        }
+        if (format_m != "")
+            pConfig->SetAttribute("format", format_m);
+        if (level_m != "")
+            pConfig->SetAttribute("level", level_m);
+    }
+}
+
 #else
 
 Logger::LoggerMap_t Logger::loggerMap_m;
@@ -92,28 +122,37 @@ bool Logger::timestamp_m;
 NullStreamBuf Logger::nullStreamBuf_m;
 std::ostream Logger::nullStream_m(&Logger::nullStreamBuf_m);
 
-void initLogging(ticpp::Element* pConfig) {
+void Logging::importXml(ticpp::Element* pConfig)
+{
     if (!pConfig) {
         Logger::level_m = 20;
         Logger::timestamp_m = true;
     }
     else {
 //        std::string output = pConfig->GetAttribute("output");
-        std::string format = pConfig->GetAttribute("format");
-        std::string level  = pConfig->GetAttribute("level");
-        if (level == "" || level == "INFO")
+        format_m = pConfig->GetAttribute("format");
+        level_m  = pConfig->GetAttribute("level");
+        if (level_m == "" || level_m == "INFO")
             Logger::level_m = 20;
-        else if (level == "NOTICE")
+        else if (level_m == "NOTICE")
             Logger::level_m = 30;
-        else if (level == "WARN")
+        else if (level_m == "WARN")
             Logger::level_m = 40;
-        else if (level == "ERROR")
+        else if (level_m == "ERROR")
             Logger::level_m = 50;
-        else if (level == "DEBUG")
+        else if (level_m == "DEBUG")
             Logger::level_m = 10;
 
-        Logger::timestamp_m = (format != "simple");
+        Logger::timestamp_m = (format_m != "simple");
     }
+}
+
+void Logging::exportXml(ticpp::Element* pConfig)
+{
+    if (format_m != "")
+        pConfig->SetAttribute("format", format_m);
+    if (level_m != "")
+        pConfig->SetAttribute("level", level_m);
 }
 
 Logger& Logger::getInstance(const char* cat) {

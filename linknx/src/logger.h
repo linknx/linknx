@@ -23,7 +23,38 @@
 #include "config.h"
 #include "ticpp.h"
 
-void initLogging(ticpp::Element* pConfig=NULL);
+class Logging
+{
+public:
+    static Logging* instance()
+    {
+        if (instance_m == 0)
+            instance_m = new Logging();
+        return instance_m;
+    };        
+    static void reset()
+    {
+        if (instance_m)
+            delete instance_m;
+        instance_m = 0;
+    };
+
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
+
+    void defaultConfig() { importXml(NULL); };
+
+private:
+    Logging() : maxSize_m(-1), maxIndex_m(0) {};
+    
+    std::string conffile_m;
+    std::string output_m;
+    std::string format_m;
+    std::string level_m;
+    int maxSize_m;
+    int maxIndex_m;
+    static Logging* instance_m;
+};
 
 #ifdef HAVE_LOG4CPP
 #include    <log4cpp/Category.hh>

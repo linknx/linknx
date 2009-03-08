@@ -236,6 +236,10 @@ void ClientConnection::Run (pth_sem_t * stop1)
                         ticpp::Element services("services");
                         Services::instance()->exportXml(&services);
                         pRead->LinkEndChild(&services);
+
+                        ticpp::Element logging("logging");
+                        Logging::instance()->exportXml(&logging);
+                        pRead->LinkEndChild(&logging);
                     }
                     else if (pConfig->Value() == "objects")
                     {
@@ -248,6 +252,10 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     else if (pConfig->Value() == "services")
                     {
                         Services::instance()->exportXml(pConfig);
+                    }
+                    else if (pConfig->Value() == "logging")
+                    {
+                        Logging::instance()->exportXml(pConfig);
                     }
                     pMsg->SetAttribute("status", "success");
                     sendmessage (doc.GetAsString(), stop);
@@ -277,6 +285,8 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 RuleServer::instance()->importXml(&(*pConfigItem));
                             else if (pConfigItem->Value() == "services")
                                 Services::instance()->importXml(&(*pConfigItem));
+                            else if (pConfigItem->Value() == "logging")
+                                Logging::instance()->importXml(&(*pConfigItem));
                             else
                                 throw "Unknown config element";
                         }
@@ -316,6 +326,9 @@ void ClientConnection::Run (pth_sem_t * stop1)
                             ticpp::Element pRules("rules");
                             RuleServer::instance()->exportXml(&pRules);
                             pConfig.LinkEndChild(&pRules);
+                            ticpp::Element pLogging("logging");
+                            Logging::instance()->exportXml(&pLogging);
+                            pConfig.LinkEndChild(&pLogging);
                     
                             doc.LinkEndChild(&pConfig);
                             doc.SaveFile(filename);
