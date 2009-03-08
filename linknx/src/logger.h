@@ -127,7 +127,7 @@ public:
     WarnStream warnStream();
     LogStream infoStream();
     DbgStream debugStream();
-    friend void initLogging(ticpp::Element* pConfig);
+    friend class Logging;
 private:
     std::string cat_m;
     typedef std::pair<std::string ,Logger*> LoggerPair_t;
