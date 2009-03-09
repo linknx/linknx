@@ -56,8 +56,12 @@ AC_ARG_ENABLE([smtp],
  
 if test x"$enable_smtp" != xno ; then
 	AC_CHECK_HEADER([libesmtp.h],
-		enable_smtp=yes,
-		if test x"$enable_smtp" = xyes ; then
+		if test x"$enable_smtp" = xstatic ; then
+			enable_smtp=static
+		else
+			enable_smtp=yes
+		fi,
+		if test x"$enable_smtp" = xyes -o x"$enable_smtp" = xstatic ; then
 			AC_MSG_ERROR([Cannot find libesmtp.])
 		else
 			enable_smtp=no
@@ -74,7 +78,11 @@ if test x"$enable_smtp" != xno ; then
 		AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
 	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
-	LIBS="$ESMTP_LIBS $LIBS"
+	if test x"$enable_smtp" = xstatic ; then
+		LIBS="-Xlinker -Bstatic $ESMTP_LIBS -Xlinker -Bdynamic $LIBS"
+	else
+		LIBS="$ESMTP_LIBS $LIBS"
+	fi
 	AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
 	AC_MSG_RESULT([yes])
 else

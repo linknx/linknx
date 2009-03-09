@@ -8604,9 +8604,13 @@ echo "${ECHO_T}$ac_cv_header_libesmtp_h" >&6; }
 
 fi
 if test $ac_cv_header_libesmtp_h = yes; then
-  enable_smtp=yes
+  if test x"$enable_smtp" = xstatic ; then
+			enable_smtp=static
+		else
+			enable_smtp=yes
+		fi
 else
-  if test x"$enable_smtp" = xyes ; then
+  if test x"$enable_smtp" = xyes -o x"$enable_smtp" = xstatic ; then
 			{ { echo "$as_me:$LINENO: error: Cannot find libesmtp." >&5
 echo "$as_me: error: Cannot find libesmtp." >&2;}
    { (exit 1); exit 1; }; }
@@ -8634,7 +8638,11 @@ _ACEOF
 
 	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
-	LIBS="$ESMTP_LIBS $LIBS"
+	if test x"$enable_smtp" = xstatic ; then
+		LIBS="-Xlinker -Bstatic $ESMTP_LIBS -Xlinker -Bdynamic $LIBS"
+	else
+		LIBS="$ESMTP_LIBS $LIBS"
+	fi
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBESMTP 1
