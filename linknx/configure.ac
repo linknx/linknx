@@ -79,7 +79,8 @@ if test x"$enable_smtp" != xno ; then
 	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	if test x"$enable_smtp" = xstatic ; then
-		LIBS="-Xlinker -Bstatic $ESMTP_LIBS -Xlinker -Bdynamic $LIBS"
+		
+		LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
 	else
 		LIBS="$ESMTP_LIBS $LIBS"
 	fi
