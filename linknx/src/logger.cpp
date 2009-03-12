@@ -116,6 +116,8 @@ void Logging::exportXml(ticpp::Element* pConfig)
 
 #else
 
+#include    <ctime>
+
 Logger::LoggerMap_t Logger::loggerMap_m;
 int Logger::level_m;
 bool Logger::timestamp_m;
