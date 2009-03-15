@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(linknx, 0.0.1.26, linknx@ouaye.net)
+AC_INIT(linknx, 0.0.1.27, linknx@ouaye.net)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
 AC_CONFIG_HEADER([config.h])
