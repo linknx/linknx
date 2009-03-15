@@ -42,7 +42,6 @@ LuaCondition::~LuaCondition()
 
 bool LuaCondition::evaluate()
 {
-    luaL_dostring(l_m, code_m.c_str());  
     if (luaL_dostring(l_m, code_m.c_str()) != 0)
     { 
         logger_m.errorStream() << "LuaCondition error: " << lua_tostring(l_m, -1) << endlog;
