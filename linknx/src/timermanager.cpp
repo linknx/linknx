@@ -400,14 +400,15 @@ void PeriodicTask::reschedule(time_t now)
     }
     if (nextExecTime_m != 0)
     {
-        struct tm * timeinfo = localtime(&nextExecTime_m);
+        struct tm timeinfo;
+        memcpy(&timeinfo, localtime(&nextExecTime_m), sizeof(struct tm));
         logger_m.infoStream() << "Rescheduled at "
-        << timeinfo->tm_year + 1900 << "-"
-        << timeinfo->tm_mon + 1 << "-"
-        << timeinfo->tm_mday << " "
-        << timeinfo->tm_hour << ":"
-        << timeinfo->tm_min << ":"
-        << timeinfo->tm_sec << " ("
+        << timeinfo.tm_year + 1900 << "-"
+        << timeinfo.tm_mon + 1 << "-"
+        << timeinfo.tm_mday << " "
+        << timeinfo.tm_hour << ":"
+        << timeinfo.tm_min << ":"
+        << timeinfo.tm_sec << " ("
         << nextExecTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
     }
@@ -418,13 +419,18 @@ void PeriodicTask::reschedule(time_t now)
 
 time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 {
+    struct tm timeinfostruct;
     struct tm * timeinfo;
     if (!next)
     {
         logger_m.infoStream() << "PeriodicTask: no more schedule available" << endlog;
         return 0;
     }
-    timeinfo = localtime(&start);
+    // make a copy of value returned by localtime to avoid interference
+    // with other calls to localtime or gmtime
+    memcpy(&timeinfostruct, localtime(&start), sizeof(struct tm));
+    timeinfo = &timeinfostruct;
+    
     timeinfo->tm_min++;
     if (timeinfo->tm_min > 59)
     {
@@ -570,14 +576,15 @@ void FixedTimeTask::reschedule(time_t now)
         now = time(0);
     if (execTime_m > now)
     {
-        struct tm * timeinfo = localtime(&execTime_m);
+        struct tm timeinfo;
+        memcpy(&timeinfo, localtime(&execTime_m), sizeof(struct tm));
         logger_m.infoStream() << "Rescheduled at "
-        << timeinfo->tm_year + 1900 << "-"
-        << timeinfo->tm_mon + 1 << "-"
-        << timeinfo->tm_mday << " "
-        << timeinfo->tm_hour << ":"
-        << timeinfo->tm_min << ":"
-        << timeinfo->tm_sec << " ("
+        << timeinfo.tm_year + 1900 << "-"
+        << timeinfo.tm_mon + 1 << "-"
+        << timeinfo.tm_mday << " "
+        << timeinfo.tm_hour << ":"
+        << timeinfo.tm_min << ":"
+        << timeinfo.tm_sec << " ("
         << execTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
     }
@@ -653,19 +660,20 @@ void ExceptionDays::exportXml(ticpp::Element* pConfig)
 
 bool ExceptionDays::isException(time_t time)
 {
-    struct tm * timeinfo = localtime(&time);
+    struct tm timeinfo;
+    memcpy(&timeinfo, localtime(&time), sizeof(struct tm));
 
     DaysList_t::iterator it;
     for (it = daysList_m.begin(); it != daysList_m.end(); it++)
     {
-        if (((*it)->year_m == -1 || (*it)->year_m == timeinfo->tm_year) &&
-                ((*it)->mon_m == -1 || (*it)->mon_m == timeinfo->tm_mon) &&
-                ((*it)->mday_m == -1 || (*it)->mday_m == timeinfo->tm_mday))
+        if (((*it)->year_m == -1 || (*it)->year_m == timeinfo.tm_year) &&
+                ((*it)->mon_m == -1 || (*it)->mon_m == timeinfo.tm_mon) &&
+                ((*it)->mday_m == -1 || (*it)->mday_m == timeinfo.tm_mday))
         {
             infoStream("ExceptionDays")
-            << timeinfo->tm_year+1900 << "-"
-            << timeinfo->tm_mon+1 << "-"
-            << timeinfo->tm_mday << " is an exception day!" << endlog;
+            << timeinfo.tm_year+1900 << "-"
+            << timeinfo.tm_mon+1 << "-"
+            << timeinfo.tm_mday << " is an exception day!" << endlog;
             return true;
         }
     }
