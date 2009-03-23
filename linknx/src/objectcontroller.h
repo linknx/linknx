@@ -34,6 +34,7 @@ class Object;
 class ChangeListener
 {
 public:
+    virtual ~ChangeListener() {};
     virtual void onChange(Object* object) = 0;
 };
 
@@ -281,6 +282,11 @@ public:
     virtual void doSend(bool isWrite);
 protected:
     static Logger& logger_m;
+private:
+    typedef union {
+        uint32_t u32;
+        float fl;
+    } convfloat;
 };
 
 

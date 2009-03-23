@@ -369,7 +369,7 @@ int ClientConnection::sendreject (const char* msgstr, const std::string& type, p
         msg << "<error>" << msgstr << "</error>" << std::endl;
     else
         msg << "<" << type << " status='error'>" << msgstr << "</" << type << ">" << std::endl;
-    sendmessage (msg.str(), stop);
+    return sendmessage (msg.str(), stop);
 }
 
 int ClientConnection::sendmessage (std::string msg, pth_event_t stop)
@@ -398,7 +398,6 @@ int ClientConnection::readmessage (pth_event_t stop)
 {
     char buf[256];
     int i;
-    unsigned start;
     std::stringstream msg;
 
     while ((i = pth_read_ev (fd_m, &buf, 256, stop)) > 0)

@@ -36,7 +36,8 @@
 class IOPortListener
 {
 public:
-    virtual void onDataReceived(const uint8_t* buf, int len) = 0;
+    virtual ~IOPortListener() {};
+    virtual void onDataReceived(const uint8_t* buf, unsigned int len) = 0;
 };
 
 class RxThread;
@@ -206,7 +207,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    virtual void onDataReceived(const uint8_t* buf, int len);
+    virtual void onDataReceived(const uint8_t* buf, unsigned int len);
 
 private:
     std::string port_m;

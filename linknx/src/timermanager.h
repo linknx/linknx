@@ -32,6 +32,7 @@
 class TimerTask
 {
 public:
+    virtual ~TimerTask() {};
     virtual void onTimer(time_t time) = 0;
     virtual void reschedule(time_t from = 0) = 0;
     virtual time_t getExecTime() = 0;

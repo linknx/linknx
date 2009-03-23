@@ -344,7 +344,7 @@ void Action::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("delay", RuleServer::formatDuration(delay_m));
 }
 
-DimUpAction::DimUpAction() : start_m(0), stop_m(255), duration_m(60), object_m(0)
+DimUpAction::DimUpAction() : object_m(0), start_m(0), stop_m(255), duration_m(60)
 {}
 
 DimUpAction::~DimUpAction()
@@ -390,7 +390,7 @@ void DimUpAction::Run (pth_sem_t * stop)
         logger_m.infoStream() << "Execute DimUpAction" << endlog;
 
         unsigned long step = ((duration_m * 1000) / (stop_m - start_m)) * 1000;
-        for (int idx=start_m; idx < stop_m; idx++)
+        for (unsigned int idx=start_m; idx < stop_m; idx++)
         {
             object_m->setIntValue(idx);
             pth_usleep(step);
@@ -406,7 +406,7 @@ void DimUpAction::Run (pth_sem_t * stop)
         logger_m.infoStream() << "Execute DimUpAction (decrease)" << endlog;
 
         unsigned long step = ((duration_m * 1000) / (start_m - stop_m)) * 1000;
-        for (int idx=start_m; idx > stop_m; idx--)
+        for (unsigned int idx=start_m; idx > stop_m; idx--)
         {
             object_m->setIntValue(idx);
             pth_usleep(step);
@@ -419,7 +419,7 @@ void DimUpAction::Run (pth_sem_t * stop)
     }
 }
 
-SetValueAction::SetValueAction() : value_m(0), object_m(0)
+SetValueAction::SetValueAction() : object_m(0), value_m(0)
 {}
 
 SetValueAction::~SetValueAction()
@@ -509,7 +509,7 @@ void CopyValueAction::Run (pth_sem_t * stop)
 }
 
 CycleOnOffAction::CycleOnOffAction()
-    : object_m(0), count_m(0), delayOn_m(0), delayOff_m(0), stopCondition_m(0), running_m(false)
+    : object_m(0), delayOn_m(0), delayOff_m(0), count_m(0), stopCondition_m(0), running_m(false)
 {}
 
 CycleOnOffAction::~CycleOnOffAction()
@@ -817,7 +817,7 @@ void OrCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-NotCondition::NotCondition(ChangeListener* cl) : cl_m(cl), condition_m(0)
+NotCondition::NotCondition(ChangeListener* cl) : condition_m(0), cl_m(cl)
 {}
 
 NotCondition::~NotCondition()
@@ -1075,7 +1075,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : cl_m(cl), condition_m(0), threshold_m(0), resetDelay_m(0), lastVal_m(false), lastTime_m(0), counter_m(0)
+TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : condition_m(0), cl_m(cl), lastTime_m(0), lastVal_m(false), counter_m(0), threshold_m(0), resetDelay_m(0)
 {}
 
 TimeCounterCondition::~TimeCounterCondition()

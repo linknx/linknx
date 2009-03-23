@@ -440,7 +440,6 @@ Logger& SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
 void SolarTimeSpec::importXml(ticpp::Element* pConfig)
 {
     TimeSpec::importXml(pConfig);
-    double offset;
     offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
 }
 

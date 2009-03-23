@@ -30,7 +30,7 @@ extern "C"
 
 Logger& KnxConnection::logger_m(Logger::getInstance("KnxConnection"));
 
-KnxConnection::KnxConnection() : con_m(0), listener_m(0), stop_m(0), isRunning_m(false)
+KnxConnection::KnxConnection() : con_m(0), isRunning_m(false), stop_m(0), listener_m(0)
 {}
 
 KnxConnection::~KnxConnection()

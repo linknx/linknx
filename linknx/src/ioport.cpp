@@ -173,7 +173,7 @@ bool IOPort::removeListener(IOPortListener *l)
         return false;
 }
 
-RxThread::RxThread(IOPort *port) : port_m(port), stop_m(0), isRunning_m(false)
+RxThread::RxThread(IOPort *port) : port_m(port), isRunning_m(false), stop_m(0)
 {}
 
 RxThread::~RxThread()
@@ -199,7 +199,6 @@ bool RxThread::removeListener(IOPortListener *listener)
 void RxThread::Run (pth_sem_t * stop1)
 {
     stop_m = pth_event (PTH_EVENT_SEM, stop1);
-    bool retry = true;
     uint8_t buf[1024];
     int retval;
     logger_m.debugStream() << "Start IO Port loop." << endlog;
@@ -217,7 +216,7 @@ void RxThread::Run (pth_sem_t * stop1)
     stop_m = 0;
 }
 
-UdpIOPort::UdpIOPort() : port_m(0), rxport_m(0), sockfd_m(-1)
+UdpIOPort::UdpIOPort() : sockfd_m(-1), port_m(0), rxport_m(0)
 {
     memset (&addr_m, 0, sizeof (addr_m));
 }
@@ -275,7 +274,7 @@ int UdpIOPort::send(const uint8_t* buf, int len)
         << buf << endlog;
 
     if (sockfd_m >= 0) {
-        size_t nbytes = pth_sendto(sockfd_m, buf, len, 0,
+        ssize_t nbytes = pth_sendto(sockfd_m, buf, len, 0,
                (const struct sockaddr *) &addr_m, sizeof (addr_m));
         if (nbytes == len) {
             return nbytes;
@@ -309,7 +308,7 @@ int UdpIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     return -1;
 }
 
-TcpClientIOPort::TcpClientIOPort() : port_m(0), sockfd_m(-1)
+TcpClientIOPort::TcpClientIOPort() : sockfd_m(-1), port_m(0)
 {
     memset (&addr_m, 0, sizeof (addr_m));
 }
@@ -352,7 +351,7 @@ int TcpClientIOPort::send(const uint8_t* buf, int len)
 
     connectToServer();
     if (sockfd_m >= 0) {
-        int nbytes = pth_write(sockfd_m, buf, len);
+        ssize_t nbytes = pth_write(sockfd_m, buf, len);
         if (nbytes == len) {
             if (!permanent_m)
                 disconnectFromServer();
@@ -478,7 +477,7 @@ void TxAction::Run (pth_sem_t * stop)
     }
 }
 
-RxCondition::RxCondition(ChangeListener* cl) : cl_m(cl), value_m(false)
+RxCondition::RxCondition(ChangeListener* cl) : value_m(false), cl_m(cl)
 {}
 
 RxCondition::~RxCondition()
@@ -515,7 +514,7 @@ void RxCondition::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("ioport", port_m);
 }
 
-void RxCondition::onDataReceived(const uint8_t* buf, int len)
+void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
 {
     if (len > exp_m.length())
         len = exp_m.length();

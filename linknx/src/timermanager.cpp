@@ -329,7 +329,7 @@ void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *ye
 Logger& PeriodicTask::logger_m(Logger::getInstance("PeriodicTask"));
 
 PeriodicTask::PeriodicTask(ChangeListener* cl)
-        : cl_m(cl), nextExecTime_m(0), value_m(false), during_m(0), after_m(-1), at_m(0), until_m(0)
+        : at_m(0), until_m(0), during_m(0), after_m(-1), nextExecTime_m(0), cl_m(cl), value_m(false)
 {}
 
 PeriodicTask::~PeriodicTask()

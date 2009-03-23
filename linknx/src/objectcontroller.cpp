@@ -31,7 +31,7 @@ ObjectController* ObjectController::instance_m;
 
 Logger& Object::logger_m(Logger::getInstance("Object"));
 
-Object::Object() : gad_m(0), init_m(false), readPending_m(false), persist_m(false), writeLog_m(false), flags_m(Default)
+Object::Object() : init_m(false), flags_m(Default), gad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
 {}
 
 Object::~Object()
@@ -352,7 +352,7 @@ std::string SwitchingObjectValue::toString()
 DimmingObjectValue::DimmingObjectValue(const std::string& value)
 {
     std::string dir;
-    int pos = value.find(":");
+    unsigned int pos = value.find(":");
     dir = value.substr(0, pos);
     stepcode_m = 1;
     if (pos != value.npos)
@@ -403,7 +403,7 @@ std::string DimmingObjectValue::toString()
 BlindsObjectValue::BlindsObjectValue(const std::string& value)
 {
     std::string dir;
-    int pos = value.find(":");
+    unsigned int pos = value.find(":");
     dir = value.substr(0, pos);
     stepcode_m = 1;
     if (pos != value.npos)
@@ -451,7 +451,7 @@ std::string BlindsObjectValue::toString()
     return ret;
 }
 
-TimeObjectValue::TimeObjectValue(const std::string& value) : hour_m(-1), min_m(-1), sec_m(-1), wday_m(-1)
+TimeObjectValue::TimeObjectValue(const std::string& value) : wday_m(-1), hour_m(-1), min_m(-1), sec_m(-1)
 {
     if (value == "now")
         return;
@@ -502,7 +502,7 @@ void TimeObjectValue::getTimeValue(int *wday, int *hour, int *min, int *sec)
     }
 }
 
-DateObjectValue::DateObjectValue(const std::string& value) : year_m(-1), month_m(-1), day_m(-1)
+DateObjectValue::DateObjectValue(const std::string& value) : day_m(-1), month_m(-1), year_m(-1)
 {
     if (value == "now")
         return;
@@ -1641,8 +1641,11 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
 
-    uint32_t tmp = buf[2]<<24 | buf[3]<<16 | buf[4]<<8 | buf[5];
-    double newValue = *reinterpret_cast<const float*>(&tmp);
+    convfloat tmp;
+    tmp.u32 = buf[2]<<24 | buf[3]<<16 | buf[4]<<8 | buf[5];
+//    logger_m.infoStream() << "New value int tmp " << tmp << " for ValueObject32 " << getID() << endlog;
+//    const float* nv = reinterpret_cast<const float*>(&tmp);
+    double newValue = tmp.fl;
     if (!init_m || newValue != value_m)
     {
         logger_m.infoStream() << "New value " << newValue << " for ValueObject32 " << getID() << endlog;
@@ -1655,12 +1658,12 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 void ValueObject32::doSend(bool isWrite)
 {
     uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), 0, 0, 0, 0 };
-    float val = static_cast<float>(value_m);
-    uint32_t tmp = *reinterpret_cast<uint32_t*>(&val);
-    buf[5] = static_cast<uint8_t>(tmp & 0x000000FF); 
-    buf[4] = static_cast<uint8_t>((tmp & 0x0000FF00) >> 8); 
-    buf[3] = static_cast<uint8_t>((tmp & 0x00FF0000) >> 16); 
-    buf[2] = static_cast<uint8_t>((tmp & 0xFF000000) >> 24);
+    convfloat tmp;
+    tmp.fl = static_cast<float>(value_m);
+    buf[5] = static_cast<uint8_t>(tmp.u32 & 0x000000FF); 
+    buf[4] = static_cast<uint8_t>((tmp.u32 & 0x0000FF00) >> 8); 
+    buf[3] = static_cast<uint8_t>((tmp.u32 & 0x00FF0000) >> 16); 
+    buf[2] = static_cast<uint8_t>((tmp.u32 & 0xFF000000) >> 24);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
@@ -1757,7 +1760,7 @@ std::string U8Object::getValue()
 
 void U8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
-    int newValue;
+    uint32_t newValue;
     if (len == 2)
         newValue = (buf[1] & 0x3F);
     else
@@ -2228,7 +2231,7 @@ void StringObject::doSend(bool isWrite)
     memset(buf,0,sizeof(buf));
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-    for(int j=0;j<value_m.size();j++)
+    for(uint j=0;j<value_m.size();j++)
         buf[j+2] = static_cast<uint8_t>(value_m[j]);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));

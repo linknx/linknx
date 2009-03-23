@@ -196,7 +196,7 @@ private:
     virtual void Run (pth_sem_t * stop);
 
     U8Object* object_m;
-    int start_m, stop_m, duration_m;
+    unsigned int start_m, stop_m, duration_m;
 };
 
 class SetValueAction : public Action

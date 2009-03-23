@@ -76,8 +76,8 @@ class LocationInfo
 {
 public:
     LocationInfo();
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
     long getGmtOffset(const struct tm* timeinfo);
     bool isEmpty() { return lon_m==0 && lat_m==0; };

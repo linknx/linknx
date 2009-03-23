@@ -34,6 +34,7 @@
 class TelegramListener
 {
 public:
+    virtual ~TelegramListener() {};
     virtual void onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) = 0;
     virtual void onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) = 0;
     virtual void onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len) = 0;

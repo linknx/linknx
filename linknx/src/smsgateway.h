@@ -31,8 +31,8 @@ public:
     SmsGateway();
     ~SmsGateway();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
 
     void sendSms(std::string &id, std::string &value);
 

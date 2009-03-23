@@ -45,8 +45,8 @@ public:
     EmailGateway();
     ~EmailGateway();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    void importXml(ticpp::Element* pConfig);
+    void exportXml(ticpp::Element* pConfig);
 
     void sendEmail(std::string &to, std::string &subject, std::string &text);
 
