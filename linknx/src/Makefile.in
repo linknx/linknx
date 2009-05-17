@@ -48,13 +48,14 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_linknx_OBJECTS = linknx.$(OBJEXT) ruleserver.$(OBJEXT) \
-	objectcontroller.$(OBJEXT) common.$(OBJEXT) \
-	eibclient.$(OBJEXT) threads.$(OBJEXT) timermanager.$(OBJEXT) \
-	persistentstorage.$(OBJEXT) xmlserver.$(OBJEXT) \
-	smsgateway.$(OBJEXT) emailgateway.$(OBJEXT) \
-	knxconnection.$(OBJEXT) services.$(OBJEXT) suncalc.$(OBJEXT) \
-	luacondition.$(OBJEXT) ioport.$(OBJEXT) logger.$(OBJEXT)
+am_linknx_OBJECTS = linknx.$(OBJEXT) logger.$(OBJEXT) \
+	ruleserver.$(OBJEXT) objectcontroller.$(OBJEXT) \
+	common.$(OBJEXT) eibclient.$(OBJEXT) threads.$(OBJEXT) \
+	timermanager.$(OBJEXT) persistentstorage.$(OBJEXT) \
+	xmlserver.$(OBJEXT) smsgateway.$(OBJEXT) \
+	emailgateway.$(OBJEXT) knxconnection.$(OBJEXT) \
+	services.$(OBJEXT) suncalc.$(OBJEXT) luacondition.$(OBJEXT) \
+	ioport.$(OBJEXT)
 linknx_OBJECTS = $(am_linknx_OBJECTS)
 am__DEPENDENCIES_1 =
 linknx_DEPENDENCIES = ../ticpp/libticpp.a $(am__DEPENDENCIES_1) \
@@ -182,7 +183,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LOG4CPP_CFLAGS) $(LUA_CFLAGS)
 linknx_LDADD = ../ticpp/libticpp.a $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LOG4CPP_LIBS) $(LUA_LIBS) -lm
-linknx_SOURCES = linknx.cpp ruleserver.cpp objectcontroller.cpp common.c eibclient.c threads.cpp timermanager.cpp  persistentstorage.cpp xmlserver.cpp smsgateway.cpp emailgateway.cpp knxconnection.cpp services.cpp suncalc.cpp  luacondition.cpp ioport.cpp logger.cpp common.h ruleserver.h objectcontroller.h threads.h timermanager.h persistentstorage.h xmlserver.h smsgateway.h emailgateway.h knxconnection.h services.h suncalc.h luacondition.h ioport.h logger.h
+linknx_SOURCES = linknx.cpp logger.cpp ruleserver.cpp objectcontroller.cpp common.c eibclient.c threads.cpp timermanager.cpp  persistentstorage.cpp xmlserver.cpp smsgateway.cpp emailgateway.cpp knxconnection.cpp services.cpp suncalc.cpp  luacondition.cpp ioport.cpp common.h ruleserver.h objectcontroller.h threads.h timermanager.h persistentstorage.h xmlserver.h smsgateway.h emailgateway.h knxconnection.h services.h suncalc.h luacondition.h ioport.h logger.h
 all: all-am
 
 .SUFFIXES:
