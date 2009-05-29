@@ -118,7 +118,6 @@ void Logging::exportXml(ticpp::Element* pConfig)
 
 #include    <ctime>
 
-Logger::LoggerMap_t Logger::loggerMap_m;
 int Logger::level_m;
 bool Logger::timestamp_m;
 NullStreamBuf Logger::nullStreamBuf_m;
@@ -157,14 +156,23 @@ void Logging::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("level", level_m);
 }
 
+Logger::LoggerMap_t* Logger::getLoggerMap() {
+    // This static local is used to avoid problems with
+    // initialization order of static object present in
+    // different compilation units
+    static LoggerMap_t* loggerMap = new LoggerMap_t();
+    return loggerMap;
+}
+
 Logger& Logger::getInstance(const char* cat) {
-    LoggerMap_t::iterator it = loggerMap_m.find(cat);
+    LoggerMap_t* map = getLoggerMap();
+    LoggerMap_t::iterator it = map->find(cat);
     Logger* logger;
-    if (it != loggerMap_m.end())
+    if (it != map->end())
         logger = it->second;
     else {
         logger = new Logger(cat);
-        loggerMap_m.insert(LoggerPair_t(cat, logger));
+        map->insert(LoggerPair_t(cat, logger));
     }
     return *(logger);
 }

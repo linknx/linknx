@@ -132,7 +132,7 @@ private:
     std::string cat_m;
     typedef std::pair<std::string ,Logger*> LoggerPair_t;
     typedef std::map<std::string ,Logger*> LoggerMap_t;
-    static LoggerMap_t loggerMap_m;
+    static LoggerMap_t* getLoggerMap();
     static int level_m; // 10=DEBUG, 20=INFO, 30=NOTICE, 40=WARN, 50=ERROR, 
     static bool timestamp_m;
     static std::ostream nullStream_m;
