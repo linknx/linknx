@@ -162,6 +162,12 @@ ClientConnection::ClientConnection (XmlServer *server, int fd)
 
 ClientConnection::~ClientConnection ()
 {
+    NotifyList_t::iterator it;
+    for (it = notifyList_m.begin(); it != notifyList_m.end(); it++)
+    {
+        (*it)->removeChangeListener(this);
+    }
+    notifyList_m.clear();
     if (server_m)
         server_m->deregister (this);
     close (fd_m);
@@ -341,6 +347,29 @@ void ClientConnection::Run (pth_sem_t * stop1)
                             throw "Error writing config to file";
                         }
                     }
+                    else if (pAdmin->Value() == "notification")
+                    {
+                        ticpp::Iterator< ticpp::Element > pObjects;
+                        for ( pObjects = pAdmin->FirstChildElement(); pObjects != pObjects.end(); pObjects++ )
+                        {
+                            if (pObjects->Value() == "register")
+                            {
+                                std::string id = pObjects->GetAttribute("id");
+                                Object* obj = ObjectController::instance()->getObject(id);
+                                notifyList_m.push_back(obj);
+                                obj->addChangeListener(this);
+                            }
+                            else if (pObjects->Value() == "unregister")
+                            {
+                                std::string id = pObjects->GetAttribute("id");
+                                Object* obj = ObjectController::instance()->getObject(id);
+                                notifyList_m.remove(obj);
+                                obj->removeChangeListener(this);
+                            }
+                            else
+                                throw "Unknown objects element";
+                        }
+                    }
                     else
                         throw "Unknown admin element";
                 }
@@ -414,3 +443,12 @@ int ClientConnection::readmessage (pth_event_t stop)
 
     return -1;
 }
+
+void ClientConnection::onChange(Object* object)
+{
+//    sendmessage ("<notify id=status='success'/>\n", stop);
+    std::stringstream msg;
+    msg << "<notify id='" << object->getID() << "'>" << object->getValue() << "</read>" << std::endl;
+    sendmessage (msg.str(), NULL);
+}
+

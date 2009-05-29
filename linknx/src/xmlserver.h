@@ -28,6 +28,7 @@
 #include <list>
 #include <string>
 #include "ticpp.h"
+#include "objectcontroller.h"
 
 
 class ClientConnection;
@@ -72,7 +73,7 @@ private:
     std::string path_m;
 };
 
-class ClientConnection : public Thread
+class ClientConnection : public Thread, public ChangeListener
 {
 public:
     ClientConnection (XmlServer *server, int fd);
@@ -85,10 +86,15 @@ public:
     int sendmessage (std::string msg, pth_event_t stop);
     int sendreject (const char* msgstr, const std::string& type, pth_event_t stop);
 
+    virtual void onChange(Object* object);
+
     std::string msg_m;
 private:
     int fd_m;
     XmlServer *server_m;
+
+    typedef std::list<Object*> NotifyList_t;
+    NotifyList_t notifyList_m;
 
     void Run (pth_sem_t * stop);
 };
