@@ -39,7 +39,7 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
     static int obj(lua_State *L);
-
+    static int isException(lua_State *L);
 private:
 //    Condition* condition_m;
     ChangeListener* cl_m;

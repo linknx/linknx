@@ -27,12 +27,15 @@ extern "C"
 #include "lualib.h"
 #include "lauxlib.h"
 }
+#include <ctime>
+#include "services.h"
 
 LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0)
 {
     l_m = luaL_newstate();  
     luaL_openlibs(l_m);
     lua_register(l_m, "obj", LuaCondition::obj);  
+    lua_register(l_m, "isException", LuaCondition::isException);  
 }
 
 LuaCondition::~LuaCondition()
@@ -87,6 +90,30 @@ int LuaCondition::obj(lua_State *L)
         lua_pushstring(L, "Error while retrieving object value");
         lua_error(L);
     }
+    return 1;
+}
+
+int LuaCondition::isException(lua_State *L)
+{
+    time_t ts;
+    if (lua_gettop(L) == 0)
+    {
+        ts = time(0);
+    }
+    else if (lua_gettop(L) != 1 || !lua_isnumber(L, 1))
+    {
+        ts = 0;
+        lua_pushstring(L, "Incorrect argument to 'isException'");
+        lua_error(L);
+    }
+    else
+    {
+        ts = lua_tointeger(L, 1);
+    }
+    bool ret = Services::instance()->getExceptionDays()->isException(ts);
+    debugStream("LuaCondition") << "Is timestamp (" << ts << ") an exception day: " << (ret ? "yes" : "no" ) << endlog;
+
+    lua_pushboolean(L, ret);
     return 1;
 }
 
