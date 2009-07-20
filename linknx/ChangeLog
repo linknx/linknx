@@ -4,6 +4,7 @@ Release 0.0.1.27:
 	* Allow XML client to register for object change notifications
 	* improved mysql support (some error logging + persistent) by stefdude (at) users.sourceforge.net
 	* add LUA function to check for exception days
+	* Add support for stateless objects and rules
 
 Release 0.0.1.26:
 	* Added LUA scripting support

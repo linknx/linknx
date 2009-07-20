@@ -140,6 +140,13 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 private:
     bool trigger_m;
+    char initVal_m;
+    enum InitialValue
+    {
+        initValTrue = 1,
+        initValFalse = 0,
+        initValGuess = -1
+    };
 };
 
 class TimeCounterCondition : public Condition, public FixedTimeTask
@@ -320,7 +327,16 @@ private:
     ActionsList_t actionsList_m;
     ActionsList_t actionsListFalse_m;
     bool prevValue_m;
-    bool isActive_m;
+//    bool isActive_m;
+    enum Flags
+    {
+        None = 0x00,
+        Active = 0x01,
+        StatelessIfTrue = 0x02,
+        StatelessIfFalse = 0x04,
+        Stateless = StatelessIfFalse | StatelessIfTrue
+    };
+    int flags_m;
 protected:
     static Logger& logger_m;
 };

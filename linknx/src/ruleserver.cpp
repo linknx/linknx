@@ -134,7 +134,7 @@ std::string RuleServer::formatDuration(int duration)
 
 Logger& Rule::logger_m(Logger::getInstance("Rule"));
 
-Rule::Rule() : condition_m(0), prevValue_m(false), isActive_m(false)
+Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(0)
 {}
 
 Rule::~Rule()
@@ -154,9 +154,9 @@ void Rule::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("id", &id_m, false);
 
     std::string value = pConfig->GetAttribute("active");
-    isActive_m = !(value == "off" || value == "false" || value == "no");
+    flags_m = (value == "off" || value == "false" || value == "no")? None : Active;
 
-    logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << isActive_m << ")" << endlog;
+    logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
     condition_m = Condition::create(pCondition, this);
@@ -164,8 +164,14 @@ void Rule::importXml(ticpp::Element* pConfig)
     ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
     for ( actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++ )
     {
-        bool isFalse = (*actionListIt).GetAttribute("type") == "on-false";
-        logger_m.infoStream() << "ActionList: Configuring " << (isFalse ? "'on-false'" : "" ) << endlog;
+        std::string type = (*actionListIt).GetAttribute("type");
+        bool isFalse = ((type == "if-false") || (type == "on-false"));
+        if (type == "if-false")
+            flags_m |= StatelessIfFalse;
+        else if (type == "if-true")
+            flags_m |= StatelessIfTrue;
+        
+        logger_m.infoStream() << "ActionList: Configuring '" << type << "'" << endlog;
         ticpp::Iterator<ticpp::Element> actionIt("action");
         for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
         {
@@ -177,15 +183,20 @@ void Rule::importXml(ticpp::Element* pConfig)
         }
     }
     logger_m.infoStream() << "Rule: Configuration done" << endlog;
+    
+    // evaluate the stateless rules to set their initial value
+    // and execute the action list if needed
+    if(flags_m & Stateless)
+        evaluate();
 }
 
 void Rule::updateXml(ticpp::Element* pConfig)
 {
     std::string value = pConfig->GetAttribute("active");
     if (value != "")
-        isActive_m = !(value == "off" || value == "false" || value == "no");
+        flags_m = (value == "off" || value == "false" || value == "no")? None : Active;
 
-    logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << isActive_m << ")" << endlog;
+    logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition", false);
     if (pCondition != NULL)
@@ -211,8 +222,14 @@ void Rule::updateXml(ticpp::Element* pConfig)
         ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
         for ( actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++ )
         {
-            bool isFalse = (*actionListIt).GetAttribute("type") == "on-false";
-            logger_m.infoStream() << "ActionList: Reconfiguring " << (isFalse ? "'on-false'" : "" ) << endlog;
+            std::string type = (*actionListIt).GetAttribute("type");
+            bool isFalse = ((type == "if-false") || (type == "on-false"));
+            if (type == "if-false")
+                flags_m |= StatelessIfFalse;
+            else if (type == "if-true")
+                flags_m |= StatelessIfTrue;
+            
+            logger_m.infoStream() << "ActionList: Reconfiguring '" << type << "'" << endlog;
             ticpp::Iterator<ticpp::Element> actionIt("action");
             for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++ )
             {
@@ -231,7 +248,7 @@ void Rule::exportXml(ticpp::Element* pConfig)
 {
     if (id_m != "")
         pConfig->SetAttribute("id", id_m);
-    if (isActive_m == false)
+    if (!(flags_m & Active))
         pConfig->SetAttribute("active", "no");
     if (condition_m)
     {
@@ -244,6 +261,9 @@ void Rule::exportXml(ticpp::Element* pConfig)
     if (actionsList_m.begin() != actionsList_m.end())
     {
         ticpp::Element pList("actionlist");
+        if (flags_m & StatelessIfTrue)
+            pList.SetAttribute("type", "if-true");
+        
         pConfig->LinkEndChild(&pList);
 
         for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
@@ -256,7 +276,11 @@ void Rule::exportXml(ticpp::Element* pConfig)
     if (actionsListFalse_m.begin() != actionsListFalse_m.end())
     {
         ticpp::Element pList("actionlist");
-        pList.SetAttribute("type", "on-false");
+        if (flags_m & StatelessIfFalse)
+            pList.SetAttribute("type", "if-false");
+        else
+            pList.SetAttribute("type", "on-false");
+
         pConfig->LinkEndChild(&pList);
 
         for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
@@ -275,16 +299,16 @@ void Rule::onChange(Object* object)
 
 void Rule::evaluate()
 {
-    if (isActive_m)
+    if (flags_m & Active)
     {
         ActionsList_t::iterator it;
         bool curValue = condition_m->evaluate();
-        if (curValue && !prevValue_m)
+        if (curValue && ((flags_m & StatelessIfTrue) || !prevValue_m))
         {
             for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
                 (*it)->execute();
         }
-        else if (!curValue && prevValue_m)
+        else if (!curValue && ((flags_m & StatelessIfFalse) || prevValue_m))
         {
             for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
                 (*it)->execute();
@@ -976,7 +1000,7 @@ void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
 
 
 TimerCondition::TimerCondition(ChangeListener* cl)
-        : PeriodicTask(cl), trigger_m(false)
+        : PeriodicTask(cl), trigger_m(false), initVal_m(initValGuess)
 {}
 
 TimerCondition::~TimerCondition()
@@ -990,13 +1014,13 @@ bool TimerCondition::evaluate()
 
 void TimerCondition::importXml(ticpp::Element* pConfig)
 {
-    std::string trigger;
-    trigger = pConfig->GetAttribute("trigger");
+    std::string trigger = pConfig->GetAttribute("trigger");
 
     if (trigger == "true")
         trigger_m = true;
     else
         cl_m = 0;
+    std::string initVal = pConfig->GetAttribute("initval");
 
     ticpp::Element* at = pConfig->FirstChildElement("at", false);
     ticpp::Element* every = pConfig->FirstChildElement("every", false);
@@ -1037,6 +1061,20 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         during_m = 0;
 
     reschedule(0);
+    if (initVal == "true")
+    {
+        value_m = true;
+        initVal_m = initValTrue;
+    }
+    else if (initVal == "false")
+    {
+        value_m = false;
+        initVal_m = initValFalse;
+    }
+    else
+        // if init value is not explicitly configured, we keep
+        // the value guessed during reschedule(0)
+        initVal_m = initValGuess;
 }
 
 void TimerCondition::exportXml(ticpp::Element* pConfig)
@@ -1044,6 +1082,11 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "timer");
     if (trigger_m)
         pConfig->SetAttribute("trigger", "true");
+        
+    if (initVal_m == initValTrue)
+        pConfig->SetAttribute("initval", "true");
+    else if (initVal_m == initValFalse)
+        pConfig->SetAttribute("initval", "false");
 
     if (after_m == -1)
     {

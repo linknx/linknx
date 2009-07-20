@@ -163,19 +163,14 @@ void Object::importXml(ticpp::Element* pConfig)
             flags_m |= Update;
         if (flags.find('i') != flags.npos)
             flags_m |= Init;
-        if (flags.find('f') != flags.npos)
-            flags_m |= Force;
+        if (flags.find('s') != flags.npos || flags.find('f') != flags.npos)
+            flags_m |= Stateless;
     }
     catch( ticpp::Exception& ex )
     {
         flags_m = Default;
     }
 
-    // BEGIN: backward compatibility with 0.0.1.17
-    if (pConfig->GetAttribute("forcewrite") == "true")
-        flags_m |= Force;
-    // END: backward compatibility with 0.0.1.17
-    
     writeLog_m = (pConfig->GetAttribute("log") == "true");
 
     // TODO: do we need to use the 'i' flag instead of init="request" attribute
@@ -233,8 +228,8 @@ void Object::exportXml(ticpp::Element* pConfig)
             flags << 'u';
         if (flags_m & Init)
             flags << 'i';
-        if (flags_m & Force)
-            flags << 'f';
+        if (flags_m & Stateless)
+            flags << 's';
         pConfig->SetAttribute("flags", flags.str());
     }
 
@@ -274,8 +269,18 @@ void Object::read()
     init_m = true;
 }
 
+void Object::onInternalUpdate()
+{
+    if ((flags_m & Transmit) && (flags_m & Comm))
+        doSend(true);
+    onUpdate();
+}
+
 void Object::onUpdate()
 {
+    init_m = true;
+    logger_m.infoStream() << "New value " << getValue() << " for object " << getID() << " (type: " << getType() << ")" << endlog;
+    
     ListenerList_t::iterator it;
     for (it = listenerList_m.begin(); it != listenerList_m.end(); it++)
     {
@@ -960,11 +965,9 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = (buf[1] & 0x3F) != 0;
     else
         newValue = buf[2] != 0;
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for switching object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -977,13 +980,10 @@ void SwitchingObject::doSend(bool isWrite)
 
 void SwitchingObject::setBoolValue(bool value)
 {
-    if (!init_m || value != value_m || (flags_m & Force))
+    if (forceUpdate() || value != value_m)
     {
         value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1063,12 +1063,10 @@ void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     if (stepcode == 0)
         direction = 0;
 
-    if (!init_m || stepcode != stepcode_m  || direction != direction_m)
+    if (forceUpdate() || stepcode != stepcode_m  || direction != direction_m)
     {
         stepcode_m = stepcode;
         direction_m = direction;
-        init_m = true;
-        logger_m.infoStream() << "New value " << getValue() << " for object " << getID() << endlog;
         onUpdate();
     }
 }
@@ -1081,14 +1079,11 @@ void StepDirObject::doSend(bool isWrite)
 
 void StepDirObject::setStepValue(int direction, int stepcode)
 {
-    if (!init_m || stepcode_m != stepcode  || direction_m != direction || (flags_m & Force))
+    if (forceUpdate() || stepcode_m != stepcode  || direction_m != direction)
     {
         stepcode_m = stepcode;
         direction_m = direction;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1243,14 +1238,12 @@ void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     hour = buf[2] & 0x1F;
     min = buf[3];
     sec = buf[4];
-    if (!init_m || wday != wday_m || hour != hour_m || min != min_m || sec != sec_m)
+    if (forceUpdate() || wday != wday_m || hour != hour_m || min != min_m || sec != sec_m)
     {
-        logger_m.infoStream() << "New value " << wday << " " << hour << ":" << min << ":" << sec << " for time object " << getID() << endlog;
         wday_m = wday;
         hour_m = hour;
         min_m = min;
         sec_m = sec;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1272,27 +1265,18 @@ void TimeObject::doSend(bool isWrite)
 
 void TimeObject::setTime(int wday, int hour, int min, int sec)
 {
-    if (!init_m ||
+    if (forceUpdate() ||
             wday_m != wday ||
             hour_m != hour ||
             min_m != min ||
-            sec_m != sec ||
-            (flags_m & Force))
+            sec_m != sec)
     {
-        logger_m.infoStream() << "TimeObject: setTime "
-        << wday << " "
-        << hour << ":"
-        << min << ":"
-        << sec << endlog;
         wday_m = wday;
         hour_m = hour;
         min_m = min;
         sec_m = sec;
 
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1409,13 +1393,11 @@ void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     year = buf[4];
     if (year < 90)
         year += 100;
-    if (!init_m || day != day_m || month != month_m || year != year_m)
+    if (forceUpdate() || day != day_m || month != month_m || year != year_m)
     {
-        logger_m.infoStream() << "New value " << year+1900 << "-" << month << "-" << day << " for date object " << getID() << endlog;
         day_m = day;
         month_m = month;
         year_m = year;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1439,24 +1421,16 @@ void DateObject::setDate(int day, int month, int year)
 {
     if (year >= 1900)
         year -= 1900;
-    if (!init_m ||
+    if (forceUpdate() ||
             day_m != day ||
             month_m != month ||
-            year_m != year ||
-            (flags_m & Force))
+            year_m != year )
     {
-        logger_m.infoStream() << "DateObject: setDate "
-        << year + 1900 << "-"
-        << month << "-"
-        << day << endlog;
         day_m = day;
         month_m = month;
         year_m = year;
 
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1554,11 +1528,9 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         m |= ~0x7ff;
     int ex = (d1 & 0x7800) >> 11;
     newValue = ((double)m * (1 << ex) / 100);
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for value object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1595,13 +1567,10 @@ void ValueObject::doSend(bool isWrite)
 
 void ValueObject::setFloatValue(double value)
 {
-    if (!init_m || value != value_m || (flags_m & Force))
+    if (forceUpdate() || value != value_m)
     {
         value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1646,11 +1615,9 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 //    logger_m.infoStream() << "New value int tmp " << tmp << " for ValueObject32 " << getID() << endlog;
 //    const float* nv = reinterpret_cast<const float*>(&tmp);
     double newValue = tmp.fl;
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for ValueObject32 " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1724,13 +1691,10 @@ void UIntObject::setValue(ObjectValue* value)
 
 void UIntObject::setIntValue(uint32_t value)
 {
-    if (!init_m || value != value_m || (flags_m & Force))
+    if (forceUpdate() || value != value_m)
     {
         value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -1765,11 +1729,9 @@ void U8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = (buf[1] & 0x3F);
     else
         newValue = buf[2];
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for U8 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1874,11 +1836,9 @@ void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
     newValue = (buf[2]<<8) | buf[3];
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for U16 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1917,11 +1877,9 @@ void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
     newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for U32 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -1988,13 +1946,10 @@ void IntObject::setValue(ObjectValue* value)
 
 void IntObject::setIntValue(int32_t value)
 {
-    if (!init_m || value != value_m || (flags_m & Force))
+    if (forceUpdate() || value != value_m)
     {
         value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 
@@ -2031,11 +1986,9 @@ void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = buf[2];
     if (newValue > 127)
         newValue -= 256;
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for S8 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -2076,11 +2029,9 @@ void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     newValue = (buf[2]<<8) | buf[3];
     if (newValue > 32767)
         newValue -= 65536;
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for S16 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -2119,11 +2070,9 @@ void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int32_t newValue;
     newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
-    if (!init_m || newValue != value_m)
+    if (forceUpdate() || newValue != value_m)
     {
-        logger_m.infoStream() << "New value " << newValue << " for S32 object " << getID() << endlog;
         value_m = newValue;
-        init_m = true;
         onUpdate();
     }
 }
@@ -2215,11 +2164,9 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     for(int j=2; j<len && buf[j]!=0; j++)
         value.push_back(buf[j]);
 
-    if (!init_m || value != value_m)
+    if (forceUpdate() || value != value_m)
     {
-        logger_m.infoStream() << "New value " << value << " for string object " << getID() << endlog;
         value_m = value;
-        init_m = true;
         onUpdate();
     }
 }
@@ -2239,13 +2186,10 @@ void StringObject::doSend(bool isWrite)
 
 void StringObject::setStringValue(const std::string& value)
 {
-    if (!init_m || value != value_m || (flags_m & Force))
+    if (forceUpdate() || value != value_m)
     {
         value_m = value;
-        if ((flags_m & Transmit) && (flags_m & Comm))
-            doSend(true);
-        init_m = true;
-        onUpdate();
+        onInternalUpdate();
     }
 }
 

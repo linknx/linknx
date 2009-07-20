@@ -75,6 +75,8 @@ public:
     const eibaddr_t getLastTx() { return lastTx_m; };
     void read();
     virtual void onUpdate();
+    void onInternalUpdate();
+    bool forceUpdate() { return (!init_m || (flags_m & Stateless)); };
     void addChangeListener(ChangeListener* listener);
     void removeChangeListener(ChangeListener* listener);
     void onWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -92,7 +94,7 @@ protected:
         Transmit = 0x08,
         Update = 0x10,
         Init = 0x20,
-        Force = 0x80,
+        Stateless = 0x80,
         Default = Comm | Write | Transmit | Update
     };
     int flags_m;
