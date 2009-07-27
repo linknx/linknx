@@ -2267,10 +2267,13 @@ void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object* object)
         return;
     std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range =
         objectMap_m.equal_range(gad);
-    ObjectMap_t::iterator it;
-    for (it = range.first; it != range.second; it++)
+    ObjectMap_t::iterator it = range.first;
+    while(it != range.second) {
         if ((*it).second == object)
-            objectMap_m.erase(it);
+            objectMap_m.erase(it++);
+        else
+            ++it;
+    }
 }
 
 void ObjectController::removeObject(Object* object)
