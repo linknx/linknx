@@ -932,7 +932,7 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
     else if (op == "ne")
         op_m = lt | gt;
     else if (op == "lte")
-        op_m = gt | eq;
+        op_m = lt | eq;
     else if (op == "gte")
         op_m = gt | eq;
     else
