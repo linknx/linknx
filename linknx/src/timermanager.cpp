@@ -94,6 +94,17 @@ void TimerManager::removeTask(TimerTask* task)
     taskList_m.remove(task);
 }
 
+void TimerManager::statusXml(ticpp::Element* pStatus)
+{
+    TaskList_t::iterator it;
+    for (it = taskList_m.begin(); it != taskList_m.end(); it++)
+    {
+        ticpp::Element pElem("task");
+        (*it)->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+}
+
 TimeSpec* TimeSpec::create(const std::string& type, ChangeListener* cl)
 {
     if (type == "variable")
@@ -354,6 +365,12 @@ void PeriodicTask::onTimer(time_t time)
     }
 }
 
+void PeriodicTask::onChange(Object* object)
+{
+    Services::instance()->getTimerManager()->removeTask(this);
+    reschedule(0);
+}
+
 void PeriodicTask::reschedule(time_t now)
 {
     if (now == 0)
@@ -560,6 +577,22 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     return nextExecTime;
 }
 
+void PeriodicTask::statusXml(ticpp::Element* pStatus)
+{
+    struct tm timeinfo;
+    std::stringstream execTime;
+    memcpy(&timeinfo, localtime(&nextExecTime_m), sizeof(struct tm));
+    execTime << timeinfo.tm_year + 1900 << "-"
+    << timeinfo.tm_mon + 1 << "-"
+    << timeinfo.tm_mday << " "
+    << timeinfo.tm_hour << ":"
+    << timeinfo.tm_min << ":"
+    << timeinfo.tm_sec;
+    pStatus->SetAttribute("next-exec", execTime.str());
+    if (cl_m)
+        pStatus->SetAttribute("owner", cl_m->getID());
+}
+
 Logger& FixedTimeTask::logger_m(Logger::getInstance("FixedTimeTask"));
 
 FixedTimeTask::FixedTimeTask() : execTime_m(0)
@@ -590,6 +623,20 @@ void FixedTimeTask::reschedule(time_t now)
     }
     else
         logger_m.infoStream() << "Not rescheduled" << endlog;
+}
+
+void FixedTimeTask::statusXml(ticpp::Element* pStatus)
+{
+    struct tm timeinfo;
+    std::stringstream execTime;
+    memcpy(&timeinfo, localtime(&execTime_m), sizeof(struct tm));
+    execTime << timeinfo.tm_year + 1900 << "-"
+    << timeinfo.tm_mon + 1 << "-"
+    << timeinfo.tm_mday << " "
+    << timeinfo.tm_hour << ":"
+    << timeinfo.tm_min << ":"
+    << timeinfo.tm_sec;
+    pStatus->SetAttribute("next-exec", execTime.str());
 }
 
 void DaySpec::importXml(ticpp::Element* pConfig)

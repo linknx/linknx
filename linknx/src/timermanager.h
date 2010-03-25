@@ -36,6 +36,7 @@ public:
     virtual void onTimer(time_t time) = 0;
     virtual void reschedule(time_t from = 0) = 0;
     virtual time_t getExecTime() = 0;
+    virtual void statusXml(ticpp::Element* pStatus) = 0;
 };
 
 class TimeSpec
@@ -110,11 +111,12 @@ public:
     virtual void onTimer(time_t time);
     virtual void reschedule(time_t from);
     virtual time_t getExecTime() { return nextExecTime_m; };
+    virtual void statusXml(ticpp::Element* pStatus);
 
     void setAt(TimeSpec* at) { at_m = at; };
     void setUntil(TimeSpec* until) { until_m = until; };
     void setDuring(int during) { during_m = during; };
-    virtual void onChange(Object* object) { reschedule(0); };
+    virtual void onChange(Object* object);
 
 protected:
     TimeSpec *at_m, *until_m;
@@ -136,6 +138,7 @@ public:
     virtual void onTimer(time_t time) = 0;
     virtual void reschedule(time_t from);
     virtual time_t getExecTime() { return execTime_m; };
+    virtual void statusXml(ticpp::Element* pStatus);
 
 protected:
     time_t execTime_m;
@@ -162,6 +165,8 @@ public:
 
     void startManager() { Start(); };
     void stopManager() { Stop(); };
+
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     void Run (pth_sem_t * stop);

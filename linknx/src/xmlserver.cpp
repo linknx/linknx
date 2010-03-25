@@ -266,6 +266,30 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     pMsg->SetAttribute("status", "success");
                     sendmessage (doc.GetAsString(), stop);
                 }
+                else if (pRead->Value() == "status")
+                {
+                    ticpp::Element* pConfig = pRead->FirstChildElement(false);
+                    if (pConfig == 0)
+                    {
+                        ticpp::Element timers("timers");
+                        Services::instance()->getTimerManager()->statusXml(&timers);
+                        pRead->LinkEndChild(&timers);
+
+                        ticpp::Element rules("rules");
+                        RuleServer::instance()->statusXml(&rules);
+                        pRead->LinkEndChild(&rules);
+                    }
+                    else if (pConfig->Value() == "timers")
+                    {
+                        Services::instance()->getTimerManager()->statusXml(pConfig);
+                    }
+                    else if (pConfig->Value() == "rules")
+                    {
+                        RuleServer::instance()->statusXml(pConfig);
+                    }
+                    pMsg->SetAttribute("status", "success");
+                    sendmessage (doc.GetAsString(), stop);
+                }
                 else
                     throw "Unknown read element";
             }

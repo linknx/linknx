@@ -70,6 +70,11 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetText(code_m);
 }
 
+void LuaCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "script");
+}
+
 int LuaCondition::obj(lua_State *L)
 {
     if (lua_gettop(L) != 1 || !lua_isstring(L, 1))

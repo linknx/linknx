@@ -38,6 +38,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
     static int obj(lua_State *L);
     static int isException(lua_State *L);
 private:

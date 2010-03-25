@@ -514,6 +514,12 @@ void RxCondition::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("ioport", port_m);
 }
 
+void RxCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "ioport-rx");
+    pStatus->SetAttribute("ioport", port_m);
+}
+
 void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
 {
     if (len > exp_m.length())

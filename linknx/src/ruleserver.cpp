@@ -85,6 +85,17 @@ void RuleServer::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void RuleServer::statusXml(ticpp::Element* pStatus)
+{
+    RuleIdMap_t::iterator it;
+    for (it = rulesMap_m.begin(); it != rulesMap_m.end(); it++)
+    {
+        ticpp::Element pElem("rule");
+        (*it).second->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+}
+
 int RuleServer::parseDuration(const std::string& duration, bool allowNegative)
 {
     if (duration == "")
@@ -289,6 +300,19 @@ void Rule::exportXml(ticpp::Element* pConfig)
             (*it)->exportXml(&pElem);
             pList.LinkEndChild(&pElem);
         }
+    }
+}
+
+void Rule::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("id", id_m);
+    pStatus->SetAttribute("active", (flags_m & Active ? "true" : "false"));
+    pStatus->SetAttribute("state", (prevValue_m ? "true" : "false"));
+    if (condition_m)
+    {
+        ticpp::Element pElem("condition");
+        condition_m->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
     }
 }
 
@@ -800,6 +824,18 @@ void AndCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void AndCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "and");
+    ConditionsList_t::iterator it;
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); it++)
+    {
+        ticpp::Element pElem("condition");
+        (*it)->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+}
+
 OrCondition::OrCondition(ChangeListener* cl) : cl_m(cl)
 {}
 
@@ -841,6 +877,18 @@ void OrCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void OrCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "or");
+    ConditionsList_t::iterator it;
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); it++)
+    {
+        ticpp::Element pElem("condition");
+        (*it)->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+}
+
 NotCondition::NotCondition(ChangeListener* cl) : condition_m(0), cl_m(cl)
 {}
 
@@ -868,6 +916,17 @@ void NotCondition::exportXml(ticpp::Element* pConfig)
         ticpp::Element pElem("condition");
         condition_m->exportXml(&pElem);
         pConfig->LinkEndChild(&pElem);
+    }
+}
+
+void NotCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "not");
+    if (condition_m)
+    {
+        ticpp::Element pElem("condition");
+        condition_m->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
     }
 }
 
@@ -967,6 +1026,15 @@ void ObjectCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("trigger", "true");
 }
 
+void ObjectCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "object");
+    pStatus->SetAttribute("id", object_m->getID());
+    pStatus->SetAttribute("value", object_m->getValue());
+    if (trigger_m)
+        pStatus->SetAttribute("trigger", "true");
+}
+
 ObjectSourceCondition::ObjectSourceCondition(ChangeListener* cl) : ObjectCondition(cl), src_m(0)
 {}
 
@@ -996,6 +1064,12 @@ void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
     ObjectCondition::exportXml(pConfig);
     pConfig->SetAttribute("type", "object-src");
     pConfig->SetAttribute("src", writeaddr(src_m));
+}
+
+void ObjectSourceCondition::statusXml(ticpp::Element* pStatus)
+{
+    ObjectCondition::statusXml(pStatus);
+    pStatus->SetAttribute("type", "object-src");
 }
 
 
@@ -1118,6 +1192,14 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void TimerCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "timer");
+    if (trigger_m)
+        pStatus->SetAttribute("trigger", "true");
+    PeriodicTask::statusXml(pStatus);
+}
+
 TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : condition_m(0), cl_m(cl), lastTime_m(0), lastVal_m(false), counter_m(0), threshold_m(0), resetDelay_m(0)
 {}
 
@@ -1187,3 +1269,15 @@ void TimeCounterCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
+void TimeCounterCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "time-counter");
+    FixedTimeTask::statusXml(pStatus);
+    pStatus->SetAttribute("counter", counter_m);
+    if (condition_m)
+    {
+        ticpp::Element pElem("condition");
+        condition_m->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+}

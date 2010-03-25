@@ -39,6 +39,7 @@ public:
     virtual bool evaluate() = 0;
     virtual void importXml(ticpp::Element* pConfig) = 0;
     virtual void exportXml(ticpp::Element* pConfig) = 0;
+    virtual void statusXml(ticpp::Element* pStatus) = 0;
 
     typedef std::list<Condition*> ConditionsList_t;
 protected:
@@ -54,6 +55,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     ConditionsList_t conditionsList_m;
@@ -69,6 +71,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     ConditionsList_t conditionsList_m;
@@ -84,6 +87,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     Condition* condition_m;
@@ -99,6 +103,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 protected:
     Object* object_m;
@@ -124,6 +129,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     eibaddr_t src_m;
@@ -138,6 +144,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 private:
     bool trigger_m;
     char initVal_m;
@@ -159,6 +166,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
 private:
     Condition* condition_m;
@@ -314,8 +322,9 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void updateXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
-    const char* getID() { return id_m.c_str(); };
+    virtual const char* getID() { return id_m.c_str(); };
     virtual void onChange(Object* object);
 
     void evaluate();
@@ -354,6 +363,7 @@ public:
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
     
     static int parseDuration(const std::string& duration, bool allowNegative = false);
     static std::string formatDuration(int duration);

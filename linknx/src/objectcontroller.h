@@ -36,6 +36,7 @@ class ChangeListener
 public:
     virtual ~ChangeListener() {};
     virtual void onChange(Object* object) = 0;
+    virtual const char* getID() { return "?"; };
 };
 
 class ObjectValue

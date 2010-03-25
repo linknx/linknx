@@ -206,6 +206,7 @@ public:
     virtual bool evaluate();
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
 
     virtual void onDataReceived(const uint8_t* buf, unsigned int len);
 
