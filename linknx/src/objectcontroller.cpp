@@ -357,7 +357,7 @@ std::string SwitchingObjectValue::toString()
 DimmingObjectValue::DimmingObjectValue(const std::string& value)
 {
     std::string dir;
-    unsigned int pos = value.find(":");
+    size_t pos = value.find(":");
     dir = value.substr(0, pos);
     stepcode_m = 1;
     if (pos != value.npos)
@@ -408,7 +408,7 @@ std::string DimmingObjectValue::toString()
 BlindsObjectValue::BlindsObjectValue(const std::string& value)
 {
     std::string dir;
-    unsigned int pos = value.find(":");
+    size_t pos = value.find(":");
     dir = value.substr(0, pos);
     stepcode_m = 1;
     if (pos != value.npos)

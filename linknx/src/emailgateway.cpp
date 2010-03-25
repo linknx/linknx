@@ -103,7 +103,7 @@ int EmailGateway::authCallback(auth_client_request_t request, char **result, int
 MessageBody::MessageBody(std::string& text) : status_m(0)
 {
     std::stringstream msg;
-    unsigned int pos, start = 0;
+    size_t pos, start = 0;
     while ((pos = text.find('\n', start)) != std::string::npos)
     {
         if (pos == 0)
