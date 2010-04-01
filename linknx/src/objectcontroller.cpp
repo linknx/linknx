@@ -71,6 +71,8 @@ Object* Object::create(const std::string& type)
         return new S16Object();
     else if (type == "13.xxx")
         return new S32Object();
+    else if (type == "29.xxx")
+        return new S64Object();
     else if (type == "EIS15" || type == "16.000")
         return new StringObject();
     else
@@ -855,6 +857,27 @@ S32ObjectValue::S32ObjectValue(const std::string& value)
 }
 
 std::string S32ObjectValue::toString()
+{
+    std::ostringstream out;
+    out << value_m;
+    return out.str();
+}
+
+S64ObjectValue::S64ObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "S64ObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string S64ObjectValue::toString()
 {
     std::ostringstream out;
     out << value_m;
@@ -2081,6 +2104,103 @@ void S32Object::doSend(bool isWrite)
 {
     uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+}
+
+Logger& S64Object::logger_m(Logger::getInstance("S64Object"));
+
+S64Object::S64Object()
+{}
+
+S64Object::~S64Object()
+{}
+
+ObjectValue* S64Object::createObjectValue(const std::string& value)
+{
+    return new S64ObjectValue(value);
+}
+
+bool S64Object::equals(ObjectValue* value)
+{
+    assert(value);
+    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream() << "S64Object: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    if (!init_m)
+        read();
+    logger_m.infoStream() << "S64Object (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    return value_m == val->value_m;
+}
+
+int S64Object::compare(ObjectValue* value)
+{
+    assert(value);
+    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream() << "S64Object: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    if (!init_m)
+        read();
+    logger_m.infoStream() << "S64Object (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+
+    if (value_m == val->value_m)
+        return 0;
+    if (value_m > val->value_m)
+        return 1;
+    else
+        return -1;
+}
+
+void S64Object::setValue(ObjectValue* value)
+{
+    assert(value);
+    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    if (val == 0)
+        logger_m.errorStream() << "S64Object: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+    else
+        setIntValue(val->value_m);
+}
+
+void S64Object::setValue(const std::string& value)
+{
+    S64ObjectValue val(value);
+    setIntValue(val.value_m);
+}
+
+std::string S64Object::getValue()
+{
+    return S64ObjectValue(getIntValue()).toString();
+}
+
+void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    int64_t newValue;
+    newValue = ((int64_t)buf[2]<<56) | ((int64_t)buf[3]<<48) | ((int64_t)buf[4]<<40) | ((int64_t)buf[5]<<32) | (buf[6]<<24) | (buf[7]<<16) | (buf[8]<<8) | buf[9];
+    if (forceUpdate() || newValue != value_m)
+    {
+        value_m = newValue;
+        onUpdate();
+    }
+}
+
+void S64Object::doSend(bool isWrite)
+{
+    uint8_t buf[10] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00000000000000LL)>>56), ((value_m & 0xff000000000000LL)>>48), ((value_m & 0xff0000000000LL)>>40), ((value_m & 0xff00000000LL)>>32),
+                                                    ((value_m & 0xff000000LL)>>24), ((value_m & 0xff0000LL)>>16), ((value_m & 0xff00LL)>>8), (value_m & 0xffLL) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 10);
+}
+
+void S64Object::setIntValue(int64_t value)
+{
+    if (forceUpdate() || value != value_m)
+    {
+        value_m = value;
+        onInternalUpdate();
+    }
 }
 
 Logger& StringObject::logger_m(Logger::getInstance("StringObject"));

@@ -77,6 +77,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testS32ObjectUpdate );
     CPPUNIT_TEST( testS32ExportImport );
     CPPUNIT_TEST( testS32Persist );
+    CPPUNIT_TEST( testS64Object );
+    CPPUNIT_TEST( testS64ObjectWrite );
+    CPPUNIT_TEST( testS64ObjectUpdate );
+    CPPUNIT_TEST( testS64ExportImport );
+    CPPUNIT_TEST( testS64Persist );
     CPPUNIT_TEST( testStringObject );
     CPPUNIT_TEST( testStringObjectWrite );
     CPPUNIT_TEST( testStringObjectUpdate );
@@ -2566,6 +2571,180 @@ public:
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-2147483648");
+        delete res3;
+    }
+
+    void testS64Object()
+    {
+        ObjectValue* val;
+        S64Object t, t2;
+        t.setValue("0");
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        t2.setValue("2147483649");
+        CPPUNIT_ASSERT(t2.getValue() == "2147483649");
+
+        t.setValue("10");
+        CPPUNIT_ASSERT(t.getValue() == "10");
+        t2.setValue("-4147483648");
+        CPPUNIT_ASSERT(t2.getValue() == "-4147483648");
+
+        CPPUNIT_ASSERT_EQUAL((int64_t)10, t.getIntValue());
+        CPPUNIT_ASSERT_EQUAL((int64_t)-4147483648ULL, t2.getIntValue());
+
+        CPPUNIT_ASSERT_THROW(t.setValue("−9223372036854775809"), ticpp::Exception); // −9223372036854775808 to 9223372036854775807
+        CPPUNIT_ASSERT_THROW(t.setValue("9223372036854775808"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("10000000000000000000"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("akmgfbf"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("25.1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("75,6"), ticpp::Exception);
+
+        S64ObjectValue tval("10");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("10");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;      
+
+        S64ObjectValue tval2("-4147483648");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("-4147483648");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;      
+
+        t.setIntValue(-2000000000LL);
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        CPPUNIT_ASSERT_EQUAL((int64_t)-2000000000LL, t.getIntValue());
+    }
+
+    void testS64ObjectWrite()
+    {
+        S64Object t;
+        t.setValue("-2000000000");
+        t.addChangeListener(this);
+
+        uint8_t buf[10] = {0, 0x80, 0, 0, 0, 0, 0x77, 0x35, 0x94, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);        
+        CPPUNIT_ASSERT(t.getValue() == "2000000000");
+        S64ObjectValue tval1("2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0xff;
+        buf[3] = 0xff;
+        buf[4] = 0xff;
+        buf[5] = 0xff;
+        buf[6] = 0x88;
+        buf[7] = 0xCA;
+        buf[8] = 0x6C;
+        buf[9] = 0x00;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);       
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        S64ObjectValue tval2("-2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);        
+        CPPUNIT_ASSERT(t.getValue() == "-2000000000");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0;
+        buf[3] = 0;
+        buf[4] = 0;
+        buf[5] = 0;
+        buf[6] = 0;
+        buf[7] = 0;
+        buf[8] = 0;
+        buf[9] = 0;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);       
+        CPPUNIT_ASSERT(t.getValue() == "0");
+        S64ObjectValue tval3("0");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        CPPUNIT_ASSERT_EQUAL((int64_t)0, t.getIntValue());
+    }
+
+    void testS64ObjectUpdate()
+    {
+        S64Object t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("-2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000169");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2000000170");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testS64ExportImport()
+    {
+        S64Object orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<S64Object*>(res));
+        delete res;
+    }
+
+    void testS64Persist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_scale");
+        pConfig.SetAttribute("type", "29.xxx");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("5000000000");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "5000000000");
+        res->setValue("0");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "0");
+        res2->setValue("-6147483648");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "-6147483648");
         delete res3;
     }
 

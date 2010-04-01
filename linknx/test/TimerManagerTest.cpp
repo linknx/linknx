@@ -10,6 +10,7 @@ public:
     virtual void onTimer(time_t time) { isOnTimerCalled_m = true; };
     virtual void reschedule(time_t from = 0) {};
     virtual time_t getExecTime() { return execTime_m; };
+    virtual void statusXml(ticpp::Element* pStatus) {};
 };
 
 class TimerManagerTest : public CppUnit::TestFixture

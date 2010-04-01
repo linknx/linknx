@@ -484,6 +484,34 @@ protected:
     static Logger& logger_m;
 };
 
+class S64Object : public Object
+{
+public:
+    S64Object();
+    virtual ~S64Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getValue();
+    virtual std::string getType() { return "29.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+
+    void setIntValue(int64_t value);
+    int64_t getIntValue()
+    {
+        if (!init_m)
+            read();
+        return value_m;
+    };
+protected:
+    int64_t value_m;
+    static Logger& logger_m;
+};
+
 class StringObject : public Object
 {
 public:
@@ -736,6 +764,19 @@ protected:
     S32ObjectValue(int32_t value) : IntObjectValue(value) {};
     S32ObjectValue() {};
     friend class S32Object;
+};
+
+class S64ObjectValue : public ObjectValue
+{
+public:
+    S64ObjectValue(const std::string& value);
+    virtual ~S64ObjectValue() {};
+    virtual std::string toString();
+protected:
+    S64ObjectValue(int64_t value) : value_m(value) {};
+    S64ObjectValue() {};
+    friend class S64Object;
+    int64_t value_m;
 };
 
 class StringObjectValue : public ObjectValue
