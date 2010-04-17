@@ -1223,6 +1223,7 @@ bool TimeCounterCondition::evaluate()
         lastTime_m = now;
         lastVal_m = true;
         execTime_m = now + (threshold_m - counter_m) + 1;
+        Services::instance()->getTimerManager()->removeTask(this);
         reschedule(0);
     }
     else if (lastVal_m)
@@ -1230,6 +1231,7 @@ bool TimeCounterCondition::evaluate()
         lastTime_m = now;
         lastVal_m = false;
         execTime_m = now + resetDelay_m + 1;
+        Services::instance()->getTimerManager()->removeTask(this);
         reschedule(0);
     }
 
