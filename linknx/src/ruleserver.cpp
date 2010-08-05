@@ -1213,7 +1213,7 @@ bool TimeCounterCondition::evaluate()
 {
     time_t now = time(0);
     bool val = condition_m->evaluate(); 
-    if (lastVal_m)
+    if (lastVal_m && (counter_m < threshold_m))
     {
         counter_m += now - lastTime_m;
         Condition::logger_m.infoStream() << "TimeCounterCondition: counter is now  '" << counter_m << "'" << endlog;
@@ -1222,9 +1222,12 @@ bool TimeCounterCondition::evaluate()
     {
         lastTime_m = now;
         lastVal_m = true;
-        execTime_m = now + (threshold_m - counter_m) + 1;
-        Services::instance()->getTimerManager()->removeTask(this);
-        reschedule(0);
+        if (counter_m < threshold_m)
+        {
+            execTime_m = now + (threshold_m - counter_m) + 1;
+            Services::instance()->getTimerManager()->removeTask(this);
+            reschedule(0);
+        }
     }
     else if (lastVal_m)
     {

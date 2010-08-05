@@ -50,8 +50,14 @@ TimerManager::TimerCheck TimerManager::checkTaskList(time_t now)
     }
     else
         logger_m.warnStream() << "TimerTask skipped due to clock skew or heavy load. " << nextExec << endlog;
-    taskList_m.pop_front();
-    first->reschedule(now);
+    
+    if (first == taskList_m.front())
+    {
+        // If the taskList was modified, do not remove the first item
+        // because it's not the one we just called onTimer for.
+        taskList_m.pop_front();
+        first->reschedule(now);
+    }
     return Immediate;
 }
 
