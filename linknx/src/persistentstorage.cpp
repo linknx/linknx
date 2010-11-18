@@ -176,9 +176,7 @@ void MysqlPersistentStorage::write(const std::string& id, const std::string& val
 
     if (mysql_real_query(&con_m, sql.str().c_str(), sql.str().length()) != 0)
     {
-        std::stringstream msg;
-        msg << "MysqlPersistentStorage: error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << std::endl;
-        throw ticpp::Exception(msg.str());
+        logger_m.errorStream() << "Error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << endlog;
     }
 }
 
@@ -218,9 +216,7 @@ std::string MysqlPersistentStorage::read(const std::string& id, const std::strin
         {
             value = defval;
             
-            std::stringstream msg;
-            msg << "MysqlPersistentStorage: error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" <<std::endl;
-            throw ticpp::Exception(msg.str());
+            logger_m.errorStream() << "Error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << endlog;
         }
     }
 
@@ -239,9 +235,7 @@ void MysqlPersistentStorage::writelog(const std::string& id, const std::string& 
 
     if (mysql_real_query(&con_m, sql.str().c_str(), sql.str().length()) != 0)
     {
-        std::stringstream msg;
-        msg << "MysqlPersistentStorage: error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << std::endl;
-        throw ticpp::Exception(msg.str());
+        logger_m.errorStream() << "Error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << endlog;
     }
 }
 #endif // HAVE_MYSQL
