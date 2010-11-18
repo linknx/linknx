@@ -141,7 +141,7 @@ main (int ac, char *ag[])
 
     argp_parse (&argp, ac, ag, 0, &index, &arg);
     if (index < ac)
-        die ("unexpected parameter");
+        die ("unexpected parameter: %s\n", ag[index]);
 
     signal (SIGPIPE, SIG_IGN);
     pth_init ();
