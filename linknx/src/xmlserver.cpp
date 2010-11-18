@@ -472,7 +472,7 @@ void ClientConnection::onChange(Object* object)
 {
 //    sendmessage ("<notify id=status='success'/>\n", stop);
     std::stringstream msg;
-    msg << "<notify id='" << object->getID() << "'>" << object->getValue() << "</read>" << std::endl;
+    msg << "<notify id='" << object->getID() << "'>" << object->getValue() << "</notify>" << std::endl;
     sendmessage (msg.str(), NULL);
 }
 
