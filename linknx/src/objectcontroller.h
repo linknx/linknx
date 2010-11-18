@@ -813,6 +813,7 @@ public:
     virtual void onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len);
     virtual void onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len);
     virtual void onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len);
+    virtual std::list<Object*> getObjects();
 
 private:
     ObjectController();

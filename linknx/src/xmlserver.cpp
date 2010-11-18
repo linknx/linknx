@@ -390,6 +390,26 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 notifyList_m.remove(obj);
                                 obj->removeChangeListener(this);
                             }
+                            else if (pObjects->Value() == "registerall" || pObjects->Value() == "unregisterall")
+                            {
+                                NotifyList_t::iterator it;
+                                for (it=notifyList_m.begin(); it != notifyList_m.end(); it++)
+                                {
+                                    (*it)->removeChangeListener(this);
+                                }
+                                notifyList_m.clear();
+
+                                if (pObjects->Value() == "registerall") 
+                                {
+                                    std::list<Object*> objList = ObjectController::instance()->getObjects();
+                                    std::list<Object*>::iterator it;
+                                    for (it=objList.begin(); it != objList.end(); it++)
+                                    {
+                                        notifyList_m.push_back((*it));
+                                        (*it)->addChangeListener(this);
+                                    }
+                                }
+                            }
                             else
                                 throw "Unknown objects element";
                         }

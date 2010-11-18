@@ -2488,3 +2488,15 @@ void ObjectController::exportObjectValues(ticpp::Element* pObjects)
         pObjects->LinkEndChild(&pElem);
     }
 }
+
+// Delivers all objects
+std::list<Object*> ObjectController::getObjects()
+{
+    std::list<Object*> objects;
+    ObjectIdMap_t::iterator it;
+    for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
+    {
+      objects.push_back((*it).second);
+    }
+    return objects;
+}

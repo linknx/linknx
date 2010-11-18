@@ -1,4 +1,5 @@
 Release 0.0.1.28:
+	* Add command to Register/Unregister all objects for notification (Mike Pieper)
 	* Better command-line parameter error reporting (Mike Pieper)
 	* Fixes the XML for a notification message (Mike Pieper)
 	* Avoid linknx crash in case of mysql error
