@@ -473,16 +473,33 @@ int ClientConnection::readmessage (pth_event_t stop)
     int i;
     std::stringstream msg;
 
+    if (msgbuf_m.size() > 0)
+    {
+        // we have already some data in the message buffer
+        std::string::size_type len = msgbuf_m.find_first_of('\004');
+        if (std::string::npos != len)
+        {
+            // Complete message in the buffer
+            msg_m = msgbuf_m.substr(0, len);
+            msgbuf_m.erase(0, len+1);
+            return 1;
+        }
+        msg << msgbuf_m;
+    }
+
     while ((i = pth_read_ev (fd_m, &buf, 256, stop)) > 0)
     {
         std::string tstr(buf, i);
-        msg << tstr;
-
-        if (buf[i-1] == 4)
+        std::string::size_type len = tstr.find_first_of('\004');
+        if (std::string::npos != len)
         {
+            // Complete message in the buffer
+            msg << tstr.substr(0, len);
             msg_m = msg.str();
+            msgbuf_m = tstr.substr(len+1);
             return 1;
         }
+        msg << tstr;
     }
 
     return -1;

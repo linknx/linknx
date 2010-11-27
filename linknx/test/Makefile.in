@@ -50,7 +50,8 @@ am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
 	testmain-ExceptionDaysTest.$(OBJEXT) \
 	testmain-TimerManagerTest.$(OBJEXT) \
 	testmain-PeriodicTaskTest.$(OBJEXT) \
-	testmain-testmain.$(OBJEXT) testmain-ruleserver.$(OBJEXT) \
+	testmain-XmlServerTest.$(OBJEXT) testmain-testmain.$(OBJEXT) \
+	testmain-ruleserver.$(OBJEXT) \
 	testmain-objectcontroller.$(OBJEXT) common.$(OBJEXT) \
 	eibclient.$(OBJEXT) testmain-threads.$(OBJEXT) \
 	testmain-timermanager.$(OBJEXT) \
@@ -188,7 +189,7 @@ target_alias = @target_alias@
 
 # Rules for the test code (use `make check` to execute)
 TESTS = testmain
-testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp XmlServerTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
@@ -247,6 +248,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-PeriodicTaskTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimeSpecTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimerManagerTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-XmlServerTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-emailgateway.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ioport.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-knxconnection.Po@am__quote@
@@ -402,6 +404,20 @@ testmain-PeriodicTaskTest.obj: PeriodicTaskTest.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PeriodicTaskTest.cpp' object='testmain-PeriodicTaskTest.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-PeriodicTaskTest.obj `if test -f 'PeriodicTaskTest.cpp'; then $(CYGPATH_W) 'PeriodicTaskTest.cpp'; else $(CYGPATH_W) '$(srcdir)/PeriodicTaskTest.cpp'; fi`
+
+testmain-XmlServerTest.o: XmlServerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-XmlServerTest.o -MD -MP -MF "$(DEPDIR)/testmain-XmlServerTest.Tpo" -c -o testmain-XmlServerTest.o `test -f 'XmlServerTest.cpp' || echo '$(srcdir)/'`XmlServerTest.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-XmlServerTest.Tpo" "$(DEPDIR)/testmain-XmlServerTest.Po"; else rm -f "$(DEPDIR)/testmain-XmlServerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='XmlServerTest.cpp' object='testmain-XmlServerTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-XmlServerTest.o `test -f 'XmlServerTest.cpp' || echo '$(srcdir)/'`XmlServerTest.cpp
+
+testmain-XmlServerTest.obj: XmlServerTest.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-XmlServerTest.obj -MD -MP -MF "$(DEPDIR)/testmain-XmlServerTest.Tpo" -c -o testmain-XmlServerTest.obj `if test -f 'XmlServerTest.cpp'; then $(CYGPATH_W) 'XmlServerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/XmlServerTest.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/testmain-XmlServerTest.Tpo" "$(DEPDIR)/testmain-XmlServerTest.Po"; else rm -f "$(DEPDIR)/testmain-XmlServerTest.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='XmlServerTest.cpp' object='testmain-XmlServerTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-XmlServerTest.obj `if test -f 'XmlServerTest.cpp'; then $(CYGPATH_W) 'XmlServerTest.cpp'; else $(CYGPATH_W) '$(srcdir)/XmlServerTest.cpp'; fi`
 
 testmain-testmain.o: testmain.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-testmain.o -MD -MP -MF "$(DEPDIR)/testmain-testmain.Tpo" -c -o testmain-testmain.o `test -f 'testmain.cpp' || echo '$(srcdir)/'`testmain.cpp; \

@@ -89,6 +89,7 @@ public:
     virtual void onChange(Object* object);
 
     std::string msg_m;
+    std::string msgbuf_m;
 private:
     int fd_m;
     XmlServer *server_m;
