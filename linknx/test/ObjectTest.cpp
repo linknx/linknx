@@ -82,11 +82,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testS64ObjectUpdate );
     CPPUNIT_TEST( testS64ExportImport );
     CPPUNIT_TEST( testS64Persist );
-    CPPUNIT_TEST( testStringObject );
-    CPPUNIT_TEST( testStringObjectWrite );
-    CPPUNIT_TEST( testStringObjectUpdate );
-    CPPUNIT_TEST( testStringExportImport );
-    CPPUNIT_TEST( testStringPersist );
+    CPPUNIT_TEST( testString14Object );
+    CPPUNIT_TEST( testString14ObjectWrite );
+    CPPUNIT_TEST( testString14ObjectUpdate );
+    CPPUNIT_TEST( testString14ExportImport );
+    CPPUNIT_TEST( testString14Persist );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -2748,10 +2748,10 @@ public:
         delete res3;
     }
 
-    void testStringObject()
+    void testString14Object()
     {
         ObjectValue* val;
-        StringObject s, s2;
+        String14Object s, s2;
         s.setValue("test");
         CPPUNIT_ASSERT(s.getValue() == "test");
         s2.setValue("Hi there!");
@@ -2771,7 +2771,7 @@ public:
         CPPUNIT_ASSERT_THROW(s.setValue("more than 14 characters"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(s.setValue("just a bit more"), ticpp::Exception);
 
-        StringObjectValue sval("Some text !?=+");
+        String14ObjectValue sval("Some text !?=+");
         CPPUNIT_ASSERT(s.equals(&sval));
         CPPUNIT_ASSERT(!s2.equals(&sval));
 
@@ -2780,7 +2780,7 @@ public:
         CPPUNIT_ASSERT(!s2.equals(val));
         delete val;      
 
-        StringObjectValue sval2("AnotherMessage");
+        String14ObjectValue sval2("AnotherMessage");
         CPPUNIT_ASSERT(!s.equals(&sval2));
         CPPUNIT_ASSERT(s2.equals(&sval2));
 
@@ -2793,9 +2793,9 @@ public:
         CPPUNIT_ASSERT(s.getValue() == "A test \n value");
     }
 
-    void testStringObjectWrite()
+    void testString14ObjectWrite()
     {
-        StringObject s;
+        String14Object s;
         s.setValue("something");
         s.addChangeListener(this);
 
@@ -2811,7 +2811,7 @@ public:
         isOnChangeCalled_m = false;
         s.onWrite(buf, 16, src);       
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
-        StringObjectValue sval1("EIB IS OK");
+        String14ObjectValue sval1("EIB IS OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -2825,14 +2825,14 @@ public:
         isOnChangeCalled_m = false;
         s.onWrite(buf, 16, src);       
         CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK");
-        StringObjectValue sval2("EIB IS\nOK");
+        String14ObjectValue sval2("EIB IS\nOK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
-    void testStringObjectUpdate()
+    void testString14ObjectUpdate()
     {
-        StringObject s;
+        String14Object s;
         s.addChangeListener(this);
 
         isOnChangeCalled_m = false;
@@ -2854,9 +2854,9 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
     }
 
-    void testStringExportImport()
+    void testString14ExportImport()
     {
-        StringObject orig;
+        String14Object orig;
         Object *res;
         ticpp::Element pConfig;
 
@@ -2864,11 +2864,11 @@ public:
         orig.exportXml(&pConfig);
         res = Object::create(&pConfig);
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
-        CPPUNIT_ASSERT(dynamic_cast<StringObject*>(res));
+        CPPUNIT_ASSERT(dynamic_cast<String14Object*>(res));
         delete res;
     }
 
-    void testStringPersist()
+    void testString14Persist()
     {
         system ("rm -rf /tmp/linknx_unittest");
         system ("mkdir /tmp/linknx_unittest");

@@ -74,6 +74,8 @@ Object* Object::create(const std::string& type)
     else if (type == "29.xxx")
         return new S64Object();
     else if (type == "EIS15" || type == "16.000")
+        return new String14Object();
+    else if (type == "28.001")
         return new StringObject();
     else
         return 0;
@@ -886,10 +888,21 @@ std::string S64ObjectValue::toString()
 
 StringObjectValue::StringObjectValue(const std::string& value)
 {
+    value_m = value;
+//    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
+}
+
+std::string StringObjectValue::toString()
+{
+    return value_m;
+}
+
+String14ObjectValue::String14ObjectValue(const std::string& value): StringObjectValue(value)
+{
     if ( value.length() > 14)
     {
         std::stringstream msg;
-        msg << "StringObjectValue: Bad value (too long): '" << value << "'" << std::endl;
+        msg << "String14ObjectValue: Bad value (too long): '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
     std::string::const_iterator it = value.begin();
@@ -898,18 +911,11 @@ StringObjectValue::StringObjectValue(const std::string& value)
         if (*it < 0)
         {
             std::stringstream msg;
-            msg << "StringObjectValue: Bad value (invalid character): '" << value << "'" << std::endl;
+            msg << "String14ObjectValue: Bad value (invalid character): '" << value << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
         ++it;
     }
-    value_m = value;
-//    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
-}
-
-std::string StringObjectValue::toString()
-{
-    return value_m;
 }
 
 SwitchingObject::SwitchingObject() : value_m(false)
@@ -2311,6 +2317,25 @@ void StringObject::setStringValue(const std::string& value)
         value_m = value;
         onInternalUpdate();
     }
+}
+
+Logger& String14Object::logger_m(Logger::getInstance("String14Object"));
+
+String14Object::String14Object()
+{}
+
+String14Object::~String14Object()
+{}
+
+ObjectValue* String14Object::createObjectValue(const std::string& value)
+{
+    return new String14ObjectValue(value);
+}
+
+void String14Object::setValue(const std::string& value)
+{
+    String14ObjectValue val(value);
+    setStringValue(val.value_m);
 }
 
 ObjectController::ObjectController()

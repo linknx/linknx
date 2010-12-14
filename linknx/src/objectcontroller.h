@@ -524,7 +524,7 @@ public:
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual std::string getValue();
-    virtual std::string getType() { return "16.000"; };
+    virtual std::string getType() { return "28.001"; };
 
     void setStringValue(const std::string& val);
 
@@ -532,6 +532,19 @@ public:
     virtual void doSend(bool isWrite);
 protected:
     std::string value_m;
+    static Logger& logger_m;
+};
+
+class String14Object : public StringObject
+{
+public:
+    String14Object();
+    virtual ~String14Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "16.000"; };
+protected:
     static Logger& logger_m;
 };
 
@@ -787,7 +800,14 @@ public:
     virtual std::string toString();
 protected:
     friend class StringObject;
+    friend class String14Object;
     std::string value_m;
+};
+
+class String14ObjectValue : public StringObjectValue
+{
+public:
+    String14ObjectValue(const std::string& value);
 };
 
 class ObjectController : public TelegramListener
