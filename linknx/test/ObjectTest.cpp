@@ -87,6 +87,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testString14ObjectUpdate );
     CPPUNIT_TEST( testString14ExportImport );
     CPPUNIT_TEST( testString14Persist );
+    CPPUNIT_TEST( testStringObject );
+    CPPUNIT_TEST( testStringObjectWrite );
+    CPPUNIT_TEST( testStringObjectUpdate );
+    CPPUNIT_TEST( testStringExportImport );
+    CPPUNIT_TEST( testStringPersist );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
     
@@ -2900,6 +2905,160 @@ public:
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "14  characters");
+        res3->setValue("");
+        delete res3;
+
+        Object *res4 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res4->getValue() == "");
+        delete res4;
+    }
+
+    void testStringObject()
+    {
+        ObjectValue* val;
+        StringObject s, s2;
+        s.setValue("test");
+        CPPUNIT_ASSERT(s.getValue() == "test");
+        s2.setValue("Hi there! This is more than 14 characters");
+        CPPUNIT_ASSERT(s2.getValue() == "Hi there! This is more than 14 characters");
+
+        s.setValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        s2.setValue("AnotherMessage with special chars 'éµë' ");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage with special chars 'éµë' ");
+
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage with special chars 'éµë' ");
+
+        String14ObjectValue sval("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(&sval));
+        CPPUNIT_ASSERT(!s2.equals(&sval));
+
+        val = s.createObjectValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(val));
+        CPPUNIT_ASSERT(!s2.equals(val));
+        delete val;      
+
+        StringObjectValue sval2("AnotherMessage with special chars 'éµë' ");
+        CPPUNIT_ASSERT(!s.equals(&sval2));
+        CPPUNIT_ASSERT(s2.equals(&sval2));
+
+        val = s.createObjectValue("AnotherMessage with special chars 'éµë' ");
+        CPPUNIT_ASSERT(!s.equals(val));
+        CPPUNIT_ASSERT(s2.equals(val));
+        delete val;      
+
+        s.setStringValue("A test \n value");
+        CPPUNIT_ASSERT(s.getValue() == "A test \n value");
+    }
+
+    void testStringObjectWrite()
+    {
+        StringObject s;
+        s.setValue("something bigger");
+        s.addChangeListener(this);
+
+        uint8_t buf[32] = {0, 0x80, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x20, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 32, src);        
+        CPPUNIT_ASSERT(s.getValue() == "EIB is OK EIB is OK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[6] = 0x49;
+        buf[7] = 0x53;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 32, src);       
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK EIB is OK");
+        StringObjectValue sval1("EIB IS OK EIB is OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 32, src);        
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK EIB is OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[8] = 0x0a;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 32, src);       
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK EIB is OK");
+        StringObjectValue sval2("EIB IS\nOK EIB is OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+    }
+
+    void testStringObjectUpdate()
+    {
+        StringObject s;
+        s.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK?");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        s.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("something else");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testStringExportImport()
+    {
+        StringObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<StringObject*>(res));
+        delete res;
+    }
+
+    void testStringPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_string");
+        pConfig.SetAttribute("type", "28.001");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("EIB is OK EIB is OK");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "EIB is OK EIB is OK");
+        res->setValue("Test \r\n ?!=+");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?!=+");
+        res2->setValue("16    characters");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "16    characters");
         res3->setValue("");
         delete res3;
 
