@@ -183,13 +183,19 @@ int LuaScriptAction::obj(lua_State *L)
 
 int LuaScriptAction::set(lua_State *L)
 {
+    const char *val = lua_tostring(L, 2);
     if (lua_gettop(L) != 2 || !lua_isstring(L, 1))
     {
         lua_pushstring(L, "Incorrect argument to 'set'");
         lua_error(L);
     }
+    if (val == NULL)
+    {
+        lua_pushstring(L, "Incorrect value for 'set'");
+        lua_error(L);
+    }
     std::string id(lua_tostring(L, 1));
-    std::string value(lua_tostring(L, 2));
+    std::string value(val);
     debugStream("LuaScriptAction") << "Setting object with id=" << id << endlog;
     try {
         Object* object = ObjectController::instance()->getObject(id);
