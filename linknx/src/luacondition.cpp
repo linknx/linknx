@@ -29,6 +29,7 @@ extern "C"
 }
 #include <ctime>
 #include "services.h"
+#include "ioport.h"
 
 LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0)
 {
@@ -128,6 +129,7 @@ LuaScriptAction::LuaScriptAction()
     luaL_openlibs(l_m);
     lua_register(l_m, "obj", LuaScriptAction::obj);  
     lua_register(l_m, "set", LuaScriptAction::set);  
+    lua_register(l_m, "iosend", LuaScriptAction::iosend);  
 }
 
 LuaScriptAction::~LuaScriptAction()
@@ -205,6 +207,46 @@ int LuaScriptAction::set(lua_State *L)
     catch( ticpp::Exception& ex )
     {
         lua_pushstring(L, "Error while setting object value");
+        lua_error(L);
+    }
+
+    return 0;
+}
+
+int LuaScriptAction::iosend(lua_State *L)
+{
+    const char *val = lua_tostring(L, 2);
+    if (lua_gettop(L) != 2 || !lua_isstring(L, 1))
+    {
+        lua_pushstring(L, "Incorrect argument to 'iosend'");
+        lua_error(L);
+    }
+    if (val == NULL)
+    {
+        lua_pushstring(L, "Incorrect value for 'iosend'");
+        lua_error(L);
+    }
+    std::string id(lua_tostring(L, 1));
+    std::string value(val);
+    debugStream("LuaScriptAction") << "Sending on ioport " << id << endlog;
+    try
+    {
+        IOPort* port = IOPortManager::instance()->getPort(id);
+        if (!port)
+            throw ticpp::Exception("IO Port ID not found.");
+        const uint8_t* data = reinterpret_cast<const uint8_t*>(value.c_str());
+        int len = value.length();
+        int ret = port->send(data, len);
+        if (ret != len) {
+            ret = port->send(data, len);
+            if (ret != len)
+                throw ticpp::Exception("Unable to send data.");
+        }
+        debugStream("LuaScriptAction") << "Sent '" << value << "' on ioport " << id << endlog;
+    }
+    catch( ticpp::Exception& ex )
+    {
+        lua_pushstring(L, "Error while sending on io port");
         lua_error(L);
     }
 

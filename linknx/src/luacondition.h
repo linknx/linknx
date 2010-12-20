@@ -58,6 +58,7 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
     static int obj(lua_State *L);
     static int set(lua_State *L);
+    static int iosend(lua_State *L);
 
 private:
     virtual void Run (pth_sem_t * stop);
