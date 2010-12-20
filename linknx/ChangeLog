@@ -1,4 +1,5 @@
 Release 0.0.1.28:
+	* Support for serial IO port
 	* Support for variable length string objects (DPT 28.001)
 	* Allow multiple messages in receive buffer (Mike Pieper)
 	* Add command to Register/Unregister all objects for notification (Mike Pieper)

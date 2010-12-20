@@ -19,11 +19,13 @@
 
 #include <iostream>
 #include "ioport.h"
+#include <fcntl.h>
 
 Logger& IOPort::logger_m(Logger::getInstance("IOPort"));
 Logger& RxThread::logger_m(Logger::getInstance("RxThread"));
 Logger& UdpIOPort::logger_m(Logger::getInstance("UdpIOPort"));
 Logger& TcpClientIOPort::logger_m(Logger::getInstance("TcpClientIOPort"));
+Logger& SerialIOPort::logger_m(Logger::getInstance("SerialIOPort"));
 
 IOPortManager* IOPortManager::instance_m;
 
@@ -127,6 +129,8 @@ IOPort* IOPort::create(const std::string& type)
         return new UdpIOPort();
     else if (type == "tcp")
         return new TcpClientIOPort();
+    else if (type == "serial")
+        return new SerialIOPort();
     else
         return 0;
 }
@@ -421,6 +425,147 @@ void TcpClientIOPort::disconnectFromServer()
         logger_m.errorStream() << "Unable to close connection to server for ioport " << getID() << endlog;
     }
     sockfd_m = -1;
+}
+
+SerialIOPort::SerialIOPort() : fd_m(-1)
+{
+    memset (&newtio_m, 0, sizeof (newtio_m));
+}
+
+SerialIOPort::~SerialIOPort()
+{
+    if (fd_m >= 0) {
+        // restore old port settings
+        tcsetattr(fd_m, TCSANOW, &oldtio_m);
+        close(fd_m);
+    }
+    Logger::getInstance("SerialIOPort").debugStream() << "Deleting SerialIOPort " << endlog;
+}
+
+void SerialIOPort::importXml(ticpp::Element* pConfig)
+{
+    int speed;
+    memset (&newtio_m, 0, sizeof (newtio_m));
+    pConfig->GetAttribute("dev", &dev_m);
+    pConfig->GetAttribute("speed", &speed);
+    switch (speed) {
+        case 2400:
+            speed_m = B2400;
+            break;
+        case 4800:
+            speed_m = B4800;
+            break;
+        case 9600:
+            speed_m = B9600;
+            break;
+        case 19200:
+            speed_m = B19200;
+            break;
+        case 38400:
+            speed_m = B38400;
+            break;
+        case 57600:
+            speed_m = B57600;
+            break;
+        case 115200:
+            speed_m = B115200;
+            break;
+        default:
+            logger_m.errorStream() << "Unsupported speed '" << speed << "' for serial port" << endlog;
+            speed_m = B9600;
+            break;
+    }
+    IOPort::importXml(pConfig);
+
+    fd_m = open(dev_m.c_str(), O_RDWR | O_NOCTTY );
+    if (fd_m >= 0) {
+        // Save previous port settings
+        tcgetattr(fd_m, &oldtio_m);
+        newtio_m.c_cflag = CS8 | CLOCAL | CREAD;
+        newtio_m.c_iflag = IGNPAR | ICRNL;
+        newtio_m.c_oflag = 0;
+        newtio_m.c_lflag = ICANON;
+         
+        newtio_m.c_cc[VTIME] = 0; // inter character timer disabled
+        newtio_m.c_cc[VMIN]  = 1; // block until 1 character arrives
+        cfsetispeed(&newtio_m, speed_m);
+        cfsetospeed(&newtio_m, speed_m);
+        
+        tcflush(fd_m, TCIFLUSH);
+        tcsetattr(fd_m, TCSANOW, &newtio_m);
+        logger_m.infoStream() << "SerialIOPort configured for device " << dev_m << endlog;
+    }
+    else {
+        logger_m.errorStream() << "Unable to open device '" << dev_m << "' for ioport " << getID() << endlog;
+    }    
+}
+
+void SerialIOPort::exportXml(ticpp::Element* pConfig)
+{
+    int speed;
+    pConfig->SetAttribute("dev", dev_m);
+    switch (speed_m) {
+        case B2400:
+            speed = 2400;
+            break;
+        case B4800:
+            speed = 4800;
+            break;
+        case B9600:
+            speed = 9600;
+            break;
+        case B19200:
+            speed = 19200;
+            break;
+        case B38400:
+            speed = 38400;
+            break;
+        case B57600:
+            speed = 57600;
+            break;
+        case B115200:
+            speed = 115200;
+            break;
+        default:
+            speed = 9600;
+            break;
+    }
+    pConfig->SetAttribute("speed", speed);
+    IOPort::exportXml(pConfig);
+}
+
+int SerialIOPort::send(const uint8_t* buf, int len)
+{
+    logger_m.infoStream() << "send(buf, len=" << len << "):"
+        << buf << endlog;
+
+    if (fd_m >= 0) {
+        ssize_t nbytes = pth_write(fd_m, buf, len);
+        if (nbytes == len) {
+            return nbytes;
+        }
+        else {
+            logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
+        }
+    }
+    return -1;
+}
+
+int SerialIOPort::get(uint8_t* buf, int len, pth_event_t stop)
+{
+    logger_m.debugStream() << "get(buf, len=" << len << "):"
+        << buf << endlog;
+    if (fd_m >= 0) {
+        ssize_t i = pth_read_ev(fd_m, buf, len, stop);
+//        logger_m.debugStream() << "Out of recvfrom " << i << " rl=" << rl << endlog;
+        if (i > 0)
+        {
+            std::string msg(reinterpret_cast<const char*>(buf), i);
+            logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
+            return i;
+        }
+    }
+    return -1;
 }
 
 TxAction::TxAction()

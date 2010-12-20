@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <termios.h>
 
 
 
@@ -179,6 +180,27 @@ private:
     
     void connectToServer();
     void disconnectFromServer();
+};
+
+class SerialIOPort : public IOPort
+{
+public:
+    SerialIOPort();
+    virtual ~SerialIOPort();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    int send(const uint8_t* buf, int len);
+    int get(uint8_t* buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled() { return true; };
+
+private:
+    std::string dev_m;
+    speed_t speed_m;
+    int fd_m;
+    struct termios oldtio_m, newtio_m;
+    static Logger& logger_m;
 };
 
 class TxAction : public Action
