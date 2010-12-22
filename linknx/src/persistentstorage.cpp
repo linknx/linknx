@@ -129,6 +129,7 @@ Logger& MysqlPersistentStorage::logger_m(Logger::getInstance("MysqlPersistentSto
 
 MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
 {
+    my_bool reconnect = 1;
     host_m = pConfig->GetAttribute("host");
     user_m = pConfig->GetAttribute("user");
     pass_m = pConfig->GetAttribute("pass");
@@ -140,6 +141,7 @@ MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
     {
         throw ticpp::Exception("MysqlPersistentStorage: error initializing client");
     }
+    mysql_options(&con_m, MYSQL_OPT_RECONNECT, &reconnect);
 
     if (!mysql_real_connect(&con_m, host_m.c_str(), user_m.c_str(), pass_m.c_str(), db_m.c_str(), 0,NULL,0)) 
     {
