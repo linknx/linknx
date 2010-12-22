@@ -6,7 +6,7 @@ Release 0.0.1.28:
 	* Better command-line parameter error reporting (Mike Pieper)
 	* Fixes the XML for a notification message (Mike Pieper)
 	* Avoid linknx crash in case of mysql error
-	* Time-counter bugfix proposed by Auto-Mate on forum
+	* Time-counter bugfix and 0-threshold support (Auto-Mate)
 	* Fix bug on x64 due to size_t != unsigned int
 	* Add command to query rules/timers status
 	* Add support for DPT 29.xxx (signed 64bit value)

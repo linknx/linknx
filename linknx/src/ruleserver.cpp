@@ -1238,12 +1238,16 @@ bool TimeCounterCondition::evaluate()
         reschedule(0);
     }
 
-    if (lastVal_m == false && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m)
+    if ((lastVal_m == false && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m || lastTime_m == 0))
     {
         counter_m = 0;
         lastTime_m = 0;
+        return false;
     }
-    return (counter_m >= threshold_m);
+    else
+    {
+        return (counter_m >= threshold_m);
+    }
 }
 
 void TimeCounterCondition::onTimer(time_t time)
