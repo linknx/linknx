@@ -240,9 +240,18 @@ DbgStream Logger::debugStream() {
 #endif
 }
 
+bool Logger::isDebugEnabled() {
+#ifdef LOG_SHOW_DEBUG
+    return (level_m <= 10);
+#else
+    return false;
+#endif
+}
+
 #endif
 
 ErrStream errorStream(const char* cat) { return Logger::getInstance(cat).errorStream(); };
 WarnStream warnStream(const char* cat) { return Logger::getInstance(cat).warnStream(); };
 LogStream infoStream(const char* cat) { return Logger::getInstance(cat).infoStream(); };
 DbgStream debugStream(const char* cat) { return Logger::getInstance(cat).debugStream(); };
+bool isDebugEnabled(const char* cat) { return Logger::getInstance(cat).isDebugEnabled(); };

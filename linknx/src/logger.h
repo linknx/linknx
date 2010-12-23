@@ -127,6 +127,7 @@ public:
     WarnStream warnStream();
     LogStream infoStream();
     DbgStream debugStream();
+    bool isDebugEnabled();
     friend class Logging;
 private:
     std::string cat_m;
@@ -146,6 +147,7 @@ ErrStream errorStream(const char* cat);
 WarnStream warnStream(const char* cat);
 LogStream infoStream(const char* cat);
 DbgStream debugStream(const char* cat);
+bool isDebugEnabled(const char* cat);
 
 
 #endif /*LOGGER_H_*/

@@ -21,6 +21,7 @@
 */
 
 #include <iostream>
+#include <iomanip>
 #include "objectcontroller.h"
 #include "knxconnection.h"
 extern "C"
@@ -73,17 +74,18 @@ void KnxConnection::write(eibaddr_t gad, uint8_t* buf, int len)
 {
     if(gad == 0)
         return;
-    logger_m.infoStream() << "write(gad=" << gad << ", buf, len=" << len << "):"
-        << buf << endlog;
-//    printf ("ObjectController::write(gad=%d, buf, len=%d):", gad, len);
-//    printHex (len, buf);
-//    printf ("\n");
+    logger_m.infoStream() << "write(gad=" << writegaddr(gad) << ", buf, len=" << len << ")" << endlog;
     if (con_m)
     {
         len = EIBSendGroup (con_m, gad, len, buf);
         if (len == -1)
-            die ("Request failed");
-        printf ("Send request\n");
+        {
+            logger_m.errorStream() << "Write request failed (gad=" << writegaddr(gad) << ", buf, len=" << len << ")" << endlog;
+        }
+        else
+        {
+            logger_m.debugStream() << "Write request sent" << endlog;
+        }
     }
 }
 
@@ -151,47 +153,50 @@ int KnxConnection::checkInput()
     if (pth_event_status (stop_m) == PTH_STATUS_OCCURRED)
         return -1;
     if (len == -1)
-        die ("Read failed");
+    {
+        logger_m.errorStream() << "Read failed" << endlog;
+        return 0;
+    }
     if (len < 2)
-        die ("Invalid Packet");
+    {
+        logger_m.warnStream() << "Invalid Packet (too short)" << endlog;
+        return 0;
+    }
     if (buf[0] & 0x3 || (buf[1] & 0xC0) == 0xC0)
     {
         logger_m.warnStream() << "Unknown APDU from "<< src << " to " << dest << endlog;
-/*        printf ("Unknown APDU from ");
-        printIndividual (src);
-        printf (" to ");
-        printGroup (dest);
-        printf (": ");
-        printHex (len, buf);
-        printf ("\n");*/
     }
     else
     {
-        switch (buf[1] & 0xC0)
+        if (logger_m.isDebugEnabled())
         {
-        case 0x00:
-            printf ("Read");
-            break;
-        case 0x40:
-            printf ("Response");
-            break;
-        case 0x80:
-            printf ("Write");
-            break;
+            DbgStream dbg = logger_m.debugStream();
+            switch (buf[1] & 0xC0)
+            {
+            case 0x00:
+                dbg << "Read";
+                break;
+            case 0x40:
+                dbg << "Response";
+                break;
+            case 0x80:
+                dbg << "Write";
+                break;
+            }
+            dbg << " from " << writeaddr(src) << " to " << writegaddr(dest);
+            if (buf[1] & 0xC0)
+            {
+                dbg << ": " << std::hex << std::setfill ('0') << std::setw (2);
+                if (len == 2)
+                    dbg << (int)(buf[1] & 0x3F);
+                else
+                {
+                    for (uint8_t *p = buf+2; p < buf+len; p++)
+                        dbg << (int)*p << " ";
+                }
+            }
+            dbg << std::dec << endlog;
         }
-        printf (" from ");
-        printIndividual (src);
-        printf (" to ");
-        printGroup (dest);
-        if (buf[1] & 0xC0)
-        {
-            printf (": ");
-            if (len == 2)
-                printf ("%02X", buf[1] & 0x3F);
-            else
-                printHex (len - 2, buf + 2);
-        }
-        printf ("\n");
         if (listener_m)
         {
             switch (buf[1] & 0xC0)
