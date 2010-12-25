@@ -8697,27 +8697,26 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-{ echo "$as_me:$LINENO: checking for log4cpp" >&5
-echo $ECHO_N "checking for log4cpp... $ECHO_C" >&6; }
 
 # Check whether --with-log4cpp was given.
 if test "${with_log4cpp+set}" = set; then
   withval=$with_log4cpp; WITH_LOG4CPP=$withval
 else
-  WITH_LOG4CPP=yes
+  WITH_LOG4CPP=auto
 fi
 
 
-{ echo "$as_me:$LINENO: result: $WITH_LOG4CPP" >&5
-echo "${ECHO_T}$WITH_LOG4CPP" >&6; }
-if test "$WITH_LOG4CPP" != "no"; then
- # try pkgconfig
- if test "$WITH_LOG4CPP" = "yes"; then
+if test x"$WITH_LOG4CPP" != xno; then
+  # try pkgconfig
+  if test x"$WITH_LOG4CPP" = xyes ; then
+    LOG4CPPPC=log4cpp
+  elif test x"$WITH_LOG4CPP" = xauto ; then
     LOG4CPPPC=log4cpp
   else
     LOG4CPPPC=$WITH_LOG4CPP
   fi
 
+  if test x"$WITH_LOG4CPP" = xauto ; then
 
 
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
@@ -8897,6 +8896,90 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LOG4CPP_PKG_ERRORS" >&5
 
+
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+elif test $pkg_failed = untried; then
+
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+else
+	LOG4CPP_CFLAGS=$pkg_cv_LOG4CPP_CFLAGS
+	LOG4CPP_LIBS=$pkg_cv_LOG4CPP_LIBS
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LOG4CPP 1
+_ACEOF
+
+
+
+
+fi
+  else
+
+pkg_failed=no
+{ echo "$as_me:$LINENO: checking for LOG4CPP" >&5
+echo $ECHO_N "checking for LOG4CPP... $ECHO_C" >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LOG4CPP_CFLAGS"; then
+        pkg_cv_LOG4CPP_CFLAGS="$LOG4CPP_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LOG4CPPPC >= 1.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LOG4CPPPC >= 1.0") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LOG4CPP_CFLAGS=`$PKG_CONFIG --cflags "$LOG4CPPPC >= 1.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LOG4CPP_LIBS"; then
+        pkg_cv_LOG4CPP_LIBS="$LOG4CPP_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LOG4CPPPC >= 1.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LOG4CPPPC >= 1.0") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LOG4CPP_LIBS=`$PKG_CONFIG --libs "$LOG4CPPPC >= 1.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LOG4CPP_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LOG4CPPPC >= 1.0"`
+        else
+	        LOG4CPP_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LOG4CPPPC >= 1.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LOG4CPP_PKG_ERRORS" >&5
+
 	{ { echo "$as_me:$LINENO: error: Package requirements ($LOG4CPPPC >= 1.0) were not met:
 
 $LOG4CPP_PKG_ERRORS
@@ -8954,34 +9037,33 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
-fi
-
 
 
 fi
+  fi
+fi
 
 
-{ echo "$as_me:$LINENO: checking for lua" >&5
-echo $ECHO_N "checking for lua... $ECHO_C" >&6; }
 
 # Check whether --with-lua was given.
 if test "${with_lua+set}" = set; then
   withval=$with_lua; WITH_LUA=$withval
 else
-  WITH_LUA=yes
+  WITH_LUA=auto
 fi
 
 
-{ echo "$as_me:$LINENO: result: $WITH_LUA" >&5
-echo "${ECHO_T}$WITH_LUA" >&6; }
-if test "$WITH_LUA" != "no"; then
- # try pkgconfig
- if test "$WITH_LUA" = "yes"; then
+if test x"$WITH_LUA" != xno ; then
+  # try pkgconfig
+  if test x"$WITH_LUA" = xyes ; then
+    LUAPC=lua
+  elif test x"$WITH_LUA" = xauto ; then
     LUAPC=lua
   else
     LUAPC=$WITH_LUA
   fi
 
+  if test x"$WITH_LUA" = xauto; then
 
 pkg_failed=no
 { echo "$as_me:$LINENO: checking for LUA" >&5
@@ -9042,6 +9124,8 @@ fi
 	echo "$LUA_PKG_ERRORS" >&5
 
 
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
 
 pkg_failed=no
 { echo "$as_me:$LINENO: checking for LUA" >&5
@@ -9052,12 +9136,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_LUA_CFLAGS="$LUA_CFLAGS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"lua5.1 >= 5.1\"") >&5
-  ($PKG_CONFIG --exists --print-errors "lua5.1 >= 5.1") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua5.1 >= 5.1" 2>/dev/null`
+  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$LUAPC >= lua5.1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -9070,12 +9154,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_LUA_LIBS="$LUA_LIBS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"lua5.1 >= 5.1\"") >&5
-  ($PKG_CONFIG --exists --print-errors "lua5.1 >= 5.1") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua5.1 >= 5.1" 2>/dev/null`
+  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$LUAPC >= lua5.1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -9094,14 +9178,279 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "lua5.1 >= 5.1"`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "lua5.1 >= 5.1"`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
 
-	{ { echo "$as_me:$LINENO: error: Package requirements (lua5.1 >= 5.1) were not met:
+
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+elif test $pkg_failed = untried; then
+
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+else
+	LUA_CFLAGS=$pkg_cv_LUA_CFLAGS
+	LUA_LIBS=$pkg_cv_LUA_LIBS
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA_H 1
+_ACEOF
+
+
+
+
+fi
+
+elif test $pkg_failed = untried; then
+
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+pkg_failed=no
+{ echo "$as_me:$LINENO: checking for LUA" >&5
+echo $ECHO_N "checking for LUA... $ECHO_C" >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_CFLAGS"; then
+        pkg_cv_LUA_CFLAGS="$LUA_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$LUAPC >= lua5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_LIBS"; then
+        pkg_cv_LUA_LIBS="$LUA_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$LUAPC >= lua5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
+        else
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LUA_PKG_ERRORS" >&5
+
+
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+elif test $pkg_failed = untried; then
+
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+else
+	LUA_CFLAGS=$pkg_cv_LUA_CFLAGS
+	LUA_LIBS=$pkg_cv_LUA_LIBS
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA_H 1
+_ACEOF
+
+
+
+
+fi
+
+else
+	LUA_CFLAGS=$pkg_cv_LUA_CFLAGS
+	LUA_LIBS=$pkg_cv_LUA_LIBS
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA 1
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LUA_H 1
+_ACEOF
+
+
+
+
+fi
+  else
+
+pkg_failed=no
+{ echo "$as_me:$LINENO: checking for LUA" >&5
+echo $ECHO_N "checking for LUA... $ECHO_C" >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_CFLAGS"; then
+        pkg_cv_LUA_CFLAGS="$LUA_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= 5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= 5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$LUAPC >= 5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_LIBS"; then
+        pkg_cv_LUA_LIBS="$LUA_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= 5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= 5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$LUAPC >= 5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LUAPC >= 5.1"`
+        else
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LUAPC >= 5.1"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LUA_PKG_ERRORS" >&5
+
+
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+
+pkg_failed=no
+{ echo "$as_me:$LINENO: checking for LUA" >&5
+echo $ECHO_N "checking for LUA... $ECHO_C" >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_CFLAGS"; then
+        pkg_cv_LUA_CFLAGS="$LUA_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$LUAPC >= lua5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LUA_LIBS"; then
+        pkg_cv_LUA_LIBS="$LUA_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$LUAPC >= lua5.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
+        else
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LUA_PKG_ERRORS" >&5
+
+	{ { echo "$as_me:$LINENO: error: Package requirements ($LUAPC >= lua5.1) were not met:
 
 $LUA_PKG_ERRORS
 
@@ -9112,7 +9461,7 @@ Alternatively, you may set the environment variables LUA_CFLAGS
 and LUA_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.
 " >&5
-echo "$as_me: error: Package requirements (lua5.1 >= 5.1) were not met:
+echo "$as_me: error: Package requirements ($LUAPC >= lua5.1) were not met:
 
 $LUA_PKG_ERRORS
 
@@ -9163,10 +9512,14 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
+
+
 fi
 
 elif test $pkg_failed = untried; then
 
+      { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
 
 pkg_failed=no
 { echo "$as_me:$LINENO: checking for LUA" >&5
@@ -9177,12 +9530,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_LUA_CFLAGS="$LUA_CFLAGS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"lua5.1 >= 5.1\"") >&5
-  ($PKG_CONFIG --exists --print-errors "lua5.1 >= 5.1") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "lua5.1 >= 5.1" 2>/dev/null`
+  pkg_cv_LUA_CFLAGS=`$PKG_CONFIG --cflags "$LUAPC >= lua5.1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -9195,12 +9548,12 @@ if test -n "$PKG_CONFIG"; then
         pkg_cv_LUA_LIBS="$LUA_LIBS"
     else
         if test -n "$PKG_CONFIG" && \
-    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"lua5.1 >= 5.1\"") >&5
-  ($PKG_CONFIG --exists --print-errors "lua5.1 >= 5.1") 2>&5
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$LUAPC >= lua5.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "$LUAPC >= lua5.1") 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; then
-  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "lua5.1 >= 5.1" 2>/dev/null`
+  pkg_cv_LUA_LIBS=`$PKG_CONFIG --libs "$LUAPC >= lua5.1" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -9219,14 +9572,14 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "lua5.1 >= 5.1"`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
         else
-	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "lua5.1 >= 5.1"`
+	        LUA_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$LUAPC >= lua5.1"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LUA_PKG_ERRORS" >&5
 
-	{ { echo "$as_me:$LINENO: error: Package requirements (lua5.1 >= 5.1) were not met:
+	{ { echo "$as_me:$LINENO: error: Package requirements ($LUAPC >= lua5.1) were not met:
 
 $LUA_PKG_ERRORS
 
@@ -9237,7 +9590,7 @@ Alternatively, you may set the environment variables LUA_CFLAGS
 and LUA_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.
 " >&5
-echo "$as_me: error: Package requirements (lua5.1 >= 5.1) were not met:
+echo "$as_me: error: Package requirements ($LUAPC >= lua5.1) were not met:
 
 $LUA_PKG_ERRORS
 
@@ -9288,6 +9641,8 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
+
+
 fi
 
 else
@@ -9307,10 +9662,10 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
+
+
 fi
-
-
-
+  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.

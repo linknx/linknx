@@ -95,56 +95,86 @@ dnl Check if using log4cpp
 dnl #########################################################################
 
 AC_PATH_PROG(LOG4CPP_CONFIG,log4cpp-config)
-AC_MSG_CHECKING(for log4cpp)
 AC_ARG_WITH(log4cpp, AC_HELP_STRING([--with-log4cpp],[Advanced logging with Log4cpp]),
-[WITH_LOG4CPP=$withval],[WITH_LOG4CPP=yes])
+[WITH_LOG4CPP=$withval],[WITH_LOG4CPP=auto])
 
-AC_MSG_RESULT($WITH_LOG4CPP)
-if test "$WITH_LOG4CPP" != "no"; then
- # try pkgconfig
- if test "$WITH_LOG4CPP" = "yes"; then
+if test x"$WITH_LOG4CPP" != xno; then
+  # try pkgconfig
+  if test x"$WITH_LOG4CPP" = xyes ; then
+    LOG4CPPPC=log4cpp
+  elif test x"$WITH_LOG4CPP" = xauto ; then
     LOG4CPPPC=log4cpp
   else
     LOG4CPPPC=$WITH_LOG4CPP
   fi
 
- PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
-   AC_DEFINE([HAVE_LOG4CPP], [1], [liblua])
- ])
-
- AC_SUBST(LOG4CPP_CFLAGS)
- AC_SUBST(LOG4CPP_LIBS)
+  if test x"$WITH_LOG4CPP" = xauto ; then
+    PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
+      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_SUBST(LOG4CPP_CFLAGS)
+      AC_SUBST(LOG4CPP_LIBS)
+    ],[
+      AC_MSG_RESULT([no])    
+    ])
+  else
+    PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
+      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_SUBST(LOG4CPP_CFLAGS)
+      AC_SUBST(LOG4CPP_LIBS)
+    ])
+  fi
 fi
 
 dnl #########################################################################
 dnl Check if using lua
 dnl #########################################################################
 
-AC_MSG_CHECKING(for lua)
 AC_ARG_WITH(lua, AC_HELP_STRING([--with-lua],[Enable lua scripting engine]),
-[WITH_LUA=$withval],[WITH_LUA=yes])
+[WITH_LUA=$withval],[WITH_LUA=auto])
 
-AC_MSG_RESULT($WITH_LUA)
-if test "$WITH_LUA" != "no"; then
- # try pkgconfig
- if test "$WITH_LUA" = "yes"; then
+if test x"$WITH_LUA" != xno ; then
+  # try pkgconfig
+  if test x"$WITH_LUA" = xyes ; then
+    LUAPC=lua
+  elif test x"$WITH_LUA" = xauto ; then
     LUAPC=lua
   else
     LUAPC=$WITH_LUA
   fi
 
- PKG_CHECK_MODULES(LUA, $LUAPC >= 5.1, [
-   AC_DEFINE([HAVE_LUA], [1], [liblua])
-   AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
- ],[
-   PKG_CHECK_MODULES(LUA, lua5.1 >= 5.1, [
-     AC_DEFINE([HAVE_LUA], [1], [liblua])
-     AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
-   ])
- ])
-
- AC_SUBST(LUA_CFLAGS)
- AC_SUBST(LUA_LIBS)
+  if test x"$WITH_LUA" = xauto; then
+    PKG_CHECK_MODULES(LUA, $LUAPC >= 5.1, [
+      AC_DEFINE([HAVE_LUA], [1], [liblua])
+      AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
+      AC_SUBST(LUA_CFLAGS)
+      AC_SUBST(LUA_LIBS)
+    ],[
+      AC_MSG_RESULT([no])    
+      PKG_CHECK_MODULES(LUA, $LUAPC >= lua5.1, [
+        AC_DEFINE([HAVE_LUA], [1], [liblua])
+        AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
+        AC_SUBST(LUA_CFLAGS)
+        AC_SUBST(LUA_LIBS)
+      ],[
+        AC_MSG_RESULT([no])    
+      ])
+    ])
+  else
+    PKG_CHECK_MODULES(LUA, $LUAPC >= 5.1, [
+      AC_DEFINE([HAVE_LUA], [1], [liblua])
+      AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
+      AC_SUBST(LUA_CFLAGS)
+      AC_SUBST(LUA_LIBS)
+    ],[
+      AC_MSG_RESULT([no])    
+      PKG_CHECK_MODULES(LUA, $LUAPC >= lua5.1, [
+        AC_DEFINE([HAVE_LUA], [1], [liblua])
+        AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
+        AC_SUBST(LUA_CFLAGS)
+        AC_SUBST(LUA_LIBS)
+      ])
+    ])
+  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.
