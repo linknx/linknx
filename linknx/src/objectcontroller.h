@@ -544,6 +544,8 @@ public:
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(const std::string& value);
     virtual std::string getType() { return "16.000"; };
+
+    virtual void doSend(bool isWrite);
 protected:
     static Logger& logger_m;
 };

@@ -2300,14 +2300,16 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 void StringObject::doSend(bool isWrite)
 {
     logger_m.debugStream() << "StringObject: Value: " << value_m << endlog;
-    uint8_t buf[16];
-    memset(buf,0,sizeof(buf));
+    uint bufsz = value_m.size()+3;
+    uint8_t *buf = new uint8_t[bufsz];
+    memset(buf,0,bufsz);
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-    for(uint j=0;j<value_m.size();j++)
-        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+    for(uint j=2;j<bufsz;j++)
+        buf[j] = static_cast<uint8_t>(value_m[j-2]);
 
-    Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
+    Services::instance()->getKnxConnection()->write(getGad(), buf, bufsz);
+    delete buf;
 }
 
 void StringObject::setStringValue(const std::string& value)
@@ -2336,6 +2338,19 @@ void String14Object::setValue(const std::string& value)
 {
     String14ObjectValue val(value);
     setStringValue(val.value_m);
+}
+
+void String14Object::doSend(bool isWrite)
+{
+    logger_m.debugStream() << "String14Object: Value: " << value_m << endlog;
+    uint8_t buf[16];
+    memset(buf,0,sizeof(buf));
+    buf[1] = (isWrite ? 0x80 : 0x40);
+    // Convert to hex
+    for(uint j=0;j<value_m.size();j++)
+        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+
+    Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
 }
 
 ObjectController::ObjectController()
