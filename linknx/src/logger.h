@@ -149,5 +149,14 @@ LogStream infoStream(const char* cat);
 DbgStream debugStream(const char* cat);
 bool isDebugEnabled(const char* cat);
 
+class ErrorMessage : public std::stringstream
+{
+public:
+    void logAndThrow(Logger &logger) {
+        std::string s = str();
+        logger.errorStream() << s << endlog;
+        throw ticpp::Exception(s);
+    };
+};
 
 #endif /*LOGGER_H_*/

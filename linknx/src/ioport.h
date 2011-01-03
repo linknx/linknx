@@ -105,9 +105,8 @@ public:
 private:
     std::auto_ptr<RxThread> rxThread_m;
     std::string id_m;
-    std::string url_m;
     
-    Direction dir_m;
+    // Direction dir_m;
 
     static Logger& logger_m;
 };
@@ -212,11 +211,13 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
+    void sendData(IOPort* port);
 private:
     virtual void Run (pth_sem_t * stop);
 
     std::string data_m;
     std::string port_m;
+    bool hex_m;
 };
 
 class RxCondition : public Condition, public IOPortListener

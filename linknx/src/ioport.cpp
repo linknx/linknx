@@ -18,6 +18,7 @@
 */
 
 #include <iostream>
+#include <iomanip>
 #include "ioport.h"
 #include <fcntl.h>
 
@@ -152,7 +153,6 @@ IOPort* IOPort::create(ticpp::Element* pConfig)
 void IOPort::importXml(ticpp::Element* pConfig)
 {
     id_m = pConfig->GetAttribute("id");
-    url_m = pConfig->GetAttribute("url");
     if (isRxEnabled())
         rxThread_m.reset(new RxThread(this));
 }
@@ -160,7 +160,6 @@ void IOPort::importXml(ticpp::Element* pConfig)
 void IOPort::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("id", id_m);
-    pConfig->SetAttribute("url", url_m);
 }
 
 void IOPort::addListener(IOPortListener *l)
@@ -265,11 +264,12 @@ void UdpIOPort::importXml(ticpp::Element* pConfig)
 
 void UdpIOPort::exportXml(ticpp::Element* pConfig)
 {
+    IOPort::exportXml(pConfig);
+    pConfig->SetAttribute("type", "udp");
     pConfig->SetAttribute("host", host_m);
     pConfig->SetAttribute("port", port_m);
     if (rxport_m > 0)
         pConfig->SetAttribute("rxport", rxport_m);
-    IOPort::exportXml(pConfig);
 }
 
 int UdpIOPort::send(const uint8_t* buf, int len)
@@ -341,11 +341,12 @@ void TcpClientIOPort::importXml(ticpp::Element* pConfig)
 
 void TcpClientIOPort::exportXml(ticpp::Element* pConfig)
 {
+    IOPort::exportXml(pConfig);
+    pConfig->SetAttribute("type", "tcp");
     pConfig->SetAttribute("host", host_m);
     pConfig->SetAttribute("port", port_m);
     if (permanent_m)
         pConfig->SetAttribute("permanent", "true");
-    IOPort::exportXml(pConfig);
 }
 
 int TcpClientIOPort::send(const uint8_t* buf, int len)
@@ -444,10 +445,68 @@ SerialIOPort::~SerialIOPort()
 
 void SerialIOPort::importXml(ticpp::Element* pConfig)
 {
+    ErrorMessage err;
     int speed;
-    memset (&newtio_m, 0, sizeof (newtio_m));
-    pConfig->GetAttribute("dev", &dev_m);
+    struct termios newtio;
+    std::string framing = pConfig->GetAttributeOrDefault("framing", "8N1");
+    std::string flow = pConfig->GetAttributeOrDefault("flow", "none");
+    memset (&newtio, 0, sizeof (newtio));
     pConfig->GetAttribute("speed", &speed);
+    newtio.c_cflag = CLOCAL | CREAD;
+    newtio.c_iflag = ICRNL;
+    newtio.c_oflag = 0;
+    newtio.c_lflag = ICANON;
+
+    newtio.c_cc[VTIME] = 0; // inter character timer disabled
+    newtio.c_cc[VMIN]  = 1; // block until 1 character arrives
+    switch (framing[0]) {
+        case '5':
+            newtio.c_cflag |= CS5;
+            break;
+        case '6':
+            newtio.c_cflag |= CS6;
+            break;
+        case '7':
+            newtio.c_cflag |= CS7;
+            break;
+        case '8':
+            newtio.c_cflag |= CS8;
+            break;
+        default:
+            err << "Unsupported nb of data bits '" << framing[0] << "' for serial port";
+            err.logAndThrow(logger_m);
+    }
+    switch (framing[1]) {
+        case 'E':
+            newtio.c_cflag |= PARENB;
+            break;
+        case 'O':
+            newtio.c_cflag |= (PARENB | PARODD);
+            break;
+        case 'N':
+            newtio.c_iflag |= IGNPAR;
+            break;
+        default:
+            err << "Unsupported parity '" << framing[1] << "' for serial port";
+            err.logAndThrow(logger_m);
+    }
+
+    if (framing[2] == '2')
+        newtio.c_cflag |= CSTOPB;
+    else if (framing[2] != '1') {
+        err << "Unsupported nb of stop bits '" << framing[2] << "' for serial port";
+        err.logAndThrow(logger_m);
+    }
+
+    if (flow == "xon-xoff")
+        newtio.c_iflag |= (IXON | IXOFF);
+    else if (flow == "rts-cts")
+        newtio.c_cflag |= CRTSCTS;
+    else if (flow != "none") {
+        err << "Unsupported flow control '" << flow << "' for serial port";
+        err.logAndThrow(logger_m);
+    }
+
     switch (speed) {
         case 2400:
             speed_m = B2400;
@@ -471,26 +530,20 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
             speed_m = B115200;
             break;
         default:
-            logger_m.errorStream() << "Unsupported speed '" << speed << "' for serial port" << endlog;
-            speed_m = B9600;
-            break;
+            err << "Unsupported speed '" << speed << "' for serial port";
+            err.logAndThrow(logger_m);
     }
+    cfsetispeed(&newtio, speed_m);
+    cfsetospeed(&newtio, speed_m);
+    pConfig->GetAttribute("dev", &dev_m);
+    newtio_m = newtio;
+
     IOPort::importXml(pConfig);
 
     fd_m = open(dev_m.c_str(), O_RDWR | O_NOCTTY );
     if (fd_m >= 0) {
         // Save previous port settings
         tcgetattr(fd_m, &oldtio_m);
-        newtio_m.c_cflag = CS8 | CLOCAL | CREAD;
-        newtio_m.c_iflag = IGNPAR | ICRNL;
-        newtio_m.c_oflag = 0;
-        newtio_m.c_lflag = ICANON;
-         
-        newtio_m.c_cc[VTIME] = 0; // inter character timer disabled
-        newtio_m.c_cc[VMIN]  = 1; // block until 1 character arrives
-        cfsetispeed(&newtio_m, speed_m);
-        cfsetospeed(&newtio_m, speed_m);
-        
         tcflush(fd_m, TCIFLUSH);
         tcsetattr(fd_m, TCSANOW, &newtio_m);
         logger_m.infoStream() << "SerialIOPort configured for device " << dev_m << endlog;
@@ -503,6 +556,8 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
 void SerialIOPort::exportXml(ticpp::Element* pConfig)
 {
     int speed;
+    IOPort::exportXml(pConfig);
+    pConfig->SetAttribute("type", "serial");
     pConfig->SetAttribute("dev", dev_m);
     switch (speed_m) {
         case B2400:
@@ -531,7 +586,43 @@ void SerialIOPort::exportXml(ticpp::Element* pConfig)
             break;
     }
     pConfig->SetAttribute("speed", speed);
-    IOPort::exportXml(pConfig);
+
+    std::string framing;
+    switch (newtio_m.c_cflag & CSIZE) {
+        case CS5:
+            framing.push_back('5');
+            break;
+        case CS6:
+            framing.push_back('6');
+            break;
+        case CS7:
+            framing.push_back('7');
+            break;
+        default:
+        case CS8:
+            framing.push_back('8');
+            break;
+    }
+    if (newtio_m.c_cflag & PARENB == 0)
+        framing.push_back('N');
+    else if (newtio_m.c_cflag & PARODD)
+        framing.push_back('O');
+    else
+        framing.push_back('E');
+
+    if (newtio_m.c_cflag & CSTOPB)
+        framing.push_back('2');
+    else
+        framing.push_back('1');
+
+    pConfig->SetAttribute("framing", framing);
+
+    if (newtio_m.c_cflag & CRTSCTS)
+        pConfig->SetAttribute("flow", "rts-cts");
+    else if (newtio_m.c_iflag & IXON)
+        pConfig->SetAttribute("flow", "xon-xoff");
+    else
+        pConfig->SetAttribute("flow", "none");
 }
 
 int SerialIOPort::send(const uint8_t* buf, int len)
@@ -568,7 +659,7 @@ int SerialIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     return -1;
 }
 
-TxAction::TxAction()
+TxAction::TxAction(): hex_m(false)
 {}
 
 TxAction::~TxAction()
@@ -576,8 +667,25 @@ TxAction::~TxAction()
 
 void TxAction::importXml(ticpp::Element* pConfig)
 {
+    int i=0;
     port_m = pConfig->GetAttribute("ioport");
-    data_m = pConfig->GetAttribute("data");
+    if (pConfig->GetAttributeOrDefault("hex", "false") != "false")
+    {
+        hex_m = true;
+        std::string data = pConfig->GetAttribute("data");
+        while (i < data.length())
+        {
+            std::istringstream ss(data.substr(i, 2));
+            ss.setf(std::ios::hex, std::ios::basefield);
+            int value = 0;
+            ss >> value;
+            data_m.push_back(static_cast<char>(value));
+            i += 2;
+        }
+    }
+    else
+        data_m = pConfig->GetAttribute("data");
+
     if (!IOPortManager::instance()->getPort(port_m))
     {
         std::stringstream msg;
@@ -591,7 +699,20 @@ void TxAction::importXml(ticpp::Element* pConfig)
 void TxAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "ioport-tx");
-    pConfig->SetAttribute("data", data_m);
+    if (hex_m)
+    {
+        int i = 0;
+        pConfig->SetAttribute("hex", "true");
+        pConfig->SetAttribute("data", data_m);
+        std::ostringstream ss;
+        ss.setf(std::ios::hex, std::ios::basefield);
+        ss.fill('0');
+        while (i < data_m.length())
+            ss << std::setw(2) << int(data_m[i++]);
+        pConfig->SetAttribute("data", ss.str());
+    }
+    else
+        pConfig->SetAttribute("data", data_m);
     pConfig->SetAttribute("ioport", port_m);
 
     Action::exportXml(pConfig);
@@ -605,20 +726,26 @@ void TxAction::Run (pth_sem_t * stop)
         IOPort* port = IOPortManager::instance()->getPort(port_m);
         if (!port)
             throw ticpp::Exception("IO Port ID not found.");
-        logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port_m << endlog;
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(data_m.c_str());
-        int len = data_m.length();
-        int ret = port->send(data, len);
-        if (ret != len) {
-            ret = port->send(data, len);
-            if (ret != len)
-                throw ticpp::Exception("Unable to send data.");
-        }
-        
+        sendData(port);
     }
     catch( ticpp::Exception& ex )
     {
        logger_m.warnStream() << "Error in TxAction on port '" << port_m << "': " << ex.m_details << endlog;
+    }
+}
+
+void TxAction::sendData(IOPort* port)
+{
+    logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port->getID() << endlog;
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(data_m.c_str());
+    int len = data_m.length();
+    int ret = port->send(data, len);
+    while (ret < len) {
+        if (ret <= 0)
+            throw ticpp::Exception("Unable to send data.");
+        len -= ret;
+        data += ret;
+        ret = port->send(data, len);
     }
 }
 
