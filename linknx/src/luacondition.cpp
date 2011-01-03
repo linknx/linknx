@@ -130,6 +130,7 @@ LuaScriptAction::LuaScriptAction()
     lua_register(l_m, "obj", LuaScriptAction::obj);  
     lua_register(l_m, "set", LuaScriptAction::set);  
     lua_register(l_m, "iosend", LuaScriptAction::iosend);  
+    lua_register(l_m, "sleep", LuaScriptAction::sleep);
 }
 
 LuaScriptAction::~LuaScriptAction()
@@ -251,6 +252,21 @@ int LuaScriptAction::iosend(lua_State *L)
     }
 
     return 0;
+}
+
+int LuaScriptAction::sleep(lua_State *L)
+{
+    int delay, ret;
+    if (lua_gettop(L) != 1 || !lua_isnumber(L, 1))
+    {
+        lua_pushstring(L, "Incorrect argument to 'sleep'");
+        lua_error(L);
+    }
+    delay = lua_tonumber(L, 1);
+    debugStream("LuaScriptAction") << "Sleep for '" << delay << "' seconds" << endlog;
+    ret = pth_sleep(delay);
+    lua_pushnumber(L, ret);
+    return 1;
 }
 
 #endif // HAVE_LUA
