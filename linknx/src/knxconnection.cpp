@@ -109,8 +109,8 @@ void KnxConnection::Run (pth_sem_t * stop1)
                 {
                     /*        TODO: find another way to check if event occured
                               struct timeval tv;
-                    	        tv.tv_sec = 1;
-                      	      tv.tv_usec = 0;
+                              tv.tv_sec = 1;
+                              tv.tv_usec = 0;
                               pth_select_ev(0,0,0,0,&tv,stop);
                     */
                 }

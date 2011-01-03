@@ -16,12 +16,12 @@ private:
 public:
     void setUp()
     {
-    	exceptiondays_m = new ExceptionDays();
+        exceptiondays_m = new ExceptionDays();
     }
 
     void tearDown()
     {
-    	delete exceptiondays_m;
+        delete exceptiondays_m;
     }
 
     void testAdd()
@@ -36,19 +36,19 @@ public:
         CPPUNIT_ASSERT_EQUAL(10-1, ds->mon_m);
         CPPUNIT_ASSERT_EQUAL(2007-1900, ds->year_m);
         
-		exceptiondays_m->addDay(ds);
+        exceptiondays_m->addDay(ds);
 
         ticpp::Element pExport;
-		exceptiondays_m->exportXml(&pExport);
-		
-	    ticpp::Iterator< ticpp::Element > child = pExport.FirstChildElement();
+        exceptiondays_m->exportXml(&pExport);
+
+        ticpp::Iterator< ticpp::Element > child = pExport.FirstChildElement();
         CPPUNIT_ASSERT("date" == child->Value());
         CPPUNIT_ASSERT("23" == child->GetAttribute("day"));
         CPPUNIT_ASSERT("10" == child->GetAttribute("month"));
         CPPUNIT_ASSERT("2007" == child->GetAttribute("year"));
         child++;
         CPPUNIT_ASSERT(child == child.end());
-	}
+    }
 
     void testExportImport()
     {
@@ -95,43 +95,43 @@ public:
         CPPUNIT_ASSERT_EQUAL(10-1, ds->mon_m);
         CPPUNIT_ASSERT_EQUAL(2007-1900, ds->year_m);
         
-		exceptiondays_m->addDay(ds);
-		
-	    struct tm timeinfo;
-	    timeinfo.tm_hour = 0;
-	    timeinfo.tm_min = 0;
-	    timeinfo.tm_sec = 0;
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        exceptiondays_m->addDay(ds);
+
+        struct tm timeinfo;
+        timeinfo.tm_hour = 0;
+        timeinfo.tm_min = 0;
+        timeinfo.tm_sec = 0;
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 24;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 24;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(!exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 9-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 9-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(!exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2008-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2008-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(!exceptiondays_m->isException(time));
 
-	    timeinfo.tm_hour = 23;
-	    timeinfo.tm_min = 59;
-	    timeinfo.tm_sec = 59;
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_hour = 23;
+        timeinfo.tm_min = 59;
+        timeinfo.tm_sec = 59;
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(exceptiondays_m->isException(time));
     }
 
@@ -144,28 +144,28 @@ public:
         DaySpec* ds = new DaySpec();
         ds->importXml(&pConfig);
         
-		exceptiondays_m->addDay(ds);
-		
-	    struct tm timeinfo;
-	    timeinfo.tm_hour = 0;
-	    timeinfo.tm_min = 0;
-	    timeinfo.tm_sec = 0;
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        exceptiondays_m->addDay(ds);
+
+        struct tm timeinfo;
+        timeinfo.tm_hour = 0;
+        timeinfo.tm_min = 0;
+        timeinfo.tm_sec = 0;
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2008-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2008-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 23;
-	    timeinfo.tm_mon = 9-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 23;
+        timeinfo.tm_mon = 9-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(!exceptiondays_m->isException(time));
     }
 
@@ -178,29 +178,29 @@ public:
         DaySpec* ds = new DaySpec();
         ds->importXml(&pConfig);
         
-		exceptiondays_m->addDay(ds);
-		
-	    struct tm timeinfo;
-	    timeinfo.tm_hour = 6;
-	    timeinfo.tm_min = 30;
-	    timeinfo.tm_sec = 0;
-	    timeinfo.tm_mday = 1;
-	    timeinfo.tm_mon = 10-1;
-	    timeinfo.tm_year = 2008-1900;
-    	time = mktime(&timeinfo);
-        CPPUNIT_ASSERT(exceptiondays_m->isException(time));
+        exceptiondays_m->addDay(ds);
 
-	    timeinfo.tm_mday = 1;
-	    timeinfo.tm_mon = 1-1;
-	    timeinfo.tm_year = 2008-1900;
+        struct tm timeinfo;
         timeinfo.tm_hour = 6;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_min = 30;
+        timeinfo.tm_sec = 0;
+        timeinfo.tm_mday = 1;
+        timeinfo.tm_mon = 10-1;
+        timeinfo.tm_year = 2008-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(exceptiondays_m->isException(time));
 
-	    timeinfo.tm_mday = 1;
-	    timeinfo.tm_mon = 1-1;
-	    timeinfo.tm_year = 2007-1900;
-    	time = mktime(&timeinfo);
+        timeinfo.tm_mday = 1;
+        timeinfo.tm_mon = 1-1;
+        timeinfo.tm_year = 2008-1900;
+        timeinfo.tm_hour = 6;
+        time = mktime(&timeinfo);
+        CPPUNIT_ASSERT(exceptiondays_m->isException(time));
+
+        timeinfo.tm_mday = 1;
+        timeinfo.tm_mon = 1-1;
+        timeinfo.tm_year = 2007-1900;
+        time = mktime(&timeinfo);
         CPPUNIT_ASSERT(!exceptiondays_m->isException(time));
     }
 
