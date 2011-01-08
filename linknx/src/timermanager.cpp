@@ -386,7 +386,12 @@ void PeriodicTask::reschedule(time_t now)
         // first schedule. check if value must be on or off (except if timer is instantaneous)
         time_t start, stop;
         if (during_m != -1)
-            stop = now + during_m;
+        {
+            if (after_m == -1)
+                stop = findNext(now-during_m, at_m)+during_m;
+            else
+                stop = now + during_m;
+        }
         else
             stop = findNext(now, until_m);
 
