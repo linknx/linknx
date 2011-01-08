@@ -143,14 +143,14 @@ if test x"$WITH_LUA" != xno ; then
   fi
 
   if test x"$WITH_LUA" = xauto; then
-    PKG_CHECK_MODULES(LUA, $LUAPC >= 5.1, [
+    PKG_CHECK_MODULES(LUA, lua >= 5.1, [
       AC_DEFINE([HAVE_LUA], [1], [liblua])
       AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
       AC_SUBST(LUA_CFLAGS)
       AC_SUBST(LUA_LIBS)
     ],[
       AC_MSG_RESULT([no])    
-      PKG_CHECK_MODULES(LUA, $LUAPC >= lua5.1, [
+      PKG_CHECK_MODULES(LUA, lua5.1 >= 5.1, [
         AC_DEFINE([HAVE_LUA], [1], [liblua])
         AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
         AC_SUBST(LUA_CFLAGS)
@@ -167,7 +167,7 @@ if test x"$WITH_LUA" != xno ; then
       AC_SUBST(LUA_LIBS)
     ],[
       AC_MSG_RESULT([no])    
-      PKG_CHECK_MODULES(LUA, $LUAPC >= lua5.1, [
+      PKG_CHECK_MODULES(LUA, "$LUAPC"5.1 >= 5.1, [
         AC_DEFINE([HAVE_LUA], [1], [liblua])
         AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
         AC_SUBST(LUA_CFLAGS)
