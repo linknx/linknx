@@ -36,8 +36,7 @@ AC_DEFUN([WITH_MYSQL], [
     CFLAGS="$CFLAGS $ADDFLAGS"    
     CXXFLAGS="$CXXFLAGS $ADDFLAGS"    
 
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lmystrings -lmysys"
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lmystrings"
+    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`
     
     AC_MSG_RESULT($MYSQL_CONFIG)
 	AC_DEFINE([HAVE_MYSQL], [1], [Build with MySQL support.])

@@ -7191,8 +7191,7 @@ fi
     CFLAGS="$CFLAGS $ADDFLAGS"
     CXXFLAGS="$CXXFLAGS $ADDFLAGS"
 
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lmystrings -lmysys"
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lmystrings"
+    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MYSQL_CONFIG" >&5
 $as_echo "$MYSQL_CONFIG" >&6; }
