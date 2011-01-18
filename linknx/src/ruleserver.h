@@ -246,6 +246,21 @@ private:
     Object* to_m;
 };
 
+class SendReadRequestAction : public Action
+{
+public:
+    SendReadRequestAction();
+    virtual ~SendReadRequestAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    Object* object_m;
+};
+
 class CycleOnOffAction : public Action, public ChangeListener
 {
 public:

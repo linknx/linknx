@@ -351,6 +351,8 @@ Action* Action::create(const std::string& type)
         return new SetValueAction();
     else if (type == "copy-value")
         return new CopyValueAction();
+    else if (type == "send-read-request")
+        return new SendReadRequestAction();
     else if (type == "cycle-on-off")
         return new CycleOnOffAction();
     else if (type == "send-sms")
@@ -554,6 +556,37 @@ void CopyValueAction::Run (pth_sem_t * stop)
             logger_m.warnStream() << "Error in CopyValueAction: " << ex.m_details << endlog;
         }
     }
+}
+
+SendReadRequestAction::SendReadRequestAction() : object_m(0)
+{}
+
+SendReadRequestAction::~SendReadRequestAction()
+{}
+
+void SendReadRequestAction::importXml(ticpp::Element* pConfig)
+{
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    object_m = ObjectController::instance()->getObject(id);
+
+    logger_m.infoStream() << "SendReadRequestAction: Configured for object " << object_m->getID() << endlog;
+}
+
+void SendReadRequestAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "send-read-request");
+    pConfig->SetAttribute("id", object_m->getID());
+
+    Action::exportXml(pConfig);
+}
+
+void SendReadRequestAction::Run (pth_sem_t * stop)
+{
+    pth_sleep(delay_m);
+    logger_m.infoStream() << "Execute SendReadRequestAction" << endlog;
+    if (object_m)
+        object_m->read();
 }
 
 CycleOnOffAction::CycleOnOffAction()

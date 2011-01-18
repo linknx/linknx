@@ -1,4 +1,5 @@
 Release 0.0.1.28:
+    * Add "send-read-request" action that will force sending of a read request on the bus
     * Add attribute read="true" for listener address which is used to send read request on the bus
     * Initial schedule for timers with at and *during* fixed (michael111)
 	* Support for serial IO port
