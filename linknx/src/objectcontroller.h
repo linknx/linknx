@@ -70,6 +70,7 @@ public:
     const char* getID() { return id_m.c_str(); };
     const char* getDescr() { return descr_m.c_str(); };
     const eibaddr_t getGad() { return gad_m; };
+    const eibaddr_t getReadRequestGad() { return readRequestGad_m; };
     std::list<eibaddr_t>::iterator getListenerGad() { return listenerGadList_m.begin(); };
     std::list<eibaddr_t>::iterator getListenerGadEnd() { return listenerGadList_m.end(); };
     //    eibaddr_t getListenerGad(int idx) { return listenerGadList_m[idx]; };
@@ -102,13 +103,14 @@ protected:
     static Logger& logger_m;
 private:
     std::string id_m;
-    eibaddr_t gad_m;
-    eibaddr_t lastTx_m;
     std::string initValue_m;
+    std::string descr_m;
+    eibaddr_t gad_m;
+    eibaddr_t readRequestGad_m;
+    eibaddr_t lastTx_m;
     bool persist_m;
     bool writeLog_m;
     bool readPending_m;
-    std::string descr_m;
     typedef std::list<ChangeListener*> ListenerList_t;
     ListenerList_t listenerList_m;
     typedef std::list<eibaddr_t> ListenerGadList_t;

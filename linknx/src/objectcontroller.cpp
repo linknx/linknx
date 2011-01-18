@@ -31,7 +31,7 @@ ObjectController* ObjectController::instance_m;
 
 Logger& Object::logger_m(Logger::getInstance("Object"));
 
-Object::Object() : init_m(false), flags_m(Default), gad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
+Object::Object() : init_m(false), flags_m(Default), gad_m(0), readRequestGad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
 {}
 
 Object::~Object()
@@ -116,6 +116,7 @@ void Object::importXml(ticpp::Element* pConfig)
         gad_m = 0;
     else if (gad != "nochange")
         gad_m = readgaddr(gad.c_str());
+    readRequestGad_m = gad_m;
 
     bool has_descr = false;
     bool has_listener = false;
@@ -140,7 +141,10 @@ void Object::importXml(ticpp::Element* pConfig)
                 has_listener = true;
             }
             std::string listener_gad = child->ToElement()->GetAttribute("gad");
-            listenerGadList_m.push_back(readgaddr(listener_gad.c_str()));
+            eibaddr_t gad = readgaddr(listener_gad.c_str());
+            listenerGadList_m.push_back(gad);
+            if (child->ToElement()->GetAttribute("read") == "true")
+                readRequestGad_m = gad;
         }
         //        else
         //        {
@@ -245,6 +249,8 @@ void Object::exportXml(ticpp::Element* pConfig)
     {
         ticpp::Element pElem("listener");
         pElem.SetAttribute("gad", writegaddr(*it));
+        if (readRequestGad_m == (*it))
+            pElem.SetAttribute("read", "true");
         pConfig->LinkEndChild(&pElem);
     }
 }
@@ -255,7 +261,7 @@ void Object::read()
     if (!readPending_m)
     {
         uint8_t buf[2] = { 0, 0 };
-        con->write(getGad(), buf, 2);
+        con->write(getReadRequestGad(), buf, 2);
     }
     readPending_m = true;
 
