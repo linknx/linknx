@@ -96,7 +96,15 @@ void RuleServer::statusXml(ticpp::Element* pStatus)
     }
 }
 
-int RuleServer::parseDuration(const std::string& duration, bool allowNegative)
+Rule *RuleServer::getRule(const char *id)
+{
+    RuleIdMap_t::iterator it = rulesMap_m.find(id);
+    if (it == rulesMap_m.end())
+        return 0;
+    return it->second;
+}
+
+int RuleServer::parseDuration(const std::string& duration, bool allowNegative, bool useMilliseconds)
 {
     if (duration == "")
         return 0;
@@ -118,20 +126,41 @@ int RuleServer::parseDuration(const std::string& duration, bool allowNegative)
         num = num * 3600;
     else if (unit == "m")
         num = num * 60;
-    else if (unit != "" && unit != "s")
+    else if (unit != "" && unit != "s" && unit != "ms")
     {
         std::stringstream msg;
         msg << "RuleServer::parseDuration: Bad unit: '" << unit << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
+    if (unit == "ms")
+    {
+        if (!useMilliseconds)
+        {
+            std::stringstream msg;
+            msg << "RuleServer::parseDuration: Milliseconds not supported" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
+    }
+    else if (useMilliseconds)
+        num = num * 1000;
+
     return num;
 }
 
-std::string RuleServer::formatDuration(int duration)
+std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
 {
     if (duration == 0)
         return "";
     std::stringstream output;
+    if (useMilliseconds)
+    {
+        if (duration % (1000) != 0)
+        {
+            output << duration << "ms";
+            return output.str();
+        }
+        duration = (duration / 1000);
+    }
     if (duration % (3600*24) == 0)
         output << (duration / (3600*24)) << 'd';
     else if (duration % 3600 == 0)
@@ -341,6 +370,19 @@ void Rule::evaluate()
     }
 }
 
+void Rule::cancel()
+{
+    if (flags_m & Active)
+    {
+        logger_m.infoStream() << "Cancel all actions for rule " << id_m << endlog;
+        ActionsList_t::iterator it;
+        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+            (*it)->cancel();
+        for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
+            (*it)->cancel();
+    }
+}
+
 Logger& Action::logger_m(Logger::getInstance("Action"));
 
 Action* Action::create(const std::string& type)
@@ -351,10 +393,14 @@ Action* Action::create(const std::string& type)
         return new SetValueAction();
     else if (type == "copy-value")
         return new CopyValueAction();
+    else if (type == "toggle-value")
+        return new ToggleValueAction();
     else if (type == "send-read-request")
         return new SendReadRequestAction();
     else if (type == "cycle-on-off")
         return new CycleOnOffAction();
+    else if (type == "repeat-list")
+        return new RepeatListAction();
     else if (type == "send-sms")
         return new SendSmsAction();
     else if (type == "send-email")
@@ -367,6 +413,8 @@ Action* Action::create(const std::string& type)
     else if (type == "script")
         return new LuaScriptAction();
 #endif
+    else if (type == "cancel")
+        return new CancelAction();
     else
         return 0;
 }
@@ -375,7 +423,7 @@ Action* Action::create(ticpp::Element* pConfig)
 {
     std::string type = pConfig->GetAttribute("type");
     int delay;
-    delay = RuleServer::parseDuration(pConfig->GetAttribute("delay"));
+    delay = RuleServer::parseDuration(pConfig->GetAttribute("delay"), false, true);
     Action* action = Action::create(type);
     if (action == 0)
     {
@@ -391,7 +439,28 @@ Action* Action::create(ticpp::Element* pConfig)
 void Action::exportXml(ticpp::Element* pConfig)
 {
     if (delay_m != 0)
-        pConfig->SetAttribute("delay", RuleServer::formatDuration(delay_m));
+        pConfig->SetAttribute("delay", RuleServer::formatDuration(delay_m, true));
+}
+
+bool Action::sleep(int delay, pth_sem_t * stop)
+{
+    struct timeval timeout;
+    timeout.tv_sec = delay / 1000;
+    timeout.tv_usec = (delay % 1000) * 1000;
+    infoStream("Action") << "sleep for " << delay << " : " << timeout.tv_sec << " and " << timeout.tv_usec << endlog;
+    pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
+    pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
+    return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
+}
+
+bool Action::usleep(int delay, pth_sem_t * stop)
+{
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = delay;
+    pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
+    pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
+    return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
 }
 
 DimUpAction::DimUpAction() : object_m(0), start_m(0), stop_m(255), duration_m(60)
@@ -414,7 +483,7 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     }
     pConfig->GetAttribute("start", &start_m);
     pConfig->GetAttribute("stop", &stop_m);
-    duration_m = RuleServer::parseDuration(pConfig->GetAttribute("duration"));
+    duration_m = RuleServer::parseDuration(pConfig->GetAttribute("duration"), false, true);
     logger_m.infoStream() << "DimUpAction: Configured for object " << object_m->getID()
     << " with start=" << start_m
     << "; stop=" << stop_m
@@ -427,23 +496,25 @@ void DimUpAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("id", object_m->getID());
     pConfig->SetAttribute("start", start_m);
     pConfig->SetAttribute("stop", stop_m);
-    pConfig->SetAttribute("duration", RuleServer::formatDuration(duration_m));
+    pConfig->SetAttribute("duration", RuleServer::formatDuration(duration_m, true));
 
     Action::exportXml(pConfig);
 }
 
 void DimUpAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     if (stop_m > start_m)
     {
         logger_m.infoStream() << "Execute DimUpAction" << endlog;
 
-        unsigned long step = ((duration_m * 1000) / (stop_m - start_m)) * 1000;
+        unsigned long step = (duration_m / (stop_m - start_m));
         for (unsigned int idx=start_m; idx < stop_m; idx++)
         {
             object_m->setIntValue(idx);
-            pth_usleep(step);
+            if (sleep(step, stop))
+                return;
             if (object_m->getIntValue() < idx)
             {
                 logger_m.infoStream() << "Abort DimUpAction" << endlog;
@@ -455,11 +526,12 @@ void DimUpAction::Run (pth_sem_t * stop)
     {
         logger_m.infoStream() << "Execute DimUpAction (decrease)" << endlog;
 
-        unsigned long step = ((duration_m * 1000) / (start_m - stop_m)) * 1000;
+        unsigned long step = (duration_m / (start_m - stop_m));
         for (unsigned int idx=start_m; idx > stop_m; idx--)
         {
             object_m->setIntValue(idx);
-            pth_usleep(step);
+            if (sleep(step, stop))
+                return;
             if (object_m->getIntValue() > idx)
             {
                 logger_m.infoStream() << "Abort DimUpAction" << endlog;
@@ -502,7 +574,8 @@ void SetValueAction::exportXml(ticpp::Element* pConfig)
 
 void SetValueAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute SetValueAction with value " << value_m->toString() << endlog;
     if (object_m)
         object_m->setValue(value_m);
@@ -544,7 +617,8 @@ void CopyValueAction::Run (pth_sem_t * stop)
 {
     if (from_m && to_m)
     {
-        pth_sleep(delay_m);
+        if (sleep(delay_m, stop))
+            return;
         try
         {
             std::string value = from_m->getValue();
@@ -556,6 +630,45 @@ void CopyValueAction::Run (pth_sem_t * stop)
             logger_m.warnStream() << "Error in CopyValueAction: " << ex.m_details << endlog;
         }
     }
+}
+
+ToggleValueAction::ToggleValueAction() : object_m(0)
+{}
+
+ToggleValueAction::~ToggleValueAction()
+{}
+
+void ToggleValueAction::importXml(ticpp::Element* pConfig)
+{
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    Object* obj = ObjectController::instance()->getObject(id);
+    object_m = dynamic_cast<SwitchingObject*>(obj);
+    if (!object_m)
+    {
+        std::stringstream msg;
+        msg << "Wrong Object type for ToggleValueAction: '" << id << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
+    logger_m.infoStream() << "ToggleValueAction: Configured for object " << object_m->getID() << endlog;
+}
+
+void ToggleValueAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "toggle-value");
+    pConfig->SetAttribute("id", object_m->getID());
+
+    Action::exportXml(pConfig);
+}
+
+void ToggleValueAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute ToggleValueAction" << endlog;
+    if (object_m)
+        object_m->setBoolValue(!object_m->getBoolValue());
 }
 
 SendReadRequestAction::SendReadRequestAction() : object_m(0)
@@ -583,7 +696,8 @@ void SendReadRequestAction::exportXml(ticpp::Element* pConfig)
 
 void SendReadRequestAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute SendReadRequestAction" << endlog;
     if (object_m)
         object_m->read();
@@ -609,8 +723,8 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
     }
 
-    delayOn_m = RuleServer::parseDuration(pConfig->GetAttribute("on"));
-    delayOff_m = RuleServer::parseDuration(pConfig->GetAttribute("off"));
+    delayOn_m = RuleServer::parseDuration(pConfig->GetAttribute("on"), false, true);
+    delayOff_m = RuleServer::parseDuration(pConfig->GetAttribute("off"), false, true);
     pConfig->GetAttribute("count", &count_m);
 
     ticpp::Iterator< ticpp::Element > child;
@@ -632,8 +746,8 @@ void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "cycle-on-off");
     pConfig->SetAttribute("id", object_m->getID());
-    pConfig->SetAttribute("on", RuleServer::formatDuration(delayOn_m));
-    pConfig->SetAttribute("off", RuleServer::formatDuration(delayOff_m));
+    pConfig->SetAttribute("on", RuleServer::formatDuration(delayOn_m, true));
+    pConfig->SetAttribute("off", RuleServer::formatDuration(delayOff_m, true));
     pConfig->SetAttribute("count", count_m);
 
     Action::exportXml(pConfig);
@@ -657,23 +771,83 @@ void CycleOnOffAction::Run (pth_sem_t * stop)
     if (!object_m)
         return;
     running_m = true;
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute CycleOnOffAction" << endlog;
     for (int i=0; i<count_m; i++)
     {
         if (!running_m)
             break;
         object_m->setBoolValue(true);
-        pth_sleep(delayOn_m);
+        if (sleep(delayOn_m, stop))
+            return;
         if (!running_m)
             break;
         object_m->setBoolValue(false);
-        pth_sleep(delayOff_m);
+        if (sleep(delayOff_m, stop))
+            return;
     }
     if (running_m)
         running_m = false;
     else
         logger_m.infoStream() << "CycleOnOffAction stopped by condition" << endlog;
+}
+
+RepeatListAction::RepeatListAction()
+    : period_m(0), count_m(0)
+{}
+
+RepeatListAction::~RepeatListAction()
+{}
+
+void RepeatListAction::importXml(ticpp::Element* pConfig)
+{
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    period_m = RuleServer::parseDuration(pConfig->GetAttribute("period"), false, true);
+    pConfig->GetAttribute("count", &count_m);
+
+    ticpp::Iterator<ticpp::Element> actionIt("action");
+    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
+    {
+        Action* action = Action::create(&(*actionIt));
+        actionsList_m.push_back(action);
+    }
+
+    logger_m.infoStream() << "RepeatListAction: Configured with period=" << period_m
+    << "; count=" << count_m << endlog;
+}
+
+void RepeatListAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "repeat-list");
+    pConfig->SetAttribute("period", RuleServer::formatDuration(period_m, true));
+    pConfig->SetAttribute("count", count_m);
+
+    Action::exportXml(pConfig);
+
+    ActionsList_t::iterator it;
+    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+    {
+        ticpp::Element pElem("action");
+        (*it)->exportXml(&pElem);
+        pConfig->LinkEndChild(&pElem);
+    }
+}
+
+void RepeatListAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute RepeatListAction" << endlog;
+    for (int i=0; i<count_m; i++)
+    {
+        ActionsList_t::iterator it;
+        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+            (*it)->execute();
+        if (sleep(period_m, stop))
+            return;
+    }
 }
 
 SendSmsAction::SendSmsAction()
@@ -701,7 +875,8 @@ void SendSmsAction::exportXml(ticpp::Element* pConfig)
 
 void SendSmsAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute SendSmsAction with value " << value_m << endlog;
 
     Services::instance()->getSmsGateway()->sendSms(id_m, value_m);
@@ -735,7 +910,8 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
 
 void SendEmailAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute SendEmailAction: to=" << to_m << " subject=" << subject_m << endlog;
 
     Services::instance()->getEmailGateway()->sendEmail(to_m, subject_m, text_m);
@@ -764,12 +940,47 @@ void ShellCommandAction::exportXml(ticpp::Element* pConfig)
 
 void ShellCommandAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute ShellCommandAction: " << cmd_m << endlog;
 
     int ret = pth_system(cmd_m.c_str());
     if (ret != 0)
         logger_m.infoStream() << "Execute ShellCommandAction: returned " << ret << endlog;
+}
+
+CancelAction::CancelAction()
+{}
+
+CancelAction::~CancelAction()
+{}
+
+void CancelAction::importXml(ticpp::Element* pConfig)
+{
+    pConfig->GetAttribute("rule-id", &ruleId_m);
+
+    logger_m.infoStream() << "CancelAction: Configured" << endlog;
+}
+
+void CancelAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "cancel");
+    pConfig->SetAttribute("rule-id", ruleId_m);
+
+    Action::exportXml(pConfig);
+}
+
+void CancelAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute CancelAction for rule ID: " << ruleId_m << endlog;
+
+    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    if (rule)
+        rule->cancel();
+    else
+        logger_m.errorStream() << "CancelAction: Rule not found '" << ruleId_m << "'" << endlog;
 }
 
 
@@ -1054,7 +1265,8 @@ void ObjectCondition::exportXml(ticpp::Element* pConfig)
             op = "ne";
         pConfig->SetAttribute("op", op);
     }
-    pConfig->SetAttribute("value", value_m->toString());
+    if (value_m)
+        pConfig->SetAttribute("value", value_m->toString());
     if (trigger_m)
         pConfig->SetAttribute("trigger", "true");
 }

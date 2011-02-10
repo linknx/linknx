@@ -191,9 +191,12 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     virtual void execute() { Start(true); };
+    virtual void cancel() { Stop(); };
 private:
     virtual void Run (pth_sem_t * stop) = 0;
 protected:
+    static bool sleep(int delay, pth_sem_t * stop);
+    static bool usleep(int delay, pth_sem_t * stop);
     int delay_m;
     static Logger& logger_m;
 };
@@ -246,6 +249,21 @@ private:
     Object* to_m;
 };
 
+class ToggleValueAction : public Action
+{
+public:
+    ToggleValueAction();
+    virtual ~ToggleValueAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    SwitchingObject* object_m;
+};
+
 class SendReadRequestAction : public Action
 {
 public:
@@ -277,6 +295,24 @@ private:
     SwitchingObject* object_m;
     int delayOn_m, delayOff_m, count_m;
     Condition* stopCondition_m;
+    bool running_m;
+};
+
+class RepeatListAction : public Action
+{
+public:
+    RepeatListAction();
+    virtual ~RepeatListAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    int period_m, count_m;
+    typedef std::list<Action*> ActionsList_t;
+    ActionsList_t actionsList_m;
     bool running_m;
 };
 
@@ -328,6 +364,21 @@ private:
     std::string cmd_m;
 };
 
+class CancelAction : public Action
+{
+public:
+    CancelAction();
+    virtual ~CancelAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    std::string ruleId_m;
+};
+
 class Rule : public ChangeListener
 {
 public:
@@ -343,6 +394,7 @@ public:
     virtual void onChange(Object* object);
 
     void evaluate();
+    void cancel();
 
 private:
     std::string id_m;
@@ -380,8 +432,10 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
     virtual void statusXml(ticpp::Element* pStatus);
     
-    static int parseDuration(const std::string& duration, bool allowNegative = false);
-    static std::string formatDuration(int duration);
+    Rule *getRule(const char *id);
+
+    static int parseDuration(const std::string& duration, bool allowNegative = false, bool useMilliseconds = false);
+    static std::string formatDuration(int duration, bool useMilliseconds = false);
 
 private:
     RuleServer();

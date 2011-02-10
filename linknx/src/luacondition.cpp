@@ -154,10 +154,19 @@ void LuaScriptAction::exportXml(ticpp::Element* pConfig)
 
 void LuaScriptAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (Action::sleep(delay_m, stop))
+        return;
     logger_m.infoStream() << "Execute LuaScriptAction" << endlog;
-    if (luaL_dostring(l_m, code_m.c_str()) != 0) 
-        logger_m.errorStream() << "LuaScriptAction error: " << lua_tostring(l_m, -1) << endlog;
+    lua_pushlightuserdata(l_m, stop);
+    lua_setglobal(l_m, "__linknx_stop");
+    if (luaL_dostring(l_m, code_m.c_str()) != 0)
+    {
+        std::string error(lua_tostring(l_m, -1));
+        if (error == "Action interrupted")
+            logger_m.infoStream() << "LuaScriptAction canceled" << endlog;
+        else
+            logger_m.errorStream() << "LuaScriptAction error: " << lua_tostring(l_m, -1) << endlog;
+    }
     lua_settop(l_m, 0);      
 }
 
@@ -256,7 +265,7 @@ int LuaScriptAction::iosend(lua_State *L)
 
 int LuaScriptAction::sleep(lua_State *L)
 {
-    int delay, ret;
+    lua_Number delay, ret=0;
     if (lua_gettop(L) != 1 || !lua_isnumber(L, 1))
     {
         lua_pushstring(L, "Incorrect argument to 'sleep'");
@@ -264,7 +273,24 @@ int LuaScriptAction::sleep(lua_State *L)
     }
     delay = lua_tonumber(L, 1);
     debugStream("LuaScriptAction") << "Sleep for '" << delay << "' seconds" << endlog;
-    ret = pth_sleep(delay);
+    lua_getglobal(L, "__linknx_stop");
+    if (lua_islightuserdata (L, -1))
+    {
+        pth_sem_t * stop = (pth_sem_t *)lua_touserdata(L, -1);
+        if (Action::sleep(delay*1000, stop))
+        {
+            lua_pushstring(L, "Action interrupted");
+            lua_error(L);
+            return 0;
+        }
+    }
+    else
+    {
+        if (delay < 1)
+            ret = pth_usleep(delay*1000000);
+        else
+            ret = pth_sleep(delay);
+    }
     lua_pushnumber(L, ret);
     return 1;
 }

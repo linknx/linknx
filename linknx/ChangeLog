@@ -1,4 +1,9 @@
 Release 0.0.1.28:
+    * Fix for exportXML with Object-Conditions without value (michael111)
+    * Add "toggle-value" action that will toggle value of a switching object
+    * Allow millisecond delays in actions
+    * Add "repeat-list" action that repeats a list of actions periodically a specified number of times 
+    * Add "cancel" action to cancel all ongoing actions of a rule
     * Add "send-read-request" action that will force sending of a read request on the bus
     * Add attribute read="true" for listener address which is used to send read request on the bus
     * Initial schedule for timers with at and *during* fixed (michael111)

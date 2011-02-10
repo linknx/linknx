@@ -720,7 +720,8 @@ void TxAction::exportXml(ticpp::Element* pConfig)
 
 void TxAction::Run (pth_sem_t * stop)
 {
-    pth_sleep(delay_m);
+    if (sleep(delay_m, stop))
+        return;
     try
     {
         IOPort* port = IOPortManager::instance()->getPort(port_m);
