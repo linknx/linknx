@@ -107,8 +107,6 @@ public:
 
 protected:
     Object* object_m;
-private:
-    ObjectValue* value_m;
     ChangeListener* cl_m;
     bool trigger_m;
     int op_m;
@@ -118,6 +116,23 @@ private:
         gt = 0x02,
         lt = 0x04
     };
+private:
+    ObjectValue* value_m;
+};
+
+class ObjectComparisonCondition : public ObjectCondition
+{
+public:
+    ObjectComparisonCondition(ChangeListener* cl);
+    virtual ~ObjectComparisonCondition();
+
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
+
+protected:
+    Object* object2_m;
 };
 
 class ObjectSourceCondition : public ObjectCondition

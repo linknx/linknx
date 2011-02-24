@@ -44,6 +44,11 @@ class ObjectValue
 public:
     virtual ~ObjectValue() {};
     virtual std::string toString() = 0;
+    virtual bool equals(ObjectValue* value) = 0;
+    virtual int compare(ObjectValue* value) = 0;
+    virtual bool set(ObjectValue* value) = 0;
+protected:
+    static Logger& logger_m; // TODO: remove when all subclasses have their own logger
 };
 
 class Object
@@ -56,11 +61,10 @@ public:
     static Object* create(const std::string& type);
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual bool equals(ObjectValue* value) = 0;
-    virtual int compare(ObjectValue* value) = 0;
     virtual void setValue(ObjectValue* value) = 0;
     virtual void setValue(const std::string& value) = 0;
-    virtual std::string getValue() = 0;
+    virtual ObjectValue* get() = 0;
+    virtual std::string getValue() { return get()->toString(); };
     virtual std::string getType() = 0;
 
     virtual void importXml(ticpp::Element* pConfig);
@@ -117,18 +121,31 @@ private:
     ListenerGadList_t listenerGadList_m;
 };
 
-class SwitchingObject : public Object
+class SwitchingObjectValue : public ObjectValue
+{
+public:
+    SwitchingObjectValue(const std::string& value);
+    SwitchingObjectValue(bool value) : value_m(value) {};
+    virtual ~SwitchingObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual bool set(ObjectValue* value);
+protected:
+    bool value_m;
+    static Logger& logger_m;
+};
+
+class SwitchingObject : public Object, public SwitchingObjectValue
 {
 public:
     SwitchingObject();
     virtual ~SwitchingObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "1.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -141,7 +158,24 @@ public:
         return value_m;
     };
 protected:
-    bool value_m;
+    static Logger& logger_m;
+};
+
+class StepDirObjectValue : public ObjectValue
+{
+public:
+    virtual ~StepDirObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString() = 0;
+    virtual bool set(ObjectValue* value);
+protected:
+    friend class StepDirObject;
+    StepDirObjectValue() : direction_m(0), stepcode_m(0) {};
+    StepDirObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
+//    set(int direction, int stepcode) { direction_m = direction; stepcode_m = stepcode; };
+    int direction_m;
+    int stepcode_m;
     static Logger& logger_m;
 };
 
@@ -152,56 +186,106 @@ public:
     virtual ~StepDirObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
-    virtual std::string getValue() = 0;
     virtual std::string getType() = 0;
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
+    virtual void setStepValue(int direction, int stepcode) = 0;
+protected:
+    virtual bool set(ObjectValue* value) = 0;
+    virtual bool setStep(int direction, int stepcode) = 0;
+    virtual int getDirection() = 0;
+    virtual int getStepCode() = 0;
+    static Logger& logger_m;
+};
+
+class DimmingObjectValue : public StepDirObjectValue
+{
+public:
+    DimmingObjectValue(const std::string& value);
+    virtual ~DimmingObjectValue() {};
+    virtual std::string toString();
+protected:
+    DimmingObjectValue(int direction, int stepcode) : StepDirObjectValue(direction, stepcode) {};
+};
+
+class DimmingObject : public StepDirObject, public DimmingObjectValue
+{
+public:
+    DimmingObject() : DimmingObjectValue(0, 0) {};
+    virtual ~DimmingObject() {};
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "3.007"; };
     virtual void setStepValue(int direction, int stepcode);
 protected:
-    int direction_m;
-    int stepcode_m;
+    virtual bool set(ObjectValue* value) { return DimmingObjectValue::set(value); };
+    virtual bool setStep(int direction, int stepcode) { if (direction_m != direction || stepcode_m != stepcode) { direction_m = direction; stepcode_m = stepcode; return true; } return false; };
+    virtual int getDirection() { return direction_m; };
+    virtual int getStepCode() { return stepcode_m; };
     static Logger& logger_m;
 };
 
-class DimmingObject : public StepDirObject
+class BlindsObjectValue : public StepDirObjectValue
 {
 public:
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "3.007"; };
+    BlindsObjectValue(const std::string& value);
+    virtual ~BlindsObjectValue() {};
+    virtual std::string toString();
 protected:
-    static Logger& logger_m;
+    BlindsObjectValue(int direction, int stepcode) : StepDirObjectValue(direction, stepcode) {};
 };
 
-class BlindsObject : public StepDirObject
+class BlindsObject : public StepDirObject, public BlindsObjectValue
 {
 public:
+    BlindsObject() : BlindsObjectValue(0, 0) {};
+    virtual ~BlindsObject() {};
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "3.008"; };
+    virtual void setStepValue(int direction, int stepcode);
 protected:
+    virtual bool set(ObjectValue* value) { return BlindsObjectValue::set(value); };
+    virtual bool setStep(int direction, int stepcode) { if (direction_m != direction || stepcode_m != stepcode) { direction_m = direction; stepcode_m = stepcode; return true; } return false; };
+    virtual int getDirection() { return direction_m; };
+    virtual int getStepCode() { return stepcode_m; };
     static Logger& logger_m;
 };
 
-class TimeObject : public Object
+class TimeObjectValue : public ObjectValue
+{
+public:
+    TimeObjectValue(const std::string& value);
+    virtual ~TimeObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual bool set(ObjectValue* value);
+    void getTimeValue(int *wday, int *hour, int *min, int *sec);
+protected:
+    int wday_m;
+    int hour_m;
+    int min_m;
+    int sec_m;
+    friend class TimeObject;
+    TimeObjectValue(int wday, int hour, int min, int sec) : wday_m(wday), hour_m(hour), min_m(min), sec_m(sec) {};
+};
+
+class TimeObject : public Object, public TimeObjectValue
 {
 public:
     TimeObject();
     virtual ~TimeObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "10.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -210,25 +294,38 @@ public:
     void setTime(int wday, int hour, int min, int sec);
     void getTime(int *wday, int *hour, int *min, int *sec);
 protected:
-    int wday_m;
-    int hour_m;
-    int min_m;
-    int sec_m;
     static Logger& logger_m;
 };
 
-class DateObject : public Object
+class DateObjectValue : public ObjectValue
+{
+public:
+    DateObjectValue(const std::string& value);
+    virtual ~DateObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual bool set(ObjectValue* value);
+    void getDateValue(int *day, int *month, int *year);
+
+protected:
+    int day_m;
+    int month_m;
+    int year_m;
+    friend class DateObject;
+    DateObjectValue(int day, int month, int year) : day_m(day), month_m(month), year_m(year) {};
+};
+
+class DateObject : public Object, public DateObjectValue
 {
 public:
     DateObject();
     virtual ~DateObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "11.001"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -237,24 +334,35 @@ public:
     void setDate(int day, int month, int year);
     void getDate(int *day, int *month, int *year);
 protected:
-    int day_m;
-    int month_m;
-    int year_m;
     static Logger& logger_m;
 };
 
-class ValueObject : public Object
+class ValueObjectValue : public ObjectValue
+{
+public:
+    ValueObjectValue(const std::string& value);
+    virtual ~ValueObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual bool set(ObjectValue* value);
+protected:
+    double value_m;
+    friend class ValueObject;
+    ValueObjectValue(double value) : value_m(value) {};
+    ValueObjectValue() : value_m(0) {};
+};
+
+class ValueObject : public Object, public ValueObjectValue
 {
 public:
     ValueObject();
     virtual ~ValueObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "9.xxx"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -267,11 +375,21 @@ public:
         return value_m;
     };
 protected:
-    double value_m;
     static Logger& logger_m;
 };
 
-class ValueObject32 : public ValueObject
+class ValueObject32Value : public ValueObjectValue
+{
+public:
+    ValueObject32Value(const std::string& value);
+    virtual ~ValueObject32Value() {};
+    virtual std::string toString();
+protected:
+    ValueObject32Value(double value) : ValueObjectValue(value) {};
+    ValueObject32Value() {};
+};
+
+class ValueObject32 : public Object, public ValueObject32Value
 {
 public:
     ValueObject32() {};
@@ -280,7 +398,7 @@ public:
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
-    virtual std::string getValue();
+    virtual ObjectValue* get();
     virtual std::string getType() { return "14.xxx"; };
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
@@ -294,6 +412,20 @@ private:
     } convfloat;
 };
 
+class UIntObjectValue : public ObjectValue
+{
+public:
+    UIntObjectValue(const std::string& value);
+    virtual ~UIntObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual bool set(ObjectValue* value);
+protected:
+    uint32_t value_m;
+    UIntObjectValue(uint32_t value) : value_m(value) {};
+    UIntObjectValue() : value_m(0) {};
+};
 
 class UIntObject : public Object
 {
@@ -302,369 +434,19 @@ public:
     virtual ~UIntObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
-    virtual std::string getValue() = 0;
     virtual std::string getType() = 0;
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
     virtual void doSend(bool isWrite) = 0;
     void setIntValue(uint32_t value);
-    uint32_t getIntValue()
-    {
-        if (!init_m)
-            read();
-        return value_m;
-    };
+    uint32_t getIntValue();
 protected:
-    uint32_t value_m;
+    virtual bool set(ObjectValue* value) = 0;
+    virtual bool setInt(uint32_t value) = 0;
+    virtual uint32_t getInt() = 0;
     static Logger& logger_m;
-};
-
-class U8Object : public UIntObject
-{
-public:
-    U8Object();
-    virtual ~U8Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "5.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class ScalingObject : public U8Object
-{
-public:
-    ScalingObject();
-    virtual ~ScalingObject();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "5.001"; };
-protected:
-    static Logger& logger_m;
-};
-
-class AngleObject : public U8Object
-{
-public:
-    AngleObject();
-    virtual ~AngleObject();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "5.003"; };
-protected:
-    static Logger& logger_m;
-};
-
-class HeatingModeObject : public U8Object
-{
-public:
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "20.102"; };
-protected:
-    static Logger& logger_m;
-};
-
-class U16Object : public UIntObject
-{
-public:
-    U16Object();
-    virtual ~U16Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "7.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class U32Object : public UIntObject
-{
-public:
-    U32Object();
-    virtual ~U32Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "12.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class IntObject : public Object
-{
-public:
-    IntObject();
-    virtual ~IntObject();
-
-    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
-    virtual void setValue(ObjectValue* value);
-    virtual void setValue(const std::string& value) = 0;
-    virtual std::string getValue() = 0;
-    virtual std::string getType() = 0;
-
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
-    virtual void doSend(bool isWrite) = 0;
-    void setIntValue(int32_t value);
-    int32_t getIntValue()
-    {
-        if (!init_m)
-            read();
-        return value_m;
-    };
-protected:
-    int32_t value_m;
-    static Logger& logger_m;
-};
-
-class S8Object : public IntObject
-{
-public:
-    S8Object();
-    virtual ~S8Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "6.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class S16Object : public IntObject
-{
-public:
-    S16Object();
-    virtual ~S16Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "8.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class S32Object : public IntObject
-{
-public:
-    S32Object();
-    virtual ~S32Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "13.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class S64Object : public Object
-{
-public:
-    S64Object();
-    virtual ~S64Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
-    virtual void setValue(ObjectValue* value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "29.xxx"; };
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-
-    void setIntValue(int64_t value);
-    int64_t getIntValue()
-    {
-        if (!init_m)
-            read();
-        return value_m;
-    };
-protected:
-    int64_t value_m;
-    static Logger& logger_m;
-};
-
-class StringObject : public Object
-{
-public:
-    StringObject();
-    virtual ~StringObject();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual bool equals(ObjectValue* value);
-    virtual int compare(ObjectValue* value);
-    virtual void setValue(ObjectValue* value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getValue();
-    virtual std::string getType() { return "28.001"; };
-
-    void setStringValue(const std::string& val);
-
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-protected:
-    std::string value_m;
-    static Logger& logger_m;
-};
-
-class String14Object : public StringObject
-{
-public:
-    String14Object();
-    virtual ~String14Object();
-
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getType() { return "16.000"; };
-
-    virtual void doSend(bool isWrite);
-protected:
-    static Logger& logger_m;
-};
-
-class SwitchingObjectValue : public ObjectValue
-{
-public:
-    SwitchingObjectValue(const std::string& value);
-    virtual ~SwitchingObjectValue() {};
-    virtual std::string toString();
-protected:
-    SwitchingObjectValue(bool value) : value_m(value) {};
-    friend class SwitchingObject;
-    bool value_m;
-};
-
-class StepDirObjectValue : public ObjectValue
-{
-public:
-    virtual ~StepDirObjectValue() {};
-    virtual std::string toString() = 0;
-protected:
-    StepDirObjectValue() : direction_m(0), stepcode_m(0) {};
-    StepDirObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
-    friend class StepDirObject;
-    int direction_m;
-    int stepcode_m;
-};
-
-class DimmingObjectValue : public StepDirObjectValue
-{
-public:
-    DimmingObjectValue(const std::string& value);
-    virtual ~DimmingObjectValue() {};
-    virtual std::string toString();
-protected:
-    DimmingObjectValue(int direction, int stepcode) : StepDirObjectValue(direction, stepcode) {};
-    friend class DimmingObject;
-};
-
-class BlindsObjectValue : public StepDirObjectValue
-{
-public:
-    BlindsObjectValue(const std::string& value);
-    virtual ~BlindsObjectValue() {};
-    virtual std::string toString();
-protected:
-    BlindsObjectValue(int direction, int stepcode) : StepDirObjectValue(direction, stepcode) {};
-    friend class BlindsObject;
-};
-
-class TimeObjectValue : public ObjectValue
-{
-public:
-    TimeObjectValue(const std::string& value);
-    virtual ~TimeObjectValue() {};
-    virtual std::string toString();
-    void getTimeValue(int *wday, int *hour, int *min, int *sec);
-protected:
-    TimeObjectValue(int wday, int hour, int min, int sec) : wday_m(wday), hour_m(hour), min_m(min), sec_m(sec) {};
-    friend class TimeObject;
-    int wday_m;
-    int hour_m;
-    int min_m;
-    int sec_m;
-};
-
-class DateObjectValue : public ObjectValue
-{
-public:
-    DateObjectValue(const std::string& value);
-    virtual ~DateObjectValue() {};
-    virtual std::string toString();
-    void getDateValue(int *day, int *month, int *year);
-protected:
-    DateObjectValue(int day, int month, int year) : day_m(day), month_m(month), year_m(year) {};
-    friend class DateObject;
-    int day_m;
-    int month_m;
-    int year_m;
-};
-
-class ValueObjectValue : public ObjectValue
-{
-public:
-    ValueObjectValue(const std::string& value);
-    virtual ~ValueObjectValue() {};
-    virtual std::string toString();
-protected:
-    ValueObjectValue(double value) : value_m(value) {};
-    friend class ValueObject;
-    double value_m;
-};
-
-class ValueObject32Value : public ObjectValue
-{
-public:
-    ValueObject32Value(const std::string& value);
-    virtual ~ValueObject32Value() {};
-    virtual std::string toString();
-protected:
-    ValueObject32Value(double value) : value_m(value) {};
-    friend class ValueObject32;
-    double value_m;
-};
-
-class UIntObjectValue : public ObjectValue
-{
-public:
-    UIntObjectValue(const std::string& value);
-    virtual ~UIntObjectValue() {};
-    virtual std::string toString();
-protected:
-    UIntObjectValue(uint32_t value) : value_m(value) {};
-    UIntObjectValue() {};
-    friend class UIntObject;
-    uint32_t value_m;
 };
 
 class U8ObjectValue : public UIntObjectValue
@@ -676,7 +458,39 @@ public:
 protected:
     U8ObjectValue(uint32_t value) : UIntObjectValue(value) {};
     U8ObjectValue() {};
-    friend class U8Object;
+};
+
+class U8ImplObject : public UIntObject
+{
+public:
+    U8ImplObject();
+    virtual ~U8ImplObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getType() = 0;
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+protected:
+    static Logger& logger_m;
+};
+
+class U8Object : public U8ImplObject, public U8ObjectValue
+{
+public:
+    U8Object();
+    virtual ~U8Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "5.xxx"; };
+    virtual std::string toString() { return U8ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return U8ObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class ScalingObjectValue : public U8ObjectValue
@@ -687,7 +501,24 @@ public:
     virtual std::string toString();
 protected:
     ScalingObjectValue(uint32_t value) : U8ObjectValue(value) {};
-    friend class ScalingObject;
+};
+
+class ScalingObject : public U8ImplObject, public ScalingObjectValue
+{
+public:
+    ScalingObject();
+    virtual ~ScalingObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "5.001"; };
+    virtual std::string toString() { return ScalingObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return ScalingObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class AngleObjectValue : public U8ObjectValue
@@ -697,7 +528,24 @@ public:
     virtual std::string toString();
 protected:
     AngleObjectValue(uint32_t value) : U8ObjectValue(value) {};
-    friend class AngleObject;
+};
+
+class AngleObject : public U8ImplObject, public AngleObjectValue
+{
+public:
+    AngleObject();
+    virtual ~AngleObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "5.003"; };
+    virtual std::string toString() { return AngleObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return AngleObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class HeatingModeObjectValue : public U8ObjectValue
@@ -706,8 +554,23 @@ public:
     HeatingModeObjectValue(const std::string& value);
     virtual std::string toString();
 protected:
+    HeatingModeObjectValue() {};
     HeatingModeObjectValue(uint32_t value) : U8ObjectValue(value) {};
-    friend class HeatingModeObject;
+};
+
+class HeatingModeObject : public U8ImplObject, public HeatingModeObjectValue
+{
+public:
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "20.102"; };
+    virtual std::string toString() { return HeatingModeObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return HeatingModeObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class U16ObjectValue : public UIntObjectValue
@@ -719,7 +582,26 @@ public:
 protected:
     U16ObjectValue(uint32_t value) : UIntObjectValue(value) {};
     U16ObjectValue() {};
-    friend class U16Object;
+};
+
+class U16Object : public UIntObject, public U16ObjectValue
+{
+public:
+    U16Object();
+    virtual ~U16Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "7.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return U16ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return U16ObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class U32ObjectValue : public UIntObjectValue
@@ -731,7 +613,26 @@ public:
 protected:
     U32ObjectValue(uint32_t value) : UIntObjectValue(value) {};
     U32ObjectValue() {};
-    friend class U32Object;
+};
+
+class U32Object : public UIntObject, public U32ObjectValue
+{
+public:
+    U32Object();
+    virtual ~U32Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "12.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return U32ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return U32ObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class IntObjectValue : public ObjectValue
@@ -739,12 +640,36 @@ class IntObjectValue : public ObjectValue
 public:
     IntObjectValue(const std::string& value);
     virtual ~IntObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual bool set(ObjectValue* value);
 protected:
+    int32_t value_m;
     IntObjectValue(int32_t value) : value_m(value) {};
     IntObjectValue() {};
-    friend class IntObject;
-    int32_t value_m;
+};
+
+class IntObject : public Object
+{
+public:
+    IntObject();
+    virtual ~IntObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getType() = 0;
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
+    virtual void doSend(bool isWrite) = 0;
+    void setIntValue(int32_t value);
+    int32_t getIntValue();
+protected:
+    virtual bool set(ObjectValue* value) = 0;
+    virtual bool setInt(int32_t value) = 0;
+    virtual int32_t getInt() = 0;
+    static Logger& logger_m;
 };
 
 class S8ObjectValue : public IntObjectValue
@@ -756,7 +681,26 @@ public:
 protected:
     S8ObjectValue(int32_t value) : IntObjectValue(value) {};
     S8ObjectValue() {};
-    friend class S8Object;
+};
+
+class S8Object : public IntObject, public S8ObjectValue
+{
+public:
+    S8Object();
+    virtual ~S8Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "6.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return S8ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return S8ObjectValue::set(value); };
+    virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual int32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class S16ObjectValue : public IntObjectValue
@@ -768,7 +712,26 @@ public:
 protected:
     S16ObjectValue(int32_t value) : IntObjectValue(value) {};
     S16ObjectValue() {};
-    friend class S16Object;
+};
+
+class S16Object : public IntObject, public S16ObjectValue
+{
+public:
+    S16Object();
+    virtual ~S16Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "8.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return S16ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return S16ObjectValue::set(value); };
+    virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual int32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class S32ObjectValue : public IntObjectValue
@@ -780,7 +743,26 @@ public:
 protected:
     S32ObjectValue(int32_t value) : IntObjectValue(value) {};
     S32ObjectValue() {};
-    friend class S32Object;
+};
+
+class S32Object : public IntObject, public S32ObjectValue
+{
+public:
+    S32Object();
+    virtual ~S32Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "13.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return S32ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return S32ObjectValue::set(value); };
+    virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual int32_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class S64ObjectValue : public ObjectValue
@@ -788,12 +770,37 @@ class S64ObjectValue : public ObjectValue
 public:
     S64ObjectValue(const std::string& value);
     virtual ~S64ObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual bool set(ObjectValue* value);
 protected:
+    int64_t value_m;
     S64ObjectValue(int64_t value) : value_m(value) {};
     S64ObjectValue() {};
-    friend class S64Object;
-    int64_t value_m;
+};
+
+class S64Object : public Object, public S64ObjectValue
+{
+public:
+    S64Object();
+    virtual ~S64Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "29.xxx"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+
+    void setIntValue(int64_t value);
+    int64_t getIntValue();
+protected:
+    virtual bool set(ObjectValue* value) { return S64ObjectValue::set(value); };
+    virtual bool setInt(int64_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual int64_t getInt() { return value_m; };
+    static Logger& logger_m;
 };
 
 class StringObjectValue : public ObjectValue
@@ -801,17 +808,63 @@ class StringObjectValue : public ObjectValue
 public:
     StringObjectValue(const std::string& value);
     virtual ~StringObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual bool set(ObjectValue* value);
 protected:
-    friend class StringObject;
-    friend class String14Object;
     std::string value_m;
+    StringObjectValue() {};
+};
+
+class StringObject : public Object, public StringObjectValue
+{
+public:
+    StringObject();
+    virtual ~StringObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "28.001"; };
+
+    void setStringValue(const std::string& val);
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return StringObjectValue::toString(); };
+protected:
+    static Logger& logger_m;
 };
 
 class String14ObjectValue : public StringObjectValue
 {
 public:
     String14ObjectValue(const std::string& value);
+protected:
+    String14ObjectValue() {};
+};
+
+class String14Object : public Object, public String14ObjectValue
+{
+public:
+    String14Object();
+    virtual ~String14Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(ObjectValue* value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "16.000"; };
+
+    void setStringValue(const std::string& val);
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return String14ObjectValue::toString(); };
+protected:
+    static Logger& logger_m;
 };
 
 class ObjectController : public TelegramListener

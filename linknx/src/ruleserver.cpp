@@ -447,7 +447,6 @@ bool Action::sleep(int delay, pth_sem_t * stop)
     struct timeval timeout;
     timeout.tv_sec = delay / 1000;
     timeout.tv_usec = (delay % 1000) * 1000;
-    infoStream("Action") << "sleep for " << delay << " : " << timeout.tv_sec << " and " << timeout.tv_usec << endlog;
     pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
     pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
     return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
@@ -998,6 +997,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectCondition(cl);
     else if (type == "timer")
         return new TimerCondition(cl);
+    else if (type == "object-compare")
+        return new ObjectComparisonCondition(cl);
     else if (type == "object-src")
         return new ObjectSourceCondition(cl);
     else if (type == "time-counter")
@@ -1174,13 +1175,15 @@ void NotCondition::statusXml(ticpp::Element* pStatus)
     }
 }
 
-ObjectCondition::ObjectCondition(ChangeListener* cl) : value_m(0), cl_m(cl), trigger_m(false), op_m(eq)
+ObjectCondition::ObjectCondition(ChangeListener* cl) : object_m(0), value_m(0), cl_m(cl), trigger_m(false), op_m(eq)
 {}
 
 ObjectCondition::~ObjectCondition()
 {
     if (value_m)
         delete value_m;
+    if (object_m)
+        object_m->removeChangeListener(cl_m);
 }
 
 bool ObjectCondition::evaluate()
@@ -1189,7 +1192,7 @@ bool ObjectCondition::evaluate()
     bool val = (value_m == 0);
     if (!val)
     {
-        int res = object_m->compare(value_m);
+        int res = object_m->get()->compare(value_m);
         val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
     }
     logger_m.infoStream() << "ObjectCondition (id='" << object_m->getID()
@@ -1276,6 +1279,98 @@ void ObjectCondition::statusXml(ticpp::Element* pStatus)
     pStatus->SetAttribute("type", "object");
     pStatus->SetAttribute("id", object_m->getID());
     pStatus->SetAttribute("value", object_m->getValue());
+    if (trigger_m)
+        pStatus->SetAttribute("trigger", "true");
+}
+
+ObjectComparisonCondition::ObjectComparisonCondition(ChangeListener* cl) : ObjectCondition(cl), object2_m(0)
+{}
+
+ObjectComparisonCondition::~ObjectComparisonCondition()
+{
+    if (object_m)
+        object_m->removeChangeListener(cl_m);
+    if (object2_m)
+        object2_m->removeChangeListener(cl_m);
+}
+
+bool ObjectComparisonCondition::evaluate()
+{
+    int res = object_m->get()->compare(object2_m->get());
+    bool val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
+    logger_m.infoStream() << "ObjectComparisonCondition (id='" << object_m->getID() << "'; id2='" << object2_m->getID()
+    << "')" << endlog;
+    return val;
+}
+
+void ObjectComparisonCondition::importXml(ticpp::Element* pConfig)
+{
+    std::string trigger;
+    trigger = pConfig->GetAttribute("trigger");
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    object_m = ObjectController::instance()->getObject(id);
+    id = pConfig->GetAttribute("id2");
+    object2_m = ObjectController::instance()->getObject(id);
+
+    if (trigger == "true")
+    {
+        trigger_m = true;
+        object_m->addChangeListener(cl_m);
+        object2_m->addChangeListener(cl_m);
+    }
+
+    std::string op;
+    op = pConfig->GetAttribute("op");
+    if (op == "" || op == "eq")
+        op_m = eq;
+    else if (op == "lt")
+        op_m = lt;
+    else if (op == "gt")
+        op_m = gt;
+    else if (op == "ne")
+        op_m = lt | gt;
+    else if (op == "lte")
+        op_m = lt | eq;
+    else if (op == "gte")
+        op_m = gt | eq;
+    else
+    {
+        std::stringstream msg;
+        msg << "ObjectComparisonCondition: operation not supported: '" << op << "'";
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+void ObjectComparisonCondition::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "object-compare");
+    pConfig->SetAttribute("id", object_m->getID());
+    pConfig->SetAttribute("id2", object2_m->getID());
+    if (op_m != eq)
+    {
+        std::string op;
+        if (op_m == lt)
+            op = "lt";
+        else if (op_m == gt)
+            op = "gt";
+        else if (op_m == (lt | eq))
+            op = "lte";
+        else if (op_m == (gt | eq))
+            op = "gte";
+        else
+            op = "ne";
+        pConfig->SetAttribute("op", op);
+    }
+    if (trigger_m)
+        pConfig->SetAttribute("trigger", "true");
+}
+
+void ObjectComparisonCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "object-compare");
+    pStatus->SetAttribute("id", object_m->getID());
+    pStatus->SetAttribute("id2", object2_m->getID());
     if (trigger_m)
         pStatus->SetAttribute("trigger", "true");
 }
