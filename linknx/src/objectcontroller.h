@@ -48,7 +48,7 @@ public:
     virtual int compare(ObjectValue* value) = 0;
     virtual bool set(ObjectValue* value) = 0;
 protected:
-    static Logger& logger_m; // TODO: remove when all subclasses have their own logger
+    static Logger& logger_m;
 };
 
 class Object
@@ -133,7 +133,6 @@ public:
     virtual bool set(ObjectValue* value);
 protected:
     bool value_m;
-    static Logger& logger_m;
 };
 
 class SwitchingObject : public Object, public SwitchingObjectValue
@@ -173,10 +172,8 @@ protected:
     friend class StepDirObject;
     StepDirObjectValue() : direction_m(0), stepcode_m(0) {};
     StepDirObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
-//    set(int direction, int stepcode) { direction_m = direction; stepcode_m = stepcode; };
     int direction_m;
     int stepcode_m;
-    static Logger& logger_m;
 };
 
 class StepDirObject : public Object

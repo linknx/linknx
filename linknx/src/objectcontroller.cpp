@@ -347,8 +347,6 @@ void Object::removeChangeListener(ChangeListener* listener)
 
 Logger& ObjectValue::logger_m(Logger::getInstance("ObjectValue"));
 
-Logger& SwitchingObjectValue::logger_m(Logger::getInstance("SwitchingObjectValue"));
-
 SwitchingObjectValue::SwitchingObjectValue(const std::string& value)
 {
     if (value == "1" || value == "on" || value == "true")
@@ -472,8 +470,6 @@ void SwitchingObject::setBoolValue(bool value)
     SwitchingObjectValue val(value);
     setValue(&val);
 }
-
-Logger& StepDirObjectValue::logger_m(Logger::getInstance("StepDirObjectValue"));
 
 bool StepDirObjectValue::equals(ObjectValue* value)
 {
