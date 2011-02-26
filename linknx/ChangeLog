@@ -1,4 +1,5 @@
 Release 0.0.1.28:
+    * Do not execute stateless rules at init (problem with object conditions because EIBD connection not yet established)
     * Avoid use of tmpfile() function in XML parser (not supported on FritzBox)
     * Allow to insert object values in some actions (shell, e-mail, SMS, io-port, set-string)
     * Add condition to compare 2 objects (requires complete refactoring of Object and ObjectValue classes)

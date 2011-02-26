@@ -223,11 +223,6 @@ void Rule::importXml(ticpp::Element* pConfig)
         }
     }
     logger_m.infoStream() << "Rule: Configuration done" << endlog;
-    
-    // evaluate the stateless rules to set their initial value
-    // and execute the action list if needed
-    if(flags_m & Stateless)
-        evaluate();
 }
 
 void Rule::updateXml(ticpp::Element* pConfig)
