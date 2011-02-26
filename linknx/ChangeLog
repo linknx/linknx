@@ -1,4 +1,5 @@
 Release 0.0.1.28:
+    * Allow to insert object values in some actions (shell, e-mail, SMS, io-port, set-string)
     * Add condition to compare 2 objects (requires complete refactoring of Object and ObjectValue classes)
     * Fix for exportXML with Object-Conditions without value (michael111)
     * Add "toggle-value" action that will toggle value of a switching object

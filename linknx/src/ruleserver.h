@@ -212,6 +212,7 @@ private:
 protected:
     static bool sleep(int delay, pth_sem_t * stop);
     static bool usleep(int delay, pth_sem_t * stop);
+    bool parseVarString(std::string &str, bool checkOnly = false);
     int delay_m;
     static Logger& logger_m;
 };
@@ -279,6 +280,22 @@ private:
     SwitchingObject* object_m;
 };
 
+class SetStringAction : public Action
+{
+public:
+    SetStringAction();
+    virtual ~SetStringAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    Object* object_m;
+    std::string value_m;
+};
+
 class SendReadRequestAction : public Action
 {
 public:
@@ -343,6 +360,13 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
+    int varFlags_m;
+    enum replaceVarFlags
+    {
+        VarEnabled = 1,
+        VarId = 2,
+        VarValue = 4,
+    };
     std::string id_m;
     std::string value_m;
 };
@@ -359,6 +383,14 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
+    int varFlags_m;
+    enum replaceVarFlags
+    {
+        VarEnabled = 1,
+        VarTo = 2,
+        VarSubject = 4,
+        VarText = 8,
+    };
     std::string to_m;
     std::string subject_m;
     std::string text_m;
@@ -376,6 +408,12 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
+    int varFlags_m;
+    enum replaceVarFlags
+    {
+        VarEnabled = 1,
+        VarCmd = 2,
+    };
     std::string cmd_m;
 };
 

@@ -215,6 +215,12 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
+    int varFlags_m;
+    enum replaceVarFlags
+    {
+        VarEnabled = 1,
+        VarData = 2,
+    };
     std::string data_m;
     std::string port_m;
     bool hex_m;

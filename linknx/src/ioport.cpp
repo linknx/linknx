@@ -659,7 +659,7 @@ int SerialIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     return -1;
 }
 
-TxAction::TxAction(): hex_m(false)
+TxAction::TxAction(): varFlags_m(0), hex_m(false)
 {}
 
 TxAction::~TxAction()
@@ -669,10 +669,18 @@ void TxAction::importXml(ticpp::Element* pConfig)
 {
     int i=0;
     port_m = pConfig->GetAttribute("ioport");
+    std::string data = pConfig->GetAttribute("data");
+    if (!IOPortManager::instance()->getPort(port_m))
+    {
+        std::stringstream msg;
+        msg << "TxAction: IO Port ID not found: '" << port_m << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
+    varFlags_m = 0;
     if (pConfig->GetAttributeOrDefault("hex", "false") != "false")
     {
         hex_m = true;
-        std::string data = pConfig->GetAttribute("data");
         while (i < data.length())
         {
             std::istringstream ss(data.substr(i, 2));
@@ -682,18 +690,20 @@ void TxAction::importXml(ticpp::Element* pConfig)
             data_m.push_back(static_cast<char>(value));
             i += 2;
         }
+        logger_m.infoStream() << "TxAction: Configured to send hex data to ioport " << port_m << endlog;
     }
     else
-        data_m = pConfig->GetAttribute("data");
-
-    if (!IOPortManager::instance()->getPort(port_m))
     {
-        std::stringstream msg;
-        msg << "TxAction: IO Port ID not found: '" << port_m << "'" << std::endl;
-        throw ticpp::Exception(msg.str());
-    }
+        data_m = data;
 
-    logger_m.infoStream() << "TxAction: Configured to send '" << data_m << "' to ioport " << port_m << endlog;
+        if (pConfig->GetAttribute("var") == "true")
+        {
+            varFlags_m = VarEnabled;
+            if (parseVarString(data, true))
+                varFlags_m |= VarData;
+        }
+        logger_m.infoStream() << "TxAction: Configured to send '" << data_m << "' to ioport " << port_m << endlog;
+    }
 }
 
 void TxAction::exportXml(ticpp::Element* pConfig)
@@ -714,6 +724,8 @@ void TxAction::exportXml(ticpp::Element* pConfig)
     else
         pConfig->SetAttribute("data", data_m);
     pConfig->SetAttribute("ioport", port_m);
+    if (varFlags_m & VarEnabled)
+        pConfig->SetAttribute("var", "true");
 
     Action::exportXml(pConfig);
 }
@@ -737,16 +749,22 @@ void TxAction::Run (pth_sem_t * stop)
 
 void TxAction::sendData(IOPort* port)
 {
-    logger_m.infoStream() << "Execute TxAction send '" << data_m << "' to ioport " << port->getID() << endlog;
-    const uint8_t* data = reinterpret_cast<const uint8_t*>(data_m.c_str());
-    int len = data_m.length();
-    int ret = port->send(data, len);
+    std::string data = data_m;
+    if (varFlags_m & VarData)
+        parseVarString(data);
+    if (hex_m)
+        logger_m.infoStream() << "Execute TxAction send hex data to ioport " << port->getID() << endlog;
+    else
+        logger_m.infoStream() << "Execute TxAction send '" << data << "' to ioport " << port->getID() << endlog;
+    const uint8_t* u8data = reinterpret_cast<const uint8_t*>(data.c_str());
+    int len = data.length();
+    int ret = port->send(u8data, len);
     while (ret < len) {
         if (ret <= 0)
             throw ticpp::Exception("Unable to send data.");
         len -= ret;
-        data += ret;
-        ret = port->send(data, len);
+        u8data += ret;
+        ret = port->send(u8data, len);
     }
 }
 

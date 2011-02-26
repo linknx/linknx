@@ -395,6 +395,8 @@ Action* Action::create(const std::string& type)
         return new CopyValueAction();
     else if (type == "toggle-value")
         return new ToggleValueAction();
+    else if (type == "set-string")
+        return new SetStringAction();
     else if (type == "send-read-request")
         return new SendReadRequestAction();
     else if (type == "cycle-on-off")
@@ -460,6 +462,38 @@ bool Action::usleep(int delay, pth_sem_t * stop)
     pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
     pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
     return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
+}
+
+bool Action::parseVarString(std::string &str, bool checkOnly)
+{
+    bool modified = false;
+    size_t idx = 0;
+    while ((idx = str.find('$', idx)) != std::string::npos)
+    {
+        if (str.length() <= ++idx)
+            break;
+        char c = str[idx];
+        if (c == '{')
+        {
+            size_t idx2 = str.find('}', ++idx);
+            if (idx2 == std::string::npos)
+                break;
+            Object* obj = ObjectController::instance()->getObject(str.substr(idx, idx2-idx));
+            if (!checkOnly) {
+                std::string val = obj->getValue();
+                logger_m.debugStream() << "Action: insert value '"<< val <<"' of object " << obj->getID() << endlog;
+                str.replace(idx-2, 3+idx2-idx, val);
+                idx += val.length()-2;
+            }
+            modified = true;
+        }
+        else if (c == '$')
+        {
+            str.erase(idx, 1); // skip double $
+            modified = true;
+        }
+    }
+    return modified;
 }
 
 DimUpAction::DimUpAction() : object_m(0), start_m(0), stop_m(255), duration_m(60)
@@ -670,6 +704,45 @@ void ToggleValueAction::Run (pth_sem_t * stop)
         object_m->setBoolValue(!object_m->getBoolValue());
 }
 
+SetStringAction::SetStringAction() : object_m(0)
+{}
+
+SetStringAction::~SetStringAction()
+{}
+
+void SetStringAction::importXml(ticpp::Element* pConfig)
+{
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    object_m = ObjectController::instance()->getObject(id);
+
+    std::string value =pConfig->GetAttribute("value");
+    value_m = value;
+    parseVarString(value, true); // Just to check string parsing and that referenced object are present
+
+    logger_m.infoStream() << "SetStringAction: Configured for object " << object_m->getID() << " with string " << value_m << endlog;
+}
+
+void SetStringAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "set-string");
+    pConfig->SetAttribute("id", object_m->getID());
+    pConfig->SetAttribute("value", value_m);
+
+    Action::exportXml(pConfig);
+}
+
+void SetStringAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    std::string value = value_m;
+    parseVarString(value);
+    logger_m.infoStream() << "Execute SetStringAction with value " << value << endlog;
+    if (object_m)
+        object_m->setValue(value);
+}
+
 SendReadRequestAction::SendReadRequestAction() : object_m(0)
 {}
 
@@ -849,7 +922,7 @@ void RepeatListAction::Run (pth_sem_t * stop)
     }
 }
 
-SendSmsAction::SendSmsAction()
+SendSmsAction::SendSmsAction() : varFlags_m(0)
 {}
 
 SendSmsAction::~SendSmsAction()
@@ -859,6 +932,18 @@ void SendSmsAction::importXml(ticpp::Element* pConfig)
 {
     id_m = pConfig->GetAttribute("id");
     value_m = pConfig->GetAttribute("value");
+    if (pConfig->GetAttribute("var") == "true")
+    {
+        std::string tmp = id_m;
+        varFlags_m = VarEnabled;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarId;
+        tmp = value_m;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarValue;
+    }
+    else
+        varFlags_m = 0;
 
     logger_m.infoStream() << "SendSmsAction: Configured for id " << id_m << " with value " << value_m << endlog;
 }
@@ -868,6 +953,8 @@ void SendSmsAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "send-sms");
     pConfig->SetAttribute("id", id_m);
     pConfig->SetAttribute("value", value_m);
+    if (varFlags_m & VarEnabled)
+        pConfig->SetAttribute("var", "true");
 
     Action::exportXml(pConfig);
 }
@@ -876,12 +963,20 @@ void SendSmsAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute SendSmsAction with value " << value_m << endlog;
 
-    Services::instance()->getSmsGateway()->sendSms(id_m, value_m);
+    std::string id = id_m;
+    if (varFlags_m & VarId)
+        parseVarString(id);
+    std::string value = value_m;
+    if (varFlags_m & VarValue)
+        parseVarString(value);
+
+    logger_m.infoStream() << "Execute SendSmsAction to id '" << id << "' with value '" << value << "'"<< endlog;
+
+    Services::instance()->getSmsGateway()->sendSms(id, value);
 }
 
-SendEmailAction::SendEmailAction()
+SendEmailAction::SendEmailAction() : varFlags_m(0)
 {}
 
 SendEmailAction::~SendEmailAction()
@@ -892,6 +987,21 @@ void SendEmailAction::importXml(ticpp::Element* pConfig)
     to_m = pConfig->GetAttribute("to");
     subject_m = pConfig->GetAttribute("subject");
     text_m = pConfig->GetText();
+    if (pConfig->GetAttribute("var") == "true")
+    {
+        std::string tmp = to_m;
+        varFlags_m = VarEnabled;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarTo;
+        tmp = subject_m;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarSubject;
+        tmp = text_m;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarText;
+    }
+    else
+        varFlags_m = 0;
 
     logger_m.infoStream() << "SendEmailAction: Configured to=" << to_m << " subject=" << subject_m << endlog;
 }
@@ -901,6 +1011,8 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "send-email");
     pConfig->SetAttribute("to", to_m);
     pConfig->SetAttribute("subject", subject_m);
+    if (varFlags_m & VarEnabled)
+        pConfig->SetAttribute("var", "true");
     if (text_m != "")
         pConfig->SetText(text_m);
 
@@ -911,12 +1023,23 @@ void SendEmailAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute SendEmailAction: to=" << to_m << " subject=" << subject_m << endlog;
 
-    Services::instance()->getEmailGateway()->sendEmail(to_m, subject_m, text_m);
+    std::string to = to_m;
+    if (varFlags_m & VarTo)
+        parseVarString(to);
+    std::string subject = subject_m;
+    if (varFlags_m & VarSubject)
+        parseVarString(subject);
+    std::string text = text_m;
+    if (varFlags_m & VarText)
+        parseVarString(text);
+
+    logger_m.infoStream() << "Execute SendEmailAction: to=" << to << " subject=" << subject << endlog;
+
+    Services::instance()->getEmailGateway()->sendEmail(to, subject, text);
 }
 
-ShellCommandAction::ShellCommandAction()
+ShellCommandAction::ShellCommandAction() : varFlags_m(0)
 {}
 
 ShellCommandAction::~ShellCommandAction()
@@ -925,6 +1048,15 @@ ShellCommandAction::~ShellCommandAction()
 void ShellCommandAction::importXml(ticpp::Element* pConfig)
 {
     cmd_m = pConfig->GetAttribute("cmd");
+    if (pConfig->GetAttribute("var") == "true")
+    {
+        std::string tmp = cmd_m;
+        varFlags_m = VarEnabled;
+        if (parseVarString(tmp, true))
+            varFlags_m |= VarCmd;
+    }
+    else
+        varFlags_m = 0;
 
     logger_m.infoStream() << "ShellCommandAction: Configured" << endlog;
 }
@@ -933,6 +1065,8 @@ void ShellCommandAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "shell-cmd");
     pConfig->SetAttribute("cmd", cmd_m);
+    if (varFlags_m & VarEnabled)
+        pConfig->SetAttribute("var", "true");
 
     Action::exportXml(pConfig);
 }
@@ -941,9 +1075,12 @@ void ShellCommandAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute ShellCommandAction: " << cmd_m << endlog;
+    std::string cmd = cmd_m;
+    if (varFlags_m & VarCmd)
+        parseVarString(cmd);
+    logger_m.infoStream() << "Execute ShellCommandAction: " << cmd << endlog;
 
-    int ret = pth_system(cmd_m.c_str());
+    int ret = pth_system(cmd.c_str());
     if (ret != 0)
         logger_m.infoStream() << "Execute ShellCommandAction: returned " << ret << endlog;
 }
