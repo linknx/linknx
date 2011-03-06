@@ -61,7 +61,7 @@ public:
     static Object* create(const std::string& type);
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual void setValue(ObjectValue* value) = 0;
+    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
     virtual ObjectValue* get() = 0;
     virtual std::string getValue() { return get()->toString(); };
@@ -91,6 +91,7 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
     virtual void doSend(bool isWrite) = 0;
 protected:
+    virtual bool set(ObjectValue* value) = 0;
     bool init_m;
     enum Flags
     {
@@ -142,7 +143,6 @@ public:
     virtual ~SwitchingObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "1.001"; };
@@ -150,13 +150,9 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
     void setBoolValue(bool value);
-    bool getBoolValue()
-    {
-        if (!init_m)
-            read();
-        return value_m;
-    };
+    bool getBoolValue() { get(); return value_m; };
 protected:
+    virtual bool set(ObjectValue* value) { return SwitchingObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -183,7 +179,6 @@ public:
     virtual ~StepDirObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
     virtual std::string getType() = 0;
 
@@ -280,7 +275,6 @@ public:
     virtual ~TimeObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "10.001"; };
@@ -291,6 +285,7 @@ public:
     void setTime(int wday, int hour, int min, int sec);
     void getTime(int *wday, int *hour, int *min, int *sec);
 protected:
+    virtual bool set(ObjectValue* value) { return TimeObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -320,7 +315,6 @@ public:
     virtual ~DateObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "11.001"; };
@@ -331,6 +325,7 @@ public:
     void setDate(int day, int month, int year);
     void getDate(int *day, int *month, int *year);
 protected:
+    virtual bool set(ObjectValue* value) { return DateObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -357,7 +352,6 @@ public:
     virtual ~ValueObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "9.xxx"; };
@@ -365,13 +359,9 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
     void setFloatValue(double value);
-    double getFloatValue()
-    {
-        if (!init_m)
-            read();
-        return value_m;
-    };
+    double getFloatValue() { get(); return value_m; };
 protected:
+    virtual bool set(ObjectValue* value) { return ValueObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -393,7 +383,6 @@ public:
     virtual ~ValueObject32() {};
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "14.xxx"; };
@@ -401,6 +390,7 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
 protected:
+    virtual bool set(ObjectValue* value) { return ValueObject32Value::set(value); };
     static Logger& logger_m;
 private:
     typedef union {
@@ -431,7 +421,6 @@ public:
     virtual ~UIntObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
     virtual std::string getType() = 0;
 
@@ -654,7 +643,6 @@ public:
     virtual ~IntObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
     virtual std::string getType() = 0;
 
@@ -784,7 +772,6 @@ public:
     virtual ~S64Object();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "29.xxx"; };
@@ -821,7 +808,6 @@ public:
     virtual ~StringObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "28.001"; };
@@ -832,6 +818,7 @@ public:
     virtual void doSend(bool isWrite);
     virtual std::string toString() { return StringObjectValue::toString(); };
 protected:
+    virtual bool set(ObjectValue* value) { return StringObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -850,7 +837,6 @@ public:
     virtual ~String14Object();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value);
     virtual ObjectValue* get();
     virtual std::string getType() { return "16.000"; };
@@ -861,6 +847,7 @@ public:
     virtual void doSend(bool isWrite);
     virtual std::string toString() { return String14ObjectValue::toString(); };
 protected:
+    virtual bool set(ObjectValue* value) { return String14ObjectValue::set(value); };
     static Logger& logger_m;
 };
 

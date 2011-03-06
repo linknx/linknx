@@ -95,6 +95,12 @@ Object* Object::create(ticpp::Element* pConfig)
     return obj;
 }
 
+void Object::setValue(ObjectValue* value)
+{
+    if (set(value) || forceUpdate())
+        onInternalUpdate();
+}
+
 void Object::importXml(ticpp::Element* pConfig)
 {
     std::string id = pConfig->GetAttribute("id");
@@ -191,7 +197,11 @@ void Object::importXml(ticpp::Element* pConfig)
         {
             std::string val = persistence->read(id_m);
             if (val != "")
-                setValue(val);
+            {
+                ObjectValue *objval = createObjectValue(val);
+                set(objval); // Here, we use set() instead of setValue() to avoid call to onInternalUpdate()
+                delete objval;
+            }
             persist_m = true;
         }
         else
@@ -202,7 +212,11 @@ void Object::importXml(ticpp::Element* pConfig)
         }
     }
     else if (initValue_m != "" && initValue_m != "request")
-        setValue(initValue_m);
+    {
+        ObjectValue *objval = createObjectValue(initValue_m);
+        set(objval); // Here, we use set() instead of setValue() to avoid call to onInternalUpdate()
+        delete objval;
+    }
 
     logger_m.infoStream() << "Configured object '" << id_m << "': gad='" << gad_m << "'" << endlog;
 }
@@ -413,6 +427,8 @@ bool SwitchingObjectValue::set(ObjectValue* value)
     return false;
 }
 
+Logger& SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
+
 SwitchingObject::SwitchingObject() : SwitchingObjectValue(false)
 {}
 
@@ -424,18 +440,10 @@ ObjectValue* SwitchingObject::createObjectValue(const std::string& value)
     return new SwitchingObjectValue(value);
 }
 
-Logger& SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
-
 void SwitchingObject::setValue(const std::string& value)
 {
     SwitchingObjectValue val(value);
-    setValue(&val);
-}
-
-void SwitchingObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
+    Object::setValue(&val);
 }
 
 ObjectValue* SwitchingObject::get()
@@ -468,7 +476,7 @@ void SwitchingObject::doSend(bool isWrite)
 void SwitchingObject::setBoolValue(bool value)
 {
     SwitchingObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 bool StepDirObjectValue::equals(ObjectValue* value)
@@ -537,12 +545,6 @@ StepDirObject::StepDirObject()
 
 StepDirObject::~StepDirObject()
 {}
-
-void StepDirObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
 
 void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
@@ -627,7 +629,7 @@ ObjectValue* DimmingObject::createObjectValue(const std::string& value)
 void DimmingObject::setValue(const std::string& value)
 {
     DimmingObjectValue val(value);
-    StepDirObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 void DimmingObject::setStepValue(int direction, int stepcode)
@@ -709,7 +711,7 @@ ObjectValue* BlindsObject::createObjectValue(const std::string& value)
 void BlindsObject::setValue(const std::string& value)
 {
     BlindsObjectValue val(value);
-    StepDirObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 void BlindsObject::setStepValue(int direction, int stepcode)
@@ -869,13 +871,7 @@ ObjectValue* TimeObject::createObjectValue(const std::string& value)
 void TimeObject::setValue(const std::string& value)
 {
     TimeObjectValue val(value);
-    setValue(&val);
-}
-
-void TimeObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
+    Object::setValue(&val);
 }
 
 ObjectValue* TimeObject::get()
@@ -927,7 +923,7 @@ void TimeObject::doSend(bool isWrite)
 void TimeObject::setTime(int wday, int hour, int min, int sec)
 {
     TimeObjectValue val(wday, hour, min, sec);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 void TimeObject::getTime(int *wday, int *hour, int *min, int *sec)
@@ -1063,16 +1059,10 @@ ObjectValue* DateObject::createObjectValue(const std::string& value)
     return new DateObjectValue(value);
 }
 
-void DateObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void DateObject::setValue(const std::string& value)
 {
     DateObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* DateObject::get()
@@ -1126,7 +1116,7 @@ void DateObject::setDate(int day, int month, int year)
     if (year >= 1900)
         year -= 1900;
     DateObjectValue val(day, month, year);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 void DateObject::getDate(int *day, int *month, int *year)
@@ -1225,16 +1215,10 @@ ObjectValue* ValueObject::createObjectValue(const std::string& value)
     return new ValueObjectValue(value);
 }
 
-void ValueObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void ValueObject::setValue(const std::string& value)
 {
     ValueObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* ValueObject::get()
@@ -1299,7 +1283,7 @@ void ValueObject::doSend(bool isWrite)
 void ValueObject::setFloatValue(double value)
 {
     ValueObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ValueObject32Value::ValueObject32Value(const std::string& value)
@@ -1331,16 +1315,10 @@ ObjectValue* ValueObject32::createObjectValue(const std::string& value)
     return new ValueObject32Value(value);
 }
 
-void ValueObject32::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void ValueObject32::setValue(const std::string& value)
 {
     ValueObject32Value val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* ValueObject32::get()
@@ -1462,12 +1440,6 @@ UIntObject::UIntObject()
 UIntObject::~UIntObject()
 {}
 
-void UIntObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void UIntObject::setIntValue(uint32_t value)
 {
     if (setInt(value) || forceUpdate())
@@ -1545,7 +1517,7 @@ ObjectValue* U8Object::createObjectValue(const std::string& value)
 void U8Object::setValue(const std::string& value)
 {
     U8ObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* U8Object::get()
@@ -1598,7 +1570,7 @@ ObjectValue* ScalingObject::createObjectValue(const std::string& value)
 void ScalingObject::setValue(const std::string& value)
 {
     ScalingObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* ScalingObject::get()
@@ -1651,7 +1623,7 @@ ObjectValue* AngleObject::createObjectValue(const std::string& value)
 void AngleObject::setValue(const std::string& value)
 {
     AngleObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* AngleObject::get()
@@ -1706,7 +1678,7 @@ ObjectValue* HeatingModeObject::createObjectValue(const std::string& value)
 void HeatingModeObject::setValue(const std::string& value)
 {
     HeatingModeObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* HeatingModeObject::get()
@@ -1756,7 +1728,7 @@ ObjectValue* U16Object::createObjectValue(const std::string& value)
 void U16Object::setValue(const std::string& value)
 {
     U16ObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* U16Object::get()
@@ -1821,7 +1793,7 @@ ObjectValue* U32Object::createObjectValue(const std::string& value)
 void U32Object::setValue(const std::string& value)
 {
     U32ObjectValue val(value);
-    UIntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* U32Object::get()
@@ -1927,12 +1899,6 @@ IntObject::IntObject()
 IntObject::~IntObject()
 {}
 
-void IntObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void IntObject::setIntValue(int32_t value)
 {
     if (setInt(value) || forceUpdate())
@@ -1985,7 +1951,7 @@ ObjectValue* S8Object::createObjectValue(const std::string& value)
 void S8Object::setValue(const std::string& value)
 {
     S8ObjectValue val(value);
-    IntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* S8Object::get()
@@ -2057,7 +2023,7 @@ ObjectValue* S16Object::createObjectValue(const std::string& value)
 void S16Object::setValue(const std::string& value)
 {
     S16ObjectValue val(value);
-    IntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* S16Object::get()
@@ -2124,7 +2090,7 @@ ObjectValue* S32Object::createObjectValue(const std::string& value)
 void S32Object::setValue(const std::string& value)
 {
     S32ObjectValue val(value);
-    IntObject::setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* S32Object::get()
@@ -2233,12 +2199,6 @@ S64Object::~S64Object()
 ObjectValue* S64Object::createObjectValue(const std::string& value)
 {
     return new S64ObjectValue(value);
-}
-
-void S64Object::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
 }
 
 void S64Object::setIntValue(int64_t value)
@@ -2360,16 +2320,10 @@ ObjectValue* StringObject::createObjectValue(const std::string& value)
     return new StringObjectValue(value);
 }
 
-void StringObject::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void StringObject::setValue(const std::string& value)
 {
     StringObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* StringObject::get()
@@ -2414,7 +2368,7 @@ void StringObject::doSend(bool isWrite)
 void StringObject::setStringValue(const std::string& value)
 {
     StringObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 String14ObjectValue::String14ObjectValue(const std::string& value): StringObjectValue(value)
@@ -2451,16 +2405,10 @@ ObjectValue* String14Object::createObjectValue(const std::string& value)
     return new String14ObjectValue(value);
 }
 
-void String14Object::setValue(ObjectValue* value)
-{
-    if (set(value) || forceUpdate())
-        onInternalUpdate();
-}
-
 void String14Object::setValue(const std::string& value)
 {
     String14ObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectValue* String14Object::get()
@@ -2503,7 +2451,7 @@ void String14Object::doSend(bool isWrite)
 void String14Object::setStringValue(const std::string& value)
 {
     String14ObjectValue val(value);
-    setValue(&val);
+    Object::setValue(&val);
 }
 
 ObjectController::ObjectController()
