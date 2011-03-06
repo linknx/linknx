@@ -210,8 +210,10 @@ void Rule::importXml(ticpp::Element* pConfig)
             flags_m |= StatelessIfFalse;
         else if (type == "if-true")
             flags_m |= StatelessIfTrue;
+        else if (!isFalse)
+            type = "on-true"; // this is just for log display below.
         
-        logger_m.infoStream() << "ActionList: Configuring '" << type << "'" << endlog;
+        logger_m.infoStream() << "ActionList: Configuring '" << type << "' action list" << endlog;
         ticpp::Iterator<ticpp::Element> actionIt("action");
         for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
         {
@@ -263,8 +265,10 @@ void Rule::updateXml(ticpp::Element* pConfig)
                 flags_m |= StatelessIfFalse;
             else if (type == "if-true")
                 flags_m |= StatelessIfTrue;
+            else if (!isFalse)
+                type = "on-true"; // this is just for log display below.
             
-            logger_m.infoStream() << "ActionList: Reconfiguring '" << type << "'" << endlog;
+            logger_m.infoStream() << "ActionList: Reconfiguring '" << type << "' action list" << endlog;
             ticpp::Iterator<ticpp::Element> actionIt("action");
             for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++ )
             {
@@ -350,16 +354,20 @@ void Rule::evaluate()
     if (flags_m & Active)
     {
         ActionsList_t::iterator it;
+        logger_m.infoStream() << "Evaluate rule " << id_m << endlog;
         bool curValue = condition_m->evaluate();
+        logger_m.infoStream() << "Rule " << id_m << " evaluated as " << curValue << ", prev value was " << prevValue_m << endlog;
         if (curValue && ((flags_m & StatelessIfTrue) || !prevValue_m))
         {
             for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
                 (*it)->execute();
+            logger_m.debugStream() << "Action list 'true' executed for rule " << id_m << endlog;
         }
         else if (!curValue && ((flags_m & StatelessIfFalse) || prevValue_m))
         {
             for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
                 (*it)->execute();
+            logger_m.debugStream() << "Action list 'false' executed for rule " << id_m << endlog;
         }
         prevValue_m = curValue;
     }
@@ -396,7 +404,7 @@ Action* Action::create(const std::string& type)
         return new SendReadRequestAction();
     else if (type == "cycle-on-off")
         return new CycleOnOffAction();
-    else if (type == "repeat-list")
+    else if (type == "repeat")
         return new RepeatListAction();
     else if (type == "send-sms")
         return new SendSmsAction();
@@ -604,9 +612,11 @@ void SetValueAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute SetValueAction with value " << value_m->toString() << endlog;
     if (object_m)
+    {
+        logger_m.infoStream() << "Execute SetValueAction: set " << object_m->getID() << " with value " << value_m->toString() << endlog;
         object_m->setValue(value_m);
+    }
 }
 
 CopyValueAction::CopyValueAction() : from_m(0), to_m(0)
@@ -694,9 +704,11 @@ void ToggleValueAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute ToggleValueAction" << endlog;
     if (object_m)
+    {
+        logger_m.infoStream() << "Execute ToggleValueAction on object " << object_m->getID() << endlog;
         object_m->setBoolValue(!object_m->getBoolValue());
+    }
 }
 
 SetStringAction::SetStringAction() : object_m(0)
@@ -733,9 +745,11 @@ void SetStringAction::Run (pth_sem_t * stop)
         return;
     std::string value = value_m;
     parseVarString(value);
-    logger_m.infoStream() << "Execute SetStringAction with value " << value << endlog;
     if (object_m)
+    {
+        logger_m.infoStream() << "Execute SetStringAction for object " << object_m->getID() << " with value " << value << endlog;
         object_m->setValue(value);
+    }
 }
 
 SendReadRequestAction::SendReadRequestAction() : object_m(0)
@@ -765,9 +779,11 @@ void SendReadRequestAction::Run (pth_sem_t * stop)
 {
     if (sleep(delay_m, stop))
         return;
-    logger_m.infoStream() << "Execute SendReadRequestAction" << endlog;
     if (object_m)
+    {
+        logger_m.infoStream() << "Execute SendReadRequestAction for object " << object_m->getID() << endlog;
         object_m->read();
+    }
 }
 
 CycleOnOffAction::CycleOnOffAction()

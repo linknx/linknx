@@ -218,7 +218,7 @@ void Object::importXml(ticpp::Element* pConfig)
         delete objval;
     }
 
-    logger_m.infoStream() << "Configured object '" << id_m << "': gad='" << gad_m << "'" << endlog;
+    logger_m.infoStream() << "Configured object '" << id_m << "': gad=" << writegaddr(gad_m) << endlog;
 }
 
 void Object::exportXml(ticpp::Element* pConfig)
@@ -450,7 +450,7 @@ ObjectValue* SwitchingObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "SwitchingObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "SwitchingObject (id=" << getID() << "): get" << endlog;
     return static_cast<SwitchingObjectValue*>(this);
 }
 
@@ -646,7 +646,7 @@ ObjectValue* DimmingObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "DimmingObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "DimmingObject (id=" << getID() << "): get" << endlog;
     return static_cast<DimmingObjectValue*>(this);
 }
 
@@ -728,7 +728,7 @@ ObjectValue* BlindsObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "BlindsObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "BlindsObject (id=" << getID() << "): get" << endlog;
     return static_cast<BlindsObjectValue*>(this);
 }
 
@@ -878,7 +878,7 @@ ObjectValue* TimeObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "TimeObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "TimeObject (id=" << getID() << "): get" << endlog;
     return static_cast<TimeObjectValue*>(this);
 }
 
@@ -1069,7 +1069,7 @@ ObjectValue* DateObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "DateObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "DateObject (id=" << getID() << "): get" << endlog;
     return static_cast<DateObjectValue*>(this);
 }
 
@@ -1225,7 +1225,7 @@ ObjectValue* ValueObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "ValueObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "ValueObject (id=" << getID() << "): get" << endlog;
     return static_cast<ValueObjectValue*>(this);
 }
 
@@ -1325,7 +1325,7 @@ ObjectValue* ValueObject32::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "ValueObject32 (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "ValueObject32 (id=" << getID() << "): get" << endlog;
     return static_cast<ValueObject32Value*>(this);
 }
 
@@ -1524,7 +1524,7 @@ ObjectValue* U8Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "U8Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "U8Object (id=" << getID() << "): get" << endlog;
     return static_cast<U8ObjectValue*>(this);
 }
 
@@ -1577,7 +1577,7 @@ ObjectValue* ScalingObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "ScalingObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "ScalingObject (id=" << getID() << "): get" << endlog;
     return static_cast<ScalingObjectValue*>(this);
 }
 
@@ -1630,7 +1630,7 @@ ObjectValue* AngleObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "AngleObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "AngleObject (id=" << getID() << "): get" << endlog;
     return static_cast<AngleObjectValue*>(this);
 }
 
@@ -1685,7 +1685,7 @@ ObjectValue* HeatingModeObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "HeatingModeObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "HeatingModeObject (id=" << getID() << "): get" << endlog;
     return static_cast<HeatingModeObjectValue*>(this);
 }
 
@@ -1735,7 +1735,7 @@ ObjectValue* U16Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "U16Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "U16Object (id=" << getID() << "): get" << endlog;
     return static_cast<U16ObjectValue*>(this);
 }
 
@@ -1800,7 +1800,7 @@ ObjectValue* U32Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "U32Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "U32Object (id=" << getID() << "): get" << endlog;
     return static_cast<U32ObjectValue*>(this);
 }
 
@@ -1958,7 +1958,7 @@ ObjectValue* S8Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "S8Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "S8Object (id=" << getID() << "): get" << endlog;
     return static_cast<S8ObjectValue*>(this);
 }
 
@@ -2030,7 +2030,7 @@ ObjectValue* S16Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "S16Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "S16Object (id=" << getID() << "): get" << endlog;
     return static_cast<S16ObjectValue*>(this);
 }
 
@@ -2097,7 +2097,7 @@ ObjectValue* S32Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "S32Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "S32Object (id=" << getID() << "): get" << endlog;
     return static_cast<S32ObjectValue*>(this);
 }
 
@@ -2225,7 +2225,7 @@ ObjectValue* S64Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "S64Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "S64Object (id=" << getID() << "): get" << endlog;
     return static_cast<S64ObjectValue*>(this);
 }
 
@@ -2330,7 +2330,7 @@ ObjectValue* StringObject::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "StringObject (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "StringObject (id=" << getID() << "): get" << endlog;
     return static_cast<StringObjectValue*>(this);
 }
 
@@ -2415,7 +2415,7 @@ ObjectValue* String14Object::get()
 {
     if (!init_m)
         read();
-    logger_m.infoStream() << "String14Object (id=" << getID() << "): get" << endlog;
+    logger_m.debugStream() << "String14Object (id=" << getID() << "): get" << endlog;
     return static_cast<String14ObjectValue*>(this);
 }
 
