@@ -406,6 +406,8 @@ Action* Action::create(const std::string& type)
         return new CycleOnOffAction();
     else if (type == "repeat")
         return new RepeatListAction();
+    else if (type == "conditional")
+        return new ConditionalAction();
     else if (type == "send-sms")
         return new SendSmsAction();
     else if (type == "send-email")
@@ -903,7 +905,7 @@ void RepeatListAction::importXml(ticpp::Element* pConfig)
 
 void RepeatListAction::exportXml(ticpp::Element* pConfig)
 {
-    pConfig->SetAttribute("type", "repeat-list");
+    pConfig->SetAttribute("type", "repeat");
     pConfig->SetAttribute("period", RuleServer::formatDuration(period_m, true));
     pConfig->SetAttribute("count", count_m);
 
@@ -929,7 +931,72 @@ void RepeatListAction::Run (pth_sem_t * stop)
         for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
             (*it)->execute();
         if (sleep(period_m, stop))
+        {
+            for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+                (*it)->cancel();
             return;
+        }
+    }
+}
+
+ConditionalAction::ConditionalAction()
+    : condition_m(0)
+{}
+
+ConditionalAction::~ConditionalAction()
+{
+    if (condition_m)
+        delete condition_m;
+}
+
+void ConditionalAction::importXml(ticpp::Element* pConfig)
+{
+    ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
+    condition_m = Condition::create(pCondition, 0);
+
+    ticpp::Iterator<ticpp::Element> actionIt("action");
+    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
+    {
+        Action* action = Action::create(&(*actionIt));
+        actionsList_m.push_back(action);
+    }
+
+    logger_m.infoStream() << "ConditionalAction: Configured" << endlog;
+}
+
+void ConditionalAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "conditional");
+    if (condition_m)
+    {
+        ticpp::Element pCond("condition");
+        condition_m->exportXml(&pCond);
+        pConfig->LinkEndChild(&pCond);
+    }
+
+    Action::exportXml(pConfig);
+
+    ActionsList_t::iterator it;
+    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+    {
+        ticpp::Element pElem("action");
+        (*it)->exportXml(&pElem);
+        pConfig->LinkEndChild(&pElem);
+    }
+}
+
+void ConditionalAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute ConditionalAction" << endlog;
+    bool curValue = condition_m->evaluate();
+    logger_m.infoStream() << "ConditionalAction evaluated as " << curValue << endlog;
+    if (curValue)
+    {
+        ActionsList_t::iterator it;
+        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+            (*it)->execute();
     }
 }
 
@@ -1330,7 +1397,7 @@ ObjectCondition::~ObjectCondition()
 {
     if (value_m)
         delete value_m;
-    if (object_m)
+    if (object_m && cl_m)
         object_m->removeChangeListener(cl_m);
 }
 
@@ -1359,6 +1426,8 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
 
     if (trigger == "true")
     {
+        if (!cl_m)
+            throw ticpp::Exception("Trigger not supported in this context");
         trigger_m = true;
         object_m->addChangeListener(cl_m);
     }
@@ -1436,9 +1505,9 @@ ObjectComparisonCondition::ObjectComparisonCondition(ChangeListener* cl) : Objec
 
 ObjectComparisonCondition::~ObjectComparisonCondition()
 {
-    if (object_m)
+    if (object_m && cl_m)
         object_m->removeChangeListener(cl_m);
-    if (object2_m)
+    if (object2_m && cl_m)
         object2_m->removeChangeListener(cl_m);
 }
 
@@ -1463,6 +1532,8 @@ void ObjectComparisonCondition::importXml(ticpp::Element* pConfig)
 
     if (trigger == "true")
     {
+        if (!cl_m)
+            throw ticpp::Exception("Trigger not supported in this context");
         trigger_m = true;
         object_m->addChangeListener(cl_m);
         object2_m->addChangeListener(cl_m);
@@ -1579,7 +1650,11 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     std::string trigger = pConfig->GetAttribute("trigger");
 
     if (trigger == "true")
+    {
+        if (!cl_m)
+            throw ticpp::Exception("Trigger not supported in this context");
         trigger_m = true;
+    }
     else
         cl_m = 0;
     std::string initVal = pConfig->GetAttribute("initval");
@@ -1740,11 +1815,14 @@ bool TimeCounterCondition::evaluate()
 
 void TimeCounterCondition::onTimer(time_t time)
 {
-    cl_m->onChange(0);
+    if (cl_m)
+        cl_m->onChange(0);
 }
 
 void TimeCounterCondition::importXml(ticpp::Element* pConfig)
 {
+    if (!cl_m)
+        throw ticpp::Exception("TimeCounter condition not supported in this context");
     threshold_m = RuleServer::parseDuration(pConfig->GetAttribute("threshold"));
     resetDelay_m = RuleServer::parseDuration(pConfig->GetAttribute("reset-delay"));
     condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);

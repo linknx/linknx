@@ -345,7 +345,23 @@ private:
     int period_m, count_m;
     typedef std::list<Action*> ActionsList_t;
     ActionsList_t actionsList_m;
-    bool running_m;
+};
+
+class ConditionalAction : public Action
+{
+public:
+    ConditionalAction();
+    virtual ~ConditionalAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    Condition *condition_m;
+    typedef std::list<Action*> ActionsList_t;
+    ActionsList_t actionsList_m;
 };
 
 class SendSmsAction : public Action

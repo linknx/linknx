@@ -785,6 +785,8 @@ bool RxCondition::evaluate()
 
 void RxCondition::importXml(ticpp::Element* pConfig)
 {
+    if (!cl_m)
+        throw ticpp::Exception("Rx condition on IO port is not supported in this context");
     port_m = pConfig->GetAttribute("ioport");
     exp_m = pConfig->GetAttribute("expected");
     IOPort* port = IOPortManager::instance()->getPort(port_m);
