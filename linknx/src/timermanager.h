@@ -195,6 +195,7 @@ public:
     ExceptionDays();
     virtual ~ExceptionDays();
 
+    void clear();
     void addDay(DaySpec* date);
     void removeDay(DaySpec* date);
 

@@ -682,14 +682,22 @@ ExceptionDays::ExceptionDays()
 
 ExceptionDays::~ExceptionDays()
 {
+    clear();
+}
+
+void ExceptionDays::clear()
+{
     DaysList_t::iterator it;
     for (it = daysList_m.begin(); it != daysList_m.end(); it++)
         delete (*it);
+    daysList_m.clear();
 }
 
 void ExceptionDays::importXml(ticpp::Element* pConfig)
 {
     ticpp::Iterator< ticpp::Element > child;
+    if (pConfig->GetAttribute("clear") == "true")
+        clear();
     for ( child = pConfig->FirstChildElement(false); child != child.end(); child++ )
     {
         if (child->Value() == "date")

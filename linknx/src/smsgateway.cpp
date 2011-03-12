@@ -50,6 +50,9 @@ void SmsGateway::importXml(ticpp::Element* pConfig)
     else if (type == "")
     {
         type_m = Unknown;
+        user_m.clear();
+        pass_m.clear();
+        data_m.clear();
     }
     else
     {

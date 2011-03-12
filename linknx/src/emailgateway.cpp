@@ -52,6 +52,10 @@ void EmailGateway::importXml(ticpp::Element* pConfig)
     else if (type == "")
     {
         type_m = Unknown;
+        host_m.clear();
+        from_m.clear();
+        login_m.clear();
+        pass_m.clear();
     }
     else
     {

@@ -1,3 +1,5 @@
+Release 0.0.1.29:
+    * Allow to clear list of exception days using XML interface
 Release 0.0.1.28:
     * Add conditional actions (skip executions of a group of actions based on a given condition)
     * Do not execute stateless rules at init (problem with object conditions because EIBD connection not yet established)
