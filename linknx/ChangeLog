@@ -1,6 +1,7 @@
 Release 0.0.1.29:
     * Allow to clear list of exception days using XML interface
-    * Add support for baud rate 200, 300, 600, 1200 and 230400 for serial io-port 
+    * Add support for baud rate 200, 300, 600, 1200 and 230400 for serial io-port
+    * Disable signed 64 bit objects if STL streams doesn't support it (uclibc++)
 Release 0.0.1.28:
     * Add conditional actions (skip executions of a group of actions based on a given condition)
     * Do not execute stateless rules at init (problem with object conditions because EIBD connection not yet established)
