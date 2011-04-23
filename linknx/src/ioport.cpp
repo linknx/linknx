@@ -508,6 +508,21 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
     }
 
     switch (speed) {
+        case 200:
+            speed_m = B200;
+            break;
+        case 300:
+            speed_m = B300;
+            break;
+        case 600:
+            speed_m = B600;
+            break;
+        case 1200:
+            speed_m = B1200;
+            break;
+        case 1800:
+            speed_m = B1800;
+            break;
         case 2400:
             speed_m = B2400;
             break;
@@ -528,6 +543,9 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
             break;
         case 115200:
             speed_m = B115200;
+            break;
+        case 230400:
+            speed_m = B230400;
             break;
         default:
             err << "Unsupported speed '" << speed << "' for serial port";
@@ -560,6 +578,21 @@ void SerialIOPort::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("type", "serial");
     pConfig->SetAttribute("dev", dev_m);
     switch (speed_m) {
+        case B200:
+            speed = 200;
+            break;
+        case B300:
+            speed = 300;
+            break;
+        case B600:
+            speed = 600;
+            break;
+        case B1200:
+            speed = 1200;
+            break;
+        case B1800:
+            speed = 1800;
+            break;
         case B2400:
             speed = 2400;
             break;
@@ -580,6 +613,9 @@ void SerialIOPort::exportXml(ticpp::Element* pConfig)
             break;
         case B115200:
             speed = 115200;
+            break;
+        case B230400:
+            speed = 230400;
             break;
         default:
             speed = 9600;
