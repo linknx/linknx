@@ -71,8 +71,10 @@ Object* Object::create(const std::string& type)
         return new S16Object();
     else if (type == "13.xxx")
         return new S32Object();
+#ifdef STL_STREAM_SUPPORT_INT64
     else if (type == "29.xxx")
         return new S64Object();
+#endif
     else if (type == "EIS15" || type == "16.000")
         return new String14Object();
     else if (type == "28.001")
@@ -2118,6 +2120,7 @@ void S32Object::doSend(bool isWrite)
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
 }
 
+#ifdef STL_STREAM_SUPPORT_INT64
 S64ObjectValue::S64ObjectValue(const std::string& value)
 {
     std::istringstream val(value);
@@ -2246,6 +2249,7 @@ void S64Object::doSend(bool isWrite)
                                                     ((value_m & 0xff000000LL)>>24), ((value_m & 0xff0000LL)>>16), ((value_m & 0xff00LL)>>8), (value_m & 0xffLL) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 10);
 }
+#endif
 
 StringObjectValue::StringObjectValue(const std::string& value)
 {

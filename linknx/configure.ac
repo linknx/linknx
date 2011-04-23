@@ -182,6 +182,7 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_INT16_T
+AC_TYPE_INT64_T
 AC_TYPE_SIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
@@ -194,6 +195,15 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([dup2 memmove memset strchr])
 
 AC_DEFINE(TIXML_USE_TICPP, [1], [Use TICPP interface])
+
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+AC_TRY_COMPILE([#include <sstream>
+#include <stdint.h>],
+[int64_t value; std::istringstream val("1234"); val >> value;],
+AC_DEFINE(STL_STREAM_SUPPORT_INT64, [1], [STL streams has support for 64 bit integer]),)
+AC_LANG_RESTORE
+
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile

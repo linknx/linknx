@@ -750,6 +750,7 @@ protected:
     static Logger& logger_m;
 };
 
+#ifdef STL_STREAM_SUPPORT_INT64
 class S64ObjectValue : public ObjectValue
 {
 public:
@@ -786,6 +787,7 @@ protected:
     virtual int64_t getInt() { return value_m; };
     static Logger& logger_m;
 };
+#endif
 
 class StringObjectValue : public ObjectValue
 {
