@@ -437,6 +437,11 @@ double GMST0( double d )
 
 Logger& SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
 
+SolarTimeSpec::~SolarTimeSpec() {};
+SunriseTimeSpec::~SunriseTimeSpec() {};
+SunsetTimeSpec::~SunsetTimeSpec() {};
+SolarNoonTimeSpec::~SolarNoonTimeSpec() {};
+
 void SolarTimeSpec::importXml(ticpp::Element* pConfig)
 {
     TimeSpec::importXml(pConfig);

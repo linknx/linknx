@@ -32,6 +32,7 @@ class SolarTimeSpec : public TimeSpec
 {
 public:
     SolarTimeSpec() : offset_m(0) {};
+    virtual ~SolarTimeSpec();
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
@@ -48,6 +49,7 @@ private:
 class SunriseTimeSpec : public SolarTimeSpec
 {
 public:
+    virtual ~SunriseTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
     virtual double computeTime(double rise, double set);
@@ -57,6 +59,7 @@ protected:
 class SunsetTimeSpec : public SolarTimeSpec
 {
 public:
+    virtual ~SunsetTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
     virtual double computeTime(double rise, double set);
@@ -66,6 +69,7 @@ protected:
 class SolarNoonTimeSpec : public SolarTimeSpec
 {
 public:
+    virtual ~SolarNoonTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
     virtual double computeTime(double rise, double set);

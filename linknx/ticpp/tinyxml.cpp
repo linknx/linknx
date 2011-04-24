@@ -1060,6 +1060,11 @@ TiXmlDocument::TiXmlDocument( const TiXmlDocument& copy ) : TiXmlNode( TiXmlNode
 }
 
 
+TiXmlDocument::~TiXmlDocument()
+{
+}
+
+
 void TiXmlDocument::operator=( const TiXmlDocument& copy )
 {
 	Clear();

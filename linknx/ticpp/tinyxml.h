@@ -1290,7 +1290,7 @@ public:
 	TiXmlDocument( const TiXmlDocument& copy );
 	void operator=( const TiXmlDocument& copy );
 
-	virtual ~TiXmlDocument() {}
+	virtual ~TiXmlDocument();
 
 	/** Load a file using the current document value.
 		Returns true if successful. Will delete any existing
