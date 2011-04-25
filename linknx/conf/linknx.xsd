@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="durationType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="-?[0-9]*[dhms]?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="positiveDurationType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]*[dhms]?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="timespecType">
+    <xs:attribute name="type" use="optional" default="fixed">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="fixed"/>
+          <xs:enumeration value="variable"/>
+          <xs:enumeration value="sunrise"/>
+          <xs:enumeration value="sunset"/>
+          <xs:enumeration value="noon"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="hour" type="xs:string" use="optional"/>
+    <xs:attribute name="day" type="xs:string" use="optional"/>
+    <xs:attribute name="exception" type="xs:string" use="optional"/>
+    <xs:attribute name="min" type="xs:string" use="optional"/>
+    <xs:attribute name="year" type="xs:string" use="optional"/>
+    <xs:attribute name="month" type="xs:string" use="optional"/>
+    <xs:attribute name="wdays" type="xs:string" use="optional"/>
+    <xs:attribute name="offset" type="durationType" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="conditionType" mixed="true">
+    <xs:choice>
+      <xs:element ref="condition" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:sequence>
+        <xs:element ref="every" minOccurs="0"/>
+        <xs:element ref="at" minOccurs="0"/>
+        <xs:element ref="until" minOccurs="0"/>
+        <xs:element ref="during" minOccurs="0"/>
+      </xs:sequence>
+    </xs:choice>
+    <xs:attribute name="trigger" use="optional" default="false">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="and"/>
+          <xs:enumeration value="or"/>
+          <xs:enumeration value="not"/>
+          <xs:enumeration value="object"/>
+          <xs:enumeration value="object-compare"/>
+          <xs:enumeration value="object-src"/>
+          <xs:enumeration value="timer"/>
+          <xs:enumeration value="time-counter"/>
+          <xs:enumeration value="script"/>
+          <xs:enumeration value="ioport-rx"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="value" type="xs:string" use="optional"/>
+    <xs:attribute name="initval" use="optional" default="guess">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="guess"/>
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="id" type="xs:string" use="optional"/>
+    <xs:attribute name="id2" type="xs:string" use="optional"/>
+    <xs:attribute name="op" use="optional" default="eq">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="eq"/>
+          <xs:enumeration value="lt"/>
+          <xs:enumeration value="gt"/>
+          <xs:enumeration value="ne"/>
+          <xs:enumeration value="lte"/>
+          <xs:enumeration value="gte"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="src" type="xs:string" use="optional"/>
+    <xs:attribute name="threshold" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="reset-delay" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="ioport" type="xs:string" use="optional"/>
+    <xs:attribute name="expected" type="xs:string" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="actionType" mixed="true">
+    <xs:choice>
+      <xs:element ref="stopcondition" minOccurs="0"/>
+      <xs:sequence>
+        <xs:element ref="condition" minOccurs="0"/>
+        <xs:element ref="action" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:choice>
+    <xs:attribute name="start" type="xs:string" use="optional"/>
+    <xs:attribute name="id" type="xs:string" use="optional"/>
+    <xs:attribute name="ioport" type="xs:string" use="optional"/>
+    <xs:attribute name="off" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="data" type="xs:string" use="optional"/>
+    <xs:attribute name="duration" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="period" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="delay" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="count" type="xs:string" use="optional"/>
+    <xs:attribute name="on" type="positiveDurationType" use="optional"/>
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="dim-up"/>
+          <xs:enumeration value="set-value"/>
+          <xs:enumeration value="copy-value"/>
+          <xs:enumeration value="toggle-value"/>
+          <xs:enumeration value="set-string"/>
+          <xs:enumeration value="send-read-request"/>
+          <xs:enumeration value="cycle-on-off"/>
+          <xs:enumeration value="repeat"/>
+          <xs:enumeration value="conditional"/>
+          <xs:enumeration value="send-sms"/>
+          <xs:enumeration value="send-email"/>
+          <xs:enumeration value="shell-cmd"/>
+          <xs:enumeration value="ioport-tx"/>
+          <xs:enumeration value="script"/>
+          <xs:enumeration value="cancel"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="subject" type="xs:string" use="optional"/>
+    <xs:attribute name="stop" type="xs:string" use="optional"/>
+    <xs:attribute name="to" type="xs:string" use="optional"/>
+    <xs:attribute name="from" type="xs:string" use="optional"/>
+    <xs:attribute name="rule-id" type="xs:string" use="optional"/>
+    <xs:attribute name="value" type="xs:string" use="optional"/>
+    <xs:attribute name="var" use="optional" default="false">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="hex" use="optional" default="false">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="cmd" type="xs:string" use="optional"/>
+  </xs:complexType>
+
+  <xs:element name="action" type="actionType"/>
+
+  <xs:element name="actionlist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="action" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="type" use="optional" default="on-true">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="on-false"/>
+            <xs:enumeration value="on-true"/>
+            <xs:enumeration value="if-false"/>
+            <xs:enumeration value="if-true"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="at" type="timespecType"/>
+
+  <xs:element name="condition" type="conditionType"/>
+
+  <xs:element name="config">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="objects" minOccurs="0"/>
+        <xs:element ref="rules" minOccurs="0"/>
+        <xs:element ref="services" minOccurs="0"/>
+        <xs:element ref="logging" minOccurs="0"/>
+      </xs:all>
+    </xs:complexType>
+    <xs:key name="object_id">
+      <xs:selector xpath="objects/object"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="condition_id_ref" refer="object_id">
+      <xs:selector xpath=".//condition"/>
+      <xs:field xpath="@id"/>
+    </xs:keyref>
+    <xs:keyref name="condition_id2_ref" refer="object_id">
+      <xs:selector xpath=".//condition"/>
+      <xs:field xpath="@id2"/>
+    </xs:keyref>
+    <xs:key name="rule_id">
+      <xs:selector xpath="rules/rule"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="action_ruleid_ref" refer="rule_id">
+      <xs:selector xpath=".//action"/>
+      <xs:field xpath="@rule-id"/>
+    </xs:keyref>
+    <xs:key name="ioport_id">
+      <xs:selector xpath="services/ioports/ioport"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="condition_ioportid_ref" refer="ioport_id">
+      <xs:selector xpath=".//condition"/>
+      <xs:field xpath="@ioport"/>
+    </xs:keyref>
+    <xs:keyref name="action_ioportid_ref" refer="ioport_id">
+      <xs:selector xpath=".//action"/>
+      <xs:field xpath="@ioport"/>
+    </xs:keyref>
+  </xs:element>
+
+  <xs:element name="date">
+    <xs:complexType>
+      <xs:attribute name="day" type="xs:string" use="optional"/>
+      <xs:attribute name="year" type="xs:string" use="optional"/>
+      <xs:attribute name="month" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="during">
+    <xs:complexType mixed="true"/>
+  </xs:element>
+
+  <xs:element name="emailserver">
+    <xs:complexType>
+      <xs:attribute name="type" type="xs:string" use="optional"/>
+      <xs:attribute name="host" type="xs:string" use="optional"/>
+      <xs:attribute name="from" type="xs:string" use="optional"/>
+      <xs:attribute name="login" type="xs:string" use="optional"/>
+      <xs:attribute name="pass" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="every">
+    <xs:complexType mixed="true"/>
+  </xs:element>
+
+  <xs:element name="exceptiondays">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="date" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ioport">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="optional"/>
+      <xs:attribute name="type" use="optional" default="udp">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="udp"/>
+            <xs:enumeration value="tcp"/>
+            <xs:enumeration value="serial"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="host" type="xs:string" use="optional"/>
+      <xs:attribute name="port" type="xs:string" use="optional"/>
+      <xs:attribute name="rxport" type="xs:string" use="optional"/>
+      <xs:attribute name="permanent" type="xs:string" use="optional"/>
+      <xs:attribute name="dev" type="xs:string" use="optional"/>
+      <xs:attribute name="speed" use="optional">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="2400"/>
+            <xs:enumeration value="4800"/>
+            <xs:enumeration value="9600"/>
+            <xs:enumeration value="19200"/>
+            <xs:enumeration value="38400"/>
+            <xs:enumeration value="57600"/>
+            <xs:enumeration value="115200"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="framing" type="xs:string" use="optional"/>
+      <xs:attribute name="flow" use="optional" default="none">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="none"/>
+            <xs:enumeration value="xon-xoff"/>
+            <xs:enumeration value="rts-cts"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ioports">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ioport" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="knxconnection">
+    <xs:complexType>
+      <xs:attribute name="url" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="listener">
+    <xs:complexType>
+      <xs:attribute name="gad" type="xs:string" use="required"/>
+      <xs:attribute name="read" use="optional" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="false"/>
+            <xs:enumeration value="true"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="location">
+    <xs:complexType>
+      <xs:attribute name="lon" type="xs:string" use="optional"/>
+      <xs:attribute name="lat" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="logging">
+    <xs:complexType>
+      <xs:attribute name="output" type="xs:string" use="optional"/>
+      <xs:attribute name="format" type="xs:string" use="optional"/>
+      <xs:attribute name="level" type="xs:string" use="optional"/>
+      <xs:attribute name="maxfilesize" type="xs:string" use="optional"/>
+      <xs:attribute name="maxfileindex" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="object">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="listener" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="gad" type="xs:string" use="optional"/>
+      <xs:attribute name="flags" type="xs:string" use="optional"/>
+      <xs:attribute name="type" use="optional" default="1.001">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="EIS1"/>
+            <xs:enumeration value="1.001"/>
+            <xs:enumeration value="EIS2"/>
+            <xs:enumeration value="3.007"/>
+            <xs:enumeration value="3.008"/>
+            <xs:enumeration value="EIS3"/>
+            <xs:enumeration value="10.001"/>
+            <xs:enumeration value="EIS4"/>
+            <xs:enumeration value="11.001"/>
+            <xs:enumeration value="EIS5"/>
+            <xs:enumeration value="9.xxx"/>
+            <xs:enumeration value="14.xxx"/>
+            <xs:enumeration value="EIS6"/>
+            <xs:enumeration value="5.xxx"/>
+            <xs:enumeration value="5.001"/>
+            <xs:enumeration value="5.003"/>
+            <xs:enumeration value="heat-mode"/>
+            <xs:enumeration value="20.102"/>
+            <xs:enumeration value="EIS10"/>
+            <xs:enumeration value="7.xxx"/>
+            <xs:enumeration value="EIS11"/>
+            <xs:enumeration value="12.xxx"/>
+            <xs:enumeration value="EIS14"/>
+            <xs:enumeration value="6.xxx"/>
+            <xs:enumeration value="8.xxx"/>
+            <xs:enumeration value="13.xxx"/>
+            <xs:enumeration value="29.xxx"/>
+            <xs:enumeration value="EIS15"/>
+            <xs:enumeration value="16.000"/>
+            <xs:enumeration value="28.001"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="log" type="xs:string" use="optional" default="false"/>
+      <xs:attribute name="init" type="xs:string" use="optional" default="request"/>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="objects">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="object" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="persistence">
+    <xs:complexType>
+      <xs:attribute name="type" type="xs:string" use="optional"/>
+      <xs:attribute name="path" type="xs:string" use="optional"/>
+      <xs:attribute name="logpath" type="xs:string" use="optional"/>
+      <xs:attribute name="host" type="xs:string" use="optional"/>
+      <xs:attribute name="user" type="xs:string" use="optional"/>
+      <xs:attribute name="pass" type="xs:string" use="optional"/>
+      <xs:attribute name="db" type="xs:string" use="optional"/>
+      <xs:attribute name="table" type="xs:string" use="optional"/>
+      <xs:attribute name="logtable" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="rule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="condition"/>
+        <xs:element ref="actionlist" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="active" type="xs:string" use="optional" default="true"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="rules">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="rule" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="services">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="knxconnection" minOccurs="0"/>
+        <xs:element ref="xmlserver" minOccurs="0"/>
+        <xs:element ref="emailserver" minOccurs="0"/>
+        <xs:element ref="smsgateway" minOccurs="0"/>
+        <xs:element ref="persistence" minOccurs="0"/>
+        <xs:element ref="location" minOccurs="0"/>
+        <xs:element ref="ioports" minOccurs="0"/>
+        <xs:element ref="exceptiondays" minOccurs="0"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="smsgateway">
+    <xs:complexType>
+      <xs:attribute name="api_id" type="xs:string" use="optional"/>
+      <xs:attribute name="user" type="xs:string" use="optional"/>
+      <xs:attribute name="type" type="xs:string" use="optional"/>
+      <xs:attribute name="pass" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="stopcondition" type="conditionType"/>
+
+  <xs:element name="until" type="timespecType"/>
+
+  <xs:element name="xmlserver">
+    <xs:complexType>
+      <xs:attribute name="port" type="xs:string" use="optional"/>
+      <xs:attribute name="type" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
