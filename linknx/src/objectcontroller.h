@@ -832,11 +832,40 @@ protected:
     String14ObjectValue() {};
 };
 
+class String14AsciiObjectValue : public StringObjectValue
+{
+public:
+    String14AsciiObjectValue(const std::string& value);
+protected:
+    String14AsciiObjectValue() {};
+};
+
 class String14Object : public Object, public String14ObjectValue
 {
 public:
     String14Object();
     virtual ~String14Object();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual ObjectValue* get();
+    virtual std::string getType() { return "16.001"; };
+
+    void setStringValue(const std::string& val);
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return String14ObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return String14ObjectValue::set(value); };
+    static Logger& logger_m;
+};
+
+class String14AsciiObject : public Object, public String14AsciiObjectValue
+{
+public:
+    String14AsciiObject();
+    virtual ~String14AsciiObject();
 
     virtual ObjectValue* createObjectValue(const std::string& value);
     virtual void setValue(const std::string& value);
@@ -847,9 +876,9 @@ public:
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
-    virtual std::string toString() { return String14ObjectValue::toString(); };
+    virtual std::string toString() { return String14AsciiObjectValue::toString(); };
 protected:
-    virtual bool set(ObjectValue* value) { return String14ObjectValue::set(value); };
+    virtual bool set(ObjectValue* value) { return String14AsciiObjectValue::set(value); };
     static Logger& logger_m;
 };
 

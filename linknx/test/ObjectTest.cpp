@@ -87,6 +87,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testString14ObjectUpdate );
     CPPUNIT_TEST( testString14ExportImport );
     CPPUNIT_TEST( testString14Persist );
+    CPPUNIT_TEST( testString14AsciiObject );
+    CPPUNIT_TEST( testString14AsciiObjectWrite );
+    CPPUNIT_TEST( testString14AsciiObjectUpdate );
+    CPPUNIT_TEST( testString14AsciiExportImport );
+    CPPUNIT_TEST( testString14AsciiPersist );
     CPPUNIT_TEST( testStringObject );
     CPPUNIT_TEST( testStringObjectWrite );
     CPPUNIT_TEST( testStringObjectUpdate );
@@ -2756,7 +2761,7 @@ public:
     void testString14Object()
     {
         ObjectValue* val;
-        String14Object s, s2;
+        String14Object s, s2, s3;
         s.setValue("test");
         CPPUNIT_ASSERT(s.getValue() == "test");
         s2.setValue("Hi there!");
@@ -2770,9 +2775,7 @@ public:
         CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
         CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage");
 
-        CPPUNIT_ASSERT_THROW(s.setValue("illegal 'é'"), ticpp::Exception);
-        CPPUNIT_ASSERT_THROW(s.setValue("256µs"), ticpp::Exception);
-        CPPUNIT_ASSERT_THROW(s.setValue("noël"), ticpp::Exception);
+        s3.setValue("é µ ë \x82");
         CPPUNIT_ASSERT_THROW(s.setValue("more than 14 characters"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(s.setValue("just a bit more"), ticpp::Exception);
 
@@ -2884,6 +2887,166 @@ public:
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
         
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_string");
+        pConfig.SetAttribute("type", "16.001");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("EIB is OK");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "EIB is OK");
+        res->setValue("Test \r\n ?é=+");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?é=+");
+        res2->setValue("14  characters");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() == "14  characters");
+        res3->setValue("");
+        delete res3;
+
+        Object *res4 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res4->getValue() == "");
+        delete res4;
+    }
+
+    void testString14AsciiObject()
+    {
+        ObjectValue* val;
+        String14AsciiObject s, s2;
+        s.setValue("test");
+        CPPUNIT_ASSERT(s.getValue() == "test");
+        s2.setValue("Hi there!");
+        CPPUNIT_ASSERT(s2.getValue() == "Hi there!");
+
+        s.setValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        s2.setValue("AnotherMessage");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage");
+
+        CPPUNIT_ASSERT(s.getValue() == "Some text !?=+");
+        CPPUNIT_ASSERT(s2.getValue() == "AnotherMessage");
+
+        CPPUNIT_ASSERT_THROW(s.setValue("illegal 'é'"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("256µs"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("noël"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("more than 14 characters"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(s.setValue("just a bit more"), ticpp::Exception);
+
+        String14AsciiObjectValue sval("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(&sval));
+        CPPUNIT_ASSERT(!s2.equals(&sval));
+
+        val = s.createObjectValue("Some text !?=+");
+        CPPUNIT_ASSERT(s.equals(val));
+        CPPUNIT_ASSERT(!s2.equals(val));
+        delete val;
+
+        String14AsciiObjectValue sval2("AnotherMessage");
+        CPPUNIT_ASSERT(!s.equals(&sval2));
+        CPPUNIT_ASSERT(s2.equals(&sval2));
+
+        val = s.createObjectValue("AnotherMessage");
+        CPPUNIT_ASSERT(!s.equals(val));
+        CPPUNIT_ASSERT(s2.equals(val));
+        delete val;
+
+        s.setStringValue("A test \n value");
+        CPPUNIT_ASSERT(s.getValue() == "A test \n value");
+    }
+
+    void testString14AsciiObjectWrite()
+    {
+        String14AsciiObject s;
+        s.setValue("something");
+        s.addChangeListener(this);
+
+        uint8_t buf[16] = {0, 0x80, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);
+        CPPUNIT_ASSERT(s.getValue() == "EIB is OK");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[6] = 0x49;
+        buf[7] = 0x53;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        String14AsciiObjectValue sval1("EIB IS OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[8] = 0x0a;
+        isOnChangeCalled_m = false;
+        s.onWrite(buf, 16, src);
+        CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK");
+        String14AsciiObjectValue sval2("EIB IS\nOK");
+        CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+    }
+
+    void testString14AsciiObjectUpdate()
+    {
+        String14AsciiObject s;
+        s.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK?");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        s.setValue("EIB is OK!");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        s.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        s.setValue("something else");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testString14AsciiExportImport()
+    {
+        String14AsciiObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<String14AsciiObject*>(res));
+        delete res;
+    }
+
+    void testString14AsciiPersist()
+    {
+        system ("rm -rf /tmp/linknx_unittest");
+        system ("mkdir /tmp/linknx_unittest");
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_string");
         pConfig.SetAttribute("type", "EIS15");

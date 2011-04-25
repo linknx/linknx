@@ -75,8 +75,10 @@ Object* Object::create(const std::string& type)
     else if (type == "29.xxx")
         return new S64Object();
 #endif
-    else if (type == "EIS15" || type == "16.000")
+    else if (type == "16.001")
         return new String14Object();
+    else if (type == "EIS15" || type == "16.000")
+        return new String14AsciiObject();
     else if (type == "28.001")
         return new StringObject();
     else
@@ -2383,13 +2385,23 @@ String14ObjectValue::String14ObjectValue(const std::string& value): StringObject
         msg << "String14ObjectValue: Bad value (too long): '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
+}
+
+String14AsciiObjectValue::String14AsciiObjectValue(const std::string& value): StringObjectValue(value)
+{
+    if ( value.length() > 14)
+    {
+        std::stringstream msg;
+        msg << "String14AsciiObjectValue: Bad value (too long): '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
     std::string::const_iterator it = value.begin();
     while ( it != value.end())
     {
-        if (*it < 0)
+        if (*it < 0 || *it > 127)
         {
             std::stringstream msg;
-            msg << "String14ObjectValue: Bad value (invalid character): '" << value << "'" << std::endl;
+            msg << "String14AsciiObjectValue: Bad value (invalid character): '" << value << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
         ++it;
@@ -2455,6 +2467,68 @@ void String14Object::doSend(bool isWrite)
 void String14Object::setStringValue(const std::string& value)
 {
     String14ObjectValue val(value);
+    Object::setValue(&val);
+}
+
+Logger& String14AsciiObject::logger_m(Logger::getInstance("String14AsciiObject"));
+
+String14AsciiObject::String14AsciiObject()
+{}
+
+String14AsciiObject::~String14AsciiObject()
+{}
+
+ObjectValue* String14AsciiObject::createObjectValue(const std::string& value)
+{
+    return new String14AsciiObjectValue(value);
+}
+
+void String14AsciiObject::setValue(const std::string& value)
+{
+    String14AsciiObjectValue val(value);
+    Object::setValue(&val);
+}
+
+ObjectValue* String14AsciiObject::get()
+{
+    if (!init_m)
+        read();
+    logger_m.debugStream() << "String14AsciiObject (id=" << getID() << "): get" << endlog;
+    return static_cast<String14AsciiObjectValue*>(this);
+}
+
+void String14AsciiObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if (len < 2)
+    {
+        logger_m.errorStream() << "Invalid packet received for String14AsciiObject (too short)" << endlog;
+        return;
+    }
+    std::string value;
+    for(int j=2; j<len && buf[j]!=0; j++)
+        value.push_back(buf[j]);
+    String14AsciiObjectValue val(value);
+
+    if (set(&val) || forceUpdate())
+        onUpdate();
+}
+
+void String14AsciiObject::doSend(bool isWrite)
+{
+    logger_m.debugStream() << "String14AsciiObject: Value: " << value_m << endlog;
+    uint8_t buf[16];
+    memset(buf,0,sizeof(buf));
+    buf[1] = (isWrite ? 0x80 : 0x40);
+    // Convert to hex
+    for(uint j=0;j<value_m.size();j++)
+        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+
+    Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
+}
+
+void String14AsciiObject::setStringValue(const std::string& value)
+{
+    String14AsciiObjectValue val(value);
     Object::setValue(&val);
 }
 

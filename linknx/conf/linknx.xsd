@@ -258,6 +258,14 @@
 
   <xs:element name="exceptiondays">
     <xs:complexType>
+      <xs:attribute name="clear" use="optional" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:sequence>
         <xs:element ref="date" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
@@ -284,6 +292,10 @@
       <xs:attribute name="speed" use="optional">
         <xs:simpleType>
           <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="200"/>
+            <xs:enumeration value="300"/>
+            <xs:enumeration value="600"/>
+            <xs:enumeration value="1200"/>
             <xs:enumeration value="2400"/>
             <xs:enumeration value="4800"/>
             <xs:enumeration value="9600"/>
@@ -291,6 +303,7 @@
             <xs:enumeration value="38400"/>
             <xs:enumeration value="57600"/>
             <xs:enumeration value="115200"/>
+            <xs:enumeration value="230400"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
@@ -391,6 +404,7 @@
             <xs:enumeration value="29.xxx"/>
             <xs:enumeration value="EIS15"/>
             <xs:enumeration value="16.000"/>
+            <xs:enumeration value="16.001"/>
             <xs:enumeration value="28.001"/>
           </xs:restriction>
         </xs:simpleType>
