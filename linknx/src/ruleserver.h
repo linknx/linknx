@@ -280,6 +280,22 @@ private:
     SwitchingObject* object_m;
 };
 
+class FormulaAction : public Action
+{
+public:
+    FormulaAction();
+    virtual ~FormulaAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    Object *object_m, *x_m, *y_m;
+    float a_m, b_m, c_m, m_m, n_m;
+};
+
 class SetStringAction : public Action
 {
 public:

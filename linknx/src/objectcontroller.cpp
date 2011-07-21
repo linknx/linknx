@@ -105,6 +105,12 @@ void Object::setValue(ObjectValue* value)
         onInternalUpdate();
 }
 
+void Object::setFloatValue(double value)
+{
+    if (set(value) || forceUpdate())
+        onInternalUpdate();
+}
+
 void Object::importXml(ticpp::Element* pConfig)
 {
     std::string id = pConfig->GetAttribute("id");
@@ -384,6 +390,11 @@ std::string SwitchingObjectValue::toString()
     return value_m ? "on" : "off";
 }
 
+double SwitchingObjectValue::toNumber()
+{
+    return value_m ? 1.0 : 0.0;
+}
+
 bool SwitchingObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -426,6 +437,17 @@ bool SwitchingObjectValue::set(ObjectValue* value)
     if (value_m != val->value_m)
     {
         value_m = val->value_m;
+        return true;
+    }
+    return false;
+}
+
+bool SwitchingObjectValue::set(double value)
+{
+    bool val = (value != 0.0);
+    if (value_m != val)
+    {
+        value_m = val;
         return true;
     }
     return false;
@@ -540,6 +562,32 @@ bool StepDirObjectValue::set(ObjectValue* value)
         return true;
     }
     return false;
+}
+
+bool StepDirObjectValue::set(double value)
+{
+    int direction = 1;
+    int stepcode = 0;
+    if (value < 0.0)
+    {
+        direction = 0;
+        value = -value;
+    }
+    stepcode = static_cast<int>(value);
+    if (direction_m != direction || stepcode_m != stepcode)
+    {
+        direction_m = direction;
+        stepcode_m = stepcode;
+        return true;
+    }
+    return false;
+}
+
+double StepDirObjectValue::toNumber()
+{
+    if (stepcode_m == 0)
+        return 0.0;
+    return (direction_m ? 1.0 : -1.0) * stepcode_m;
 }
 
 Logger& StepDirObject::logger_m(Logger::getInstance("StepDirObject"));
@@ -765,6 +813,13 @@ std::string TimeObjectValue::toString()
     return out.str();
 }
 
+double TimeObjectValue::toNumber()
+{
+    if (hour_m == -1)
+        return -1.0;
+    return hour_m * 3600 + min_m * 60 + sec_m;
+}
+
 bool TimeObjectValue::equals(ObjectValue* value)
 {
     int wday, hour, min, sec;
@@ -833,6 +888,35 @@ bool TimeObjectValue::set(ObjectValue* value)
             sec_m = sec;
             return true;
         }
+    }
+    return false;
+}
+
+bool TimeObjectValue::set(double value)
+{
+    int wday, hour, min, sec;
+    if (value < 0)
+    {
+        wday = -1;
+        hour = -1;
+        min = -1;
+        sec = -1;
+    }
+    else
+    {
+        wday = 0;
+        hour = value / 3600;
+        value -= hour * 3600;
+        min = value / 60;
+        sec = value - min * 60;
+    }
+    if (wday_m != wday || hour_m != hour || min_m != min || sec_m != sec)
+    {
+        wday_m = wday;
+        hour_m = hour;
+        min_m = min;
+        sec_m = sec;
+        return true;
     }
     return false;
 }
@@ -966,6 +1050,13 @@ std::string DateObjectValue::toString()
     return out.str();
 }
 
+double DateObjectValue::toNumber()
+{
+    if (day_m == -1)
+        return -1.0;
+    return year_m * 400 + month_m * 31 + day_m;
+}
+
 bool DateObjectValue::equals(ObjectValue* value)
 {
     int day, month, year;
@@ -1028,6 +1119,32 @@ bool DateObjectValue::set(ObjectValue* value)
             year_m = year;
             return true;
         }
+    }
+    return false;
+}
+
+bool DateObjectValue::set(double value)
+{
+    int day, month, year;
+    if (value < 0)
+    {
+        day = -1;
+        month = -1;
+        year = -1;
+    }
+    else
+    {
+        year = value / 400;
+        value -= year * 400;
+        month = value / 31;
+        day = value - month * 31;
+    }
+    if ( day_m != day || month_m != month || year_m != year )
+    {
+        day_m = day;
+        month_m = month;
+        year_m = year;
+        return true;
     }
     return false;
 }
@@ -1157,6 +1274,11 @@ std::string ValueObjectValue::toString()
     return out.str();
 }
 
+double ValueObjectValue::toNumber()
+{
+    return value_m;
+}
+
 bool ValueObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -1202,6 +1324,16 @@ bool ValueObjectValue::set(ObjectValue* value)
             value_m = val->value_m;
             return true;
         }
+    }
+    return false;
+}
+
+bool ValueObjectValue::set(double value)
+{
+    if (value_m != value)
+    {
+        value_m = value;
+        return true;
     }
     return false;
 }
@@ -1385,6 +1517,11 @@ std::string UIntObjectValue::toString()
     std::ostringstream out;
     out << value_m;
     return out.str();
+}
+
+double UIntObjectValue::toNumber()
+{
+    return value_m;
 }
 
 bool UIntObjectValue::equals(ObjectValue* value)
@@ -1846,6 +1983,11 @@ std::string IntObjectValue::toString()
     return out.str();
 }
 
+double IntObjectValue::toNumber()
+{
+    return value_m;
+}
+
 bool IntObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -2144,6 +2286,11 @@ std::string S64ObjectValue::toString()
     return out.str();
 }
 
+double S64ObjectValue::toNumber()
+{
+    return value_m;
+}
+
 bool S64ObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -2264,6 +2411,20 @@ std::string StringObjectValue::toString()
     return value_m;
 }
 
+double StringObjectValue::toNumber()
+{
+    std::istringstream val(value_m);
+    double value;
+    val >> value;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        value = 0;
+    }
+    return value;
+}
+
 bool StringObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -2309,6 +2470,18 @@ bool StringObjectValue::set(ObjectValue* value)
             value_m = val->value_m;
             return true;
         }
+    }
+    return false;
+}
+
+bool StringObjectValue::set(double value)
+{
+    std::ostringstream out;
+    out << value;
+    if (value_m != out.str())
+    {
+        value_m = out.str();
+        return true;
     }
     return false;
 }

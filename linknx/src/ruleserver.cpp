@@ -22,6 +22,7 @@
 #include "smsgateway.h"
 #include "luacondition.h"
 #include "ioport.h"
+#include <cmath>
 
 extern "C"
 {
@@ -422,6 +423,8 @@ Action* Action::create(const std::string& type)
 #endif
     else if (type == "cancel")
         return new CancelAction();
+    else if (type == "formula")
+        return new FormulaAction();
     else
         return 0;
 }
@@ -710,6 +713,76 @@ void ToggleValueAction::Run (pth_sem_t * stop)
     {
         logger_m.infoStream() << "Execute ToggleValueAction on object " << object_m->getID() << endlog;
         object_m->setBoolValue(!object_m->getBoolValue());
+    }
+}
+
+FormulaAction::FormulaAction() : object_m(0), x_m(0), y_m(0), a_m(1), b_m(1), c_m(0), m_m(1), n_m(1)
+{}
+
+FormulaAction::~FormulaAction()
+{}
+
+void FormulaAction::importXml(ticpp::Element* pConfig)
+{
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    object_m = ObjectController::instance()->getObject(id);
+
+//    float a, b, c;
+    id = pConfig->GetAttribute("x");
+    if (id.empty())
+        x_m = 0;
+    else
+        x_m = ObjectController::instance()->getObject(id);
+    id = pConfig->GetAttribute("y");
+    if (id.empty())
+        y_m = 0;
+    else
+        y_m = ObjectController::instance()->getObject(id);
+    pConfig->GetAttributeOrDefault("a", &a_m, 1.0);
+    pConfig->GetAttributeOrDefault("b", &b_m, 1.0);
+    pConfig->GetAttributeOrDefault("c", &c_m, 0.0);
+    pConfig->GetAttributeOrDefault("m", &m_m, 1.0);
+    pConfig->GetAttributeOrDefault("n", &n_m, 1.0);
+
+    logger_m.infoStream() << "FormulaAction: Configured for object " << object_m->getID() << endlog;
+}
+
+void FormulaAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "formula");
+    pConfig->SetAttribute("id", object_m->getID());
+    if (x_m)
+        pConfig->SetAttribute("x", x_m->getID());
+    if (y_m)
+        pConfig->SetAttribute("y", y_m->getID());
+    if (a_m != 1.0)
+        pConfig->SetAttribute("a", a_m);
+    if (b_m != 1.0)
+        pConfig->SetAttribute("b", b_m);
+    if (c_m != 0.0)
+        pConfig->SetAttribute("c", c_m);
+    if (m_m != 1.0)
+        pConfig->SetAttribute("m", m_m);
+    if (n_m != 1.0)
+        pConfig->SetAttribute("n", n_m);
+
+    Action::exportXml(pConfig);
+}
+
+void FormulaAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    if (object_m)
+    {
+        logger_m.infoStream() << "Execute FormulaAction: set " << object_m->getID() << endlog;
+        float res = c_m;
+        if (x_m)
+            res += a_m * pow(x_m->getFloatValue(), m_m);
+        if (y_m)
+            res += b_m * pow(y_m->getFloatValue(), n_m);
+        object_m->setFloatValue(res);
     }
 }
 

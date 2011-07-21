@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Add formula action ( compute a value based on formula a*x^m+b*y^n+c )
     * Allow to clear list of exception days using XML interface
     * Add support for baud rate 200, 300, 600, 1200 and 230400 for serial io-port
     * Disable signed 64 bit objects if STL streams doesn't support it (uclibc++)

@@ -47,6 +47,7 @@ public:
     virtual bool equals(ObjectValue* value) = 0;
     virtual int compare(ObjectValue* value) = 0;
     virtual bool set(ObjectValue* value) = 0;
+    virtual double toNumber() = 0;
 protected:
     static Logger& logger_m;
 };
@@ -63,8 +64,10 @@ public:
     virtual ObjectValue* createObjectValue(const std::string& value) = 0;
     virtual void setValue(ObjectValue* value);
     virtual void setValue(const std::string& value) = 0;
+    virtual void setFloatValue(double value);
     virtual ObjectValue* get() = 0;
     virtual std::string getValue() { return get()->toString(); };
+    virtual double getFloatValue() { return get()->toNumber(); };
     virtual std::string getType() = 0;
 
     virtual void importXml(ticpp::Element* pConfig);
@@ -92,6 +95,7 @@ public:
     virtual void doSend(bool isWrite) = 0;
 protected:
     virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) = 0;
     bool init_m;
     enum Flags
     {
@@ -131,8 +135,10 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     bool value_m;
 };
 
@@ -153,6 +159,7 @@ public:
     bool getBoolValue() { get(); return value_m; };
 protected:
     virtual bool set(ObjectValue* value) { return SwitchingObjectValue::set(value); };
+    virtual bool set(double value) { return SwitchingObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -163,8 +170,10 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString() = 0;
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     friend class StepDirObject;
     StepDirObjectValue() : direction_m(0), stepcode_m(0) {};
     StepDirObjectValue(int direction, int stepcode) : direction_m(direction), stepcode_m(stepcode) {};
@@ -187,6 +196,7 @@ public:
     virtual void setStepValue(int direction, int stepcode) = 0;
 protected:
     virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) = 0;
     virtual bool setStep(int direction, int stepcode) = 0;
     virtual int getDirection() = 0;
     virtual int getStepCode() = 0;
@@ -215,6 +225,7 @@ public:
     virtual void setStepValue(int direction, int stepcode);
 protected:
     virtual bool set(ObjectValue* value) { return DimmingObjectValue::set(value); };
+    virtual bool set(double value) { return DimmingObjectValue::set(value); };
     virtual bool setStep(int direction, int stepcode) { if (direction_m != direction || stepcode_m != stepcode) { direction_m = direction; stepcode_m = stepcode; return true; } return false; };
     virtual int getDirection() { return direction_m; };
     virtual int getStepCode() { return stepcode_m; };
@@ -243,6 +254,7 @@ public:
     virtual void setStepValue(int direction, int stepcode);
 protected:
     virtual bool set(ObjectValue* value) { return BlindsObjectValue::set(value); };
+    virtual bool set(double value) { return BlindsObjectValue::set(value); };
     virtual bool setStep(int direction, int stepcode) { if (direction_m != direction || stepcode_m != stepcode) { direction_m = direction; stepcode_m = stepcode; return true; } return false; };
     virtual int getDirection() { return direction_m; };
     virtual int getStepCode() { return stepcode_m; };
@@ -257,9 +269,11 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
     void getTimeValue(int *wday, int *hour, int *min, int *sec);
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     int wday_m;
     int hour_m;
     int min_m;
@@ -286,6 +300,7 @@ public:
     void getTime(int *wday, int *hour, int *min, int *sec);
 protected:
     virtual bool set(ObjectValue* value) { return TimeObjectValue::set(value); };
+    virtual bool set(double value) { return TimeObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -297,10 +312,11 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
     void getDateValue(int *day, int *month, int *year);
-
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     int day_m;
     int month_m;
     int year_m;
@@ -326,6 +342,7 @@ public:
     void getDate(int *day, int *month, int *year);
 protected:
     virtual bool set(ObjectValue* value) { return DateObjectValue::set(value); };
+    virtual bool set(double value) { return DateObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -337,8 +354,10 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     double value_m;
     friend class ValueObject;
     ValueObjectValue(double value) : value_m(value) {};
@@ -362,6 +381,7 @@ public:
     double getFloatValue() { get(); return value_m; };
 protected:
     virtual bool set(ObjectValue* value) { return ValueObjectValue::set(value); };
+    virtual bool set(double value) { return ValueObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -391,6 +411,7 @@ public:
     virtual void doSend(bool isWrite);
 protected:
     virtual bool set(ObjectValue* value) { return ValueObject32Value::set(value); };
+    virtual bool set(double value) { return ValueObject32Value::set(value); };
     static Logger& logger_m;
 private:
     typedef union {
@@ -407,8 +428,9 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
     uint32_t value_m;
     UIntObjectValue(uint32_t value) : value_m(value) {};
     UIntObjectValue() : value_m(0) {};
@@ -430,6 +452,7 @@ public:
     uint32_t getIntValue();
 protected:
     virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) { return setInt(static_cast<uint32_t>(value)); };
     virtual bool setInt(uint32_t value) = 0;
     virtual uint32_t getInt() = 0;
     static Logger& logger_m;
@@ -629,8 +652,9 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
     int32_t value_m;
     IntObjectValue(int32_t value) : value_m(value) {};
     IntObjectValue() {};
@@ -652,6 +676,7 @@ public:
     int32_t getIntValue();
 protected:
     virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) { return setInt(static_cast<int32_t>(value)); };
     virtual bool setInt(int32_t value) = 0;
     virtual int32_t getInt() = 0;
     static Logger& logger_m;
@@ -759,8 +784,9 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
     int64_t value_m;
     S64ObjectValue(int64_t value) : value_m(value) {};
     S64ObjectValue() {};
@@ -783,6 +809,7 @@ public:
     int64_t getIntValue();
 protected:
     virtual bool set(ObjectValue* value) { return S64ObjectValue::set(value); };
+    virtual bool set(double value) { return setInt(static_cast<int64_t>(value)); };
     virtual bool setInt(int64_t value) { if (value_m != value) { value_m = value; return true; } return false; };
     virtual int64_t getInt() { return value_m; };
     static Logger& logger_m;
@@ -797,8 +824,10 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
-    virtual bool set(ObjectValue* value);
+    virtual double toNumber();
 protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
     std::string value_m;
     StringObjectValue() {};
 };
@@ -821,6 +850,7 @@ public:
     virtual std::string toString() { return StringObjectValue::toString(); };
 protected:
     virtual bool set(ObjectValue* value) { return StringObjectValue::set(value); };
+    virtual bool set(double value) { return StringObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -858,6 +888,7 @@ public:
     virtual std::string toString() { return String14ObjectValue::toString(); };
 protected:
     virtual bool set(ObjectValue* value) { return String14ObjectValue::set(value); };
+    virtual bool set(double value) { return String14ObjectValue::set(value); };
     static Logger& logger_m;
 };
 
@@ -879,6 +910,7 @@ public:
     virtual std::string toString() { return String14AsciiObjectValue::toString(); };
 protected:
     virtual bool set(ObjectValue* value) { return String14AsciiObjectValue::set(value); };
+    virtual bool set(double value) { return String14AsciiObjectValue::set(value); };
     static Logger& logger_m;
 };
 
