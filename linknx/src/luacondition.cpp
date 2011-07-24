@@ -31,12 +31,48 @@ extern "C"
 #include "services.h"
 #include "ioport.h"
 
+LuaMain* LuaMain::instance_m;
+
+LuaMain::LuaMain()
+{
+    if (pth_mutex_init(&mutex_m))
+    {
+        Logger::getInstance("LuaMain").debugStream() << "Lua Mutex Initialized" << endlog;
+    } else {
+        Logger::getInstance("LuaMain").errorStream() << "Error initializing Lua Mutex" << endlog;
+    }
+}
+
+LuaMain::~LuaMain()
+{}
+
+LuaMain* LuaMain::instance()
+{
+    if (instance_m == 0)
+        instance_m = new LuaMain();
+    return instance_m;
+}
+
+void LuaMain::lock()
+{
+    pth_mutex_acquire(&instance()->mutex_m, FALSE, NULL);
+}
+
+void LuaMain::unlock()
+{
+    pth_mutex_release(&instance()->mutex_m);
+}
+
 LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0)
 {
     l_m = luaL_newstate();  
-    luaL_openlibs(l_m);
+    /* stop collector during initialisation
+     * http://lua-users.org/lists/lua-l/2008-07/msg00690.html
+     */
+    lua_gc(l_m, LUA_GCSTOP, 0);    luaL_openlibs(l_m);
     lua_register(l_m, "obj", LuaCondition::obj);  
     lua_register(l_m, "isException", LuaCondition::isException);  
+    lua_gc(l_m, LUA_GCRESTART, 0);
 }
 
 LuaCondition::~LuaCondition()
@@ -46,6 +82,7 @@ LuaCondition::~LuaCondition()
 
 bool LuaCondition::evaluate()
 {
+    LuaMain::lock();
     if (luaL_dostring(l_m, code_m.c_str()) != 0)
     { 
         logger_m.errorStream() << "LuaCondition error: " << lua_tostring(l_m, -1) << endlog;
@@ -53,7 +90,8 @@ bool LuaCondition::evaluate()
     }
     int ret = lua_toboolean(l_m, -1);  
     logger_m.infoStream() << "LuaCondition evaluated as " << (ret? "true":"false") << endlog;
-    lua_settop(l_m, 0);      
+    lua_settop(l_m, 0);
+    LuaMain::unlock();
     return ret;
 }
 
@@ -125,12 +163,17 @@ int LuaCondition::isException(lua_State *L)
 
 LuaScriptAction::LuaScriptAction()
 {
-    l_m = luaL_newstate();  
+    l_m = luaL_newstate();
+    /* stop collector during initialisation
+     * http://lua-users.org/lists/lua-l/2008-07/msg00690.html
+     */
+    lua_gc(l_m, LUA_GCSTOP, 0);
     luaL_openlibs(l_m);
     lua_register(l_m, "obj", LuaScriptAction::obj);  
     lua_register(l_m, "set", LuaScriptAction::set);  
     lua_register(l_m, "iosend", LuaScriptAction::iosend);  
     lua_register(l_m, "sleep", LuaScriptAction::sleep);
+    lua_gc(l_m, LUA_GCRESTART, 0);
 }
 
 LuaScriptAction::~LuaScriptAction()
@@ -157,6 +200,7 @@ void LuaScriptAction::Run (pth_sem_t * stop)
     if (Action::sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute LuaScriptAction" << endlog;
+    LuaMain::lock();
     lua_pushlightuserdata(l_m, stop);
     lua_setglobal(l_m, "__linknx_stop");
     if (luaL_dostring(l_m, code_m.c_str()) != 0)
@@ -167,7 +211,8 @@ void LuaScriptAction::Run (pth_sem_t * stop)
         else
             logger_m.errorStream() << "LuaScriptAction error: " << lua_tostring(l_m, -1) << endlog;
     }
-    lua_settop(l_m, 0);      
+    lua_settop(l_m, 0);
+    LuaMain::unlock();
 }
 
 int LuaScriptAction::obj(lua_State *L)
@@ -277,19 +322,24 @@ int LuaScriptAction::sleep(lua_State *L)
     if (lua_islightuserdata (L, -1))
     {
         pth_sem_t * stop = (pth_sem_t *)lua_touserdata(L, -1);
+        LuaMain::unlock();
         if (Action::sleep(delay*1000, stop))
         {
+            LuaMain::lock();
             lua_pushstring(L, "Action interrupted");
             lua_error(L);
             return 0;
         }
+        LuaMain::lock();
     }
     else
     {
+        LuaMain::unlock();
         if (delay < 1)
             ret = pth_usleep(delay*1000000);
         else
             ret = pth_sleep(delay);
+        LuaMain::lock();
     }
     lua_pushnumber(L, ret);
     return 1;

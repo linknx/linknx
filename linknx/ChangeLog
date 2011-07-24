@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Add locking to protect LUA scripting engine (stefdude)
     * DimUpAction: take into account the stop-limit inclusive (stefdude)
     * Allow DimUpAction for object types 5.001 and 5.003 (stefdude)
     * Add formula action ( compute a value based on formula a*x^m+b*y^n+c )

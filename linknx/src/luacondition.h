@@ -29,6 +29,26 @@
 
 struct lua_State;
 
+class LuaMain
+{
+public:
+    static LuaMain* instance();
+    static void reset()
+    {
+        if (instance_m)
+            delete instance_m;
+        instance_m = 0;
+    };
+
+    static void lock();
+    static void unlock();
+private:
+    LuaMain();
+    ~LuaMain();
+    pth_mutex_t mutex_m;
+    static LuaMain* instance_m;
+};
+
 class LuaCondition : public Condition
 {
 public:
