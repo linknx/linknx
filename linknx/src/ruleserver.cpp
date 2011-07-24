@@ -515,7 +515,7 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     std::string id;
     id = pConfig->GetAttribute("id");
     Object* obj = ObjectController::instance()->getObject(id); 
-    object_m = dynamic_cast<U8Object*>(obj); 
+    object_m = dynamic_cast<UIntObject*>(obj);
     if (!object_m)
     {
         std::stringstream msg;

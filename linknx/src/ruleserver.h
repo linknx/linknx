@@ -229,7 +229,7 @@ public:
 private:
     virtual void Run (pth_sem_t * stop);
 
-    U8Object* object_m;
+    UIntObject* object_m;
     unsigned int start_m, stop_m, duration_m;
 };
 

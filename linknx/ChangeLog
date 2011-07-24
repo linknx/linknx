@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Allow DimUpAction for object types 5.001 and 5.003 (stefdude)
     * Add formula action ( compute a value based on formula a*x^m+b*y^n+c )
     * Allow to clear list of exception days using XML interface
     * Add support for baud rate 200, 300, 600, 1200 and 230400 for serial io-port
