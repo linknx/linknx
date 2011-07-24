@@ -551,7 +551,7 @@ void DimUpAction::Run (pth_sem_t * stop)
         logger_m.infoStream() << "Execute DimUpAction" << endlog;
 
         unsigned long step = (duration_m / (stop_m - start_m));
-        for (unsigned int idx=start_m; idx < stop_m; idx++)
+        for (unsigned int idx=start_m; idx <= stop_m; idx++)
         {
             object_m->setIntValue(idx);
             if (sleep(step, stop))
@@ -568,7 +568,7 @@ void DimUpAction::Run (pth_sem_t * stop)
         logger_m.infoStream() << "Execute DimUpAction (decrease)" << endlog;
 
         unsigned long step = (duration_m / (start_m - stop_m));
-        for (unsigned int idx=start_m; idx > stop_m; idx--)
+        for (unsigned int idx=start_m; idx >= stop_m; idx--)
         {
             object_m->setIntValue(idx);
             if (sleep(step, stop))
