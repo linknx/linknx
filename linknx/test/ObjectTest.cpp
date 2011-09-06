@@ -1097,6 +1097,27 @@ public:
         v2.setValue("14.55");
         CPPUNIT_ASSERT(v2.getValue() == "14.55");
 
+        v2.setPrecision("0.2");
+        v2.setValue("14.55");
+        CPPUNIT_ASSERT(v2.getValue() == "14.6");
+        v2.setValue("14.451254");
+        CPPUNIT_ASSERT(v2.getValue() == "14.4");
+        v2.setValue("-14.451254");
+        CPPUNIT_ASSERT(v2.getValue() == "-14.4");
+        v2.setValue("-0.71");
+        CPPUNIT_ASSERT(v2.getValue() == "-0.8");
+
+        v2.setPrecision("3");
+        v2.setValue("6");
+        CPPUNIT_ASSERT(v2.getValue() == "6");
+        v2.setValue("-3544.2");
+        CPPUNIT_ASSERT(v2.getValue() == "-3543");
+
+        v2.setPrecision("100");
+        v2.setValue("56254");
+        CPPUNIT_ASSERT(v2.getValue() == "56300");
+        v2.setPrecision("0");
+
         v.setValue("670760.96");
         v2.setValue("-671088.64");
         CPPUNIT_ASSERT(v.getValue() == "670760.96");

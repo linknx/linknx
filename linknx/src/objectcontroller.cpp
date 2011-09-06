@@ -111,6 +111,14 @@ void Object::setFloatValue(double value)
         onInternalUpdate();
 }
 
+ObjectValue* Object::get()
+{
+    if (!init_m)
+        read();
+    logger_m.debugStream() << "Object (id=" << getID() << "): get" << endlog;
+    return getObjectValue();
+}
+
 void Object::importXml(ticpp::Element* pConfig)
 {
     std::string id = pConfig->GetAttribute("id");
@@ -196,6 +204,10 @@ void Object::importXml(ticpp::Element* pConfig)
     }
 
     writeLog_m = (pConfig->GetAttribute("log") == "true");
+
+    std::string precision = pConfig->GetAttribute("precision");
+    if (!precision.empty())
+        getObjectValue()->setPrecision(precision);
 
     // TODO: do we need to use the 'i' flag instead of init="request" attribute
     persist_m = false;
@@ -472,14 +484,6 @@ void SwitchingObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* SwitchingObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "SwitchingObject (id=" << getID() << "): get" << endlog;
-    return static_cast<SwitchingObjectValue*>(this);
-}
-
 void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     bool newValue;
@@ -694,14 +698,6 @@ void DimmingObject::setStepValue(int direction, int stepcode)
     }
 }
 
-ObjectValue* DimmingObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "DimmingObject (id=" << getID() << "): get" << endlog;
-    return static_cast<DimmingObjectValue*>(this);
-}
-
 BlindsObjectValue::BlindsObjectValue(const std::string& value)
 {
     std::string dir;
@@ -774,14 +770,6 @@ void BlindsObject::setStepValue(int direction, int stepcode)
         direction_m = direction;
         onInternalUpdate();
     }
-}
-
-ObjectValue* BlindsObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "BlindsObject (id=" << getID() << "): get" << endlog;
-    return static_cast<BlindsObjectValue*>(this);
 }
 
 TimeObjectValue::TimeObjectValue(const std::string& value) : wday_m(-1), hour_m(-1), min_m(-1), sec_m(-1)
@@ -960,14 +948,6 @@ void TimeObject::setValue(const std::string& value)
 {
     TimeObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* TimeObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "TimeObject (id=" << getID() << "): get" << endlog;
-    return static_cast<TimeObjectValue*>(this);
 }
 
 void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
@@ -1186,14 +1166,6 @@ void DateObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* DateObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "DateObject (id=" << getID() << "): get" << endlog;
-    return static_cast<DateObjectValue*>(this);
-}
-
 void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 5)
@@ -1266,6 +1238,20 @@ ValueObjectValue::ValueObjectValue(const std::string& value)
     }
 }
 
+void ValueObjectValue::setPrecision(std::string precision)
+{
+    std::istringstream val(precision);
+    val >> precision_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "ValueObjectValue: Bad precision: '" << precision << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
 std::string ValueObjectValue::toString()
 {
     std::ostringstream out;
@@ -1319,17 +1305,18 @@ bool ValueObjectValue::set(ObjectValue* value)
         logger_m.errorStream() << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
     else
     {
-        if (value_m != val->value_m)
-        {
-            value_m = val->value_m;
-            return true;
-        }
+        return set(val->value_m);
     }
     return false;
 }
 
 bool ValueObjectValue::set(double value)
 {
+    if (precision_m != 0) {
+        int div = (int) (value/precision_m + (value >= 0 ? 0.5 : -0.5));
+        value = div*precision_m;
+        logger_m.debugStream() << "ValueObject: rounded value "<< value << endlog;
+    }
     if (value_m != value)
     {
         value_m = value;
@@ -1357,14 +1344,6 @@ void ValueObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* ValueObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "ValueObject (id=" << getID() << "): get" << endlog;
-    return static_cast<ValueObjectValue*>(this);
-}
-
 void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 4)
@@ -1379,9 +1358,8 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         m |= ~0x7ff;
     int ex = (d1 & 0x7800) >> 11;
     newValue = ((double)m * (1 << ex) / 100);
-    if (forceUpdate() || newValue != value_m)
+    if (set(newValue) || forceUpdate())
     {
-        value_m = newValue;
         onUpdate();
     }
 }
@@ -1457,14 +1435,6 @@ void ValueObject32::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* ValueObject32::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "ValueObject32 (id=" << getID() << "): get" << endlog;
-    return static_cast<ValueObject32Value*>(this);
-}
-
 void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 6)
@@ -1478,9 +1448,8 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 //    logger_m.infoStream() << "New value int tmp " << tmp << " for ValueObject32 " << getID() << endlog;
 //    const float* nv = reinterpret_cast<const float*>(&tmp);
     double newValue = tmp.fl;
-    if (forceUpdate() || newValue != value_m)
+    if (set(newValue) || forceUpdate())
     {
-        value_m = newValue;
         onUpdate();
     }
 }
@@ -1661,14 +1630,6 @@ void U8Object::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* U8Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "U8Object (id=" << getID() << "): get" << endlog;
-    return static_cast<U8ObjectValue*>(this);
-}
-
 ScalingObjectValue::ScalingObjectValue(const std::string& value)
 {
     float fvalue;
@@ -1714,14 +1675,6 @@ void ScalingObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* ScalingObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "ScalingObject (id=" << getID() << "): get" << endlog;
-    return static_cast<ScalingObjectValue*>(this);
-}
-
 AngleObjectValue::AngleObjectValue(const std::string& value)
 {
     float fvalue;
@@ -1765,14 +1718,6 @@ void AngleObject::setValue(const std::string& value)
 {
     AngleObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* AngleObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "AngleObject (id=" << getID() << "): get" << endlog;
-    return static_cast<AngleObjectValue*>(this);
 }
 
 HeatingModeObjectValue::HeatingModeObjectValue(const std::string& value)
@@ -1822,14 +1767,6 @@ void HeatingModeObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* HeatingModeObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "HeatingModeObject (id=" << getID() << "): get" << endlog;
-    return static_cast<HeatingModeObjectValue*>(this);
-}
-
 U16ObjectValue::U16ObjectValue(const std::string& value)
 {
     std::istringstream val(value);
@@ -1870,14 +1807,6 @@ void U16Object::setValue(const std::string& value)
 {
     U16ObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* U16Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "U16Object (id=" << getID() << "): get" << endlog;
-    return static_cast<U16ObjectValue*>(this);
 }
 
 void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
@@ -1935,14 +1864,6 @@ void U32Object::setValue(const std::string& value)
 {
     U32ObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* U32Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "U32Object (id=" << getID() << "): get" << endlog;
-    return static_cast<U32ObjectValue*>(this);
 }
 
 void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
@@ -2100,14 +2021,6 @@ void S8Object::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* S8Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "S8Object (id=" << getID() << "): get" << endlog;
-    return static_cast<S8ObjectValue*>(this);
-}
-
 void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int32_t newValue;
@@ -2172,14 +2085,6 @@ void S16Object::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* S16Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "S16Object (id=" << getID() << "): get" << endlog;
-    return static_cast<S16ObjectValue*>(this);
-}
-
 void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int32_t newValue;
@@ -2237,14 +2142,6 @@ void S32Object::setValue(const std::string& value)
 {
     S32ObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* S32Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "S32Object (id=" << getID() << "): get" << endlog;
-    return static_cast<S32ObjectValue*>(this);
 }
 
 void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
@@ -2373,14 +2270,6 @@ void S64Object::setValue(const std::string& value)
         onInternalUpdate();
 }
 
-ObjectValue* S64Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "S64Object (id=" << getID() << "): get" << endlog;
-    return static_cast<S64ObjectValue*>(this);
-}
-
 void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int64_t newValue;
@@ -2505,14 +2394,6 @@ void StringObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* StringObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "StringObject (id=" << getID() << "): get" << endlog;
-    return static_cast<StringObjectValue*>(this);
-}
-
 void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 2)
@@ -2600,14 +2481,6 @@ void String14Object::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
-ObjectValue* String14Object::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "String14Object (id=" << getID() << "): get" << endlog;
-    return static_cast<String14ObjectValue*>(this);
-}
-
 void String14Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 2)
@@ -2660,14 +2533,6 @@ void String14AsciiObject::setValue(const std::string& value)
 {
     String14AsciiObjectValue val(value);
     Object::setValue(&val);
-}
-
-ObjectValue* String14AsciiObject::get()
-{
-    if (!init_m)
-        read();
-    logger_m.debugStream() << "String14AsciiObject (id=" << getID() << "): get" << endlog;
-    return static_cast<String14AsciiObjectValue*>(this);
 }
 
 void String14AsciiObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
