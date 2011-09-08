@@ -1,4 +1,6 @@
 Release 0.0.1.29:
+    * Add action "start-actionlist" to force execution of the complete actionlist from a given rule
+    * Add possibility to force execution of an actionlist on xml interface
     * Read version string and optional feature set on xml interface
     * Add "from" attribute for SMS gateway (Sender ID).
     * Add precision setting (rounding of value) for objects with floating point value.

@@ -449,6 +449,22 @@ private:
     std::string cmd_m;
 };
 
+class StartActionlistAction : public Action
+{
+public:
+    StartActionlistAction();
+    virtual ~StartActionlistAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    std::string ruleId_m;
+    bool list_m;
+};
+
 class CancelAction : public Action
 {
 public:
@@ -479,6 +495,8 @@ public:
     virtual void onChange(Object* object);
 
     void evaluate();
+    void executeActionsTrue();
+    void executeActionsFalse();
     void cancel();
 
 private:

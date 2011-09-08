@@ -354,6 +354,20 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 throw "Unknown config element";
                         }
                     }
+                    else if (pWrite->Value() == "rule-actions")
+                    {
+                        std::string id = pWrite->GetAttribute("id");
+                        std::string list = pWrite->GetAttribute("list");
+                        Rule* rule = RuleServer::instance()->getRule(id.c_str());
+                        if (rule == 0)
+                            throw "Unknown rule id";
+                        if (list == "true")
+                            rule->executeActionsTrue();
+                        else if (list == "false")
+                            rule->executeActionsFalse();
+                        else
+                            throw "Invalid list attribute. (Must be 'true' or 'false')";
+                    }
                     else
                         throw "Unknown write element";
                 }

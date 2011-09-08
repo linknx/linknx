@@ -354,24 +354,31 @@ void Rule::evaluate()
 {
     if (flags_m & Active)
     {
-        ActionsList_t::iterator it;
         logger_m.infoStream() << "Evaluate rule " << id_m << endlog;
         bool curValue = condition_m->evaluate();
         logger_m.infoStream() << "Rule " << id_m << " evaluated as " << curValue << ", prev value was " << prevValue_m << endlog;
         if (curValue && ((flags_m & StatelessIfTrue) || !prevValue_m))
-        {
-            for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-                (*it)->execute();
-            logger_m.debugStream() << "Action list 'true' executed for rule " << id_m << endlog;
-        }
+            executeActionsTrue();
         else if (!curValue && ((flags_m & StatelessIfFalse) || prevValue_m))
-        {
-            for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-                (*it)->execute();
-            logger_m.debugStream() << "Action list 'false' executed for rule " << id_m << endlog;
-        }
+            executeActionsFalse();
         prevValue_m = curValue;
     }
+}
+
+void Rule::executeActionsTrue()
+{
+    ActionsList_t::iterator it;
+    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        (*it)->execute();
+    logger_m.debugStream() << "Action list 'true' executed for rule " << id_m << endlog;
+}
+
+void Rule::executeActionsFalse()
+{
+    ActionsList_t::iterator it;
+    for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
+        (*it)->execute();
+    logger_m.debugStream() << "Action list 'false' executed for rule " << id_m << endlog;
 }
 
 void Rule::cancel()
@@ -421,6 +428,8 @@ Action* Action::create(const std::string& type)
     else if (type == "script")
         return new LuaScriptAction();
 #endif
+    else if (type == "start-actionlist")
+        return new StartActionlistAction();
     else if (type == "cancel")
         return new CancelAction();
     else if (type == "formula")
@@ -1234,6 +1243,45 @@ void ShellCommandAction::Run (pth_sem_t * stop)
     int ret = pth_system(cmd.c_str());
     if (ret != 0)
         logger_m.infoStream() << "Execute ShellCommandAction: returned " << ret << endlog;
+}
+
+StartActionlistAction::StartActionlistAction() : list_m(true)
+{}
+
+StartActionlistAction::~StartActionlistAction()
+{}
+
+void StartActionlistAction::importXml(ticpp::Element* pConfig)
+{
+    pConfig->GetAttribute("rule-id", &ruleId_m);
+    list_m = (pConfig->GetAttribute("list") != "false");
+    logger_m.infoStream() << "StartActionlistAction: Configured" << endlog;
+}
+
+void StartActionlistAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "start-actionlist");
+    pConfig->SetAttribute("rule-id", ruleId_m);
+    pConfig->SetAttribute("list", list_m ? "true" : "false");
+
+    Action::exportXml(pConfig);
+}
+
+void StartActionlistAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute StartActionlistAction for rule ID: " << ruleId_m << endlog;
+
+    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    if (rule) {
+        if (list_m)
+            rule->executeActionsTrue();
+        else
+            rule->executeActionsFalse();
+    }
+    else
+        logger_m.errorStream() << "CancelAction: Rule not found '" << ruleId_m << "'" << endlog;
 }
 
 CancelAction::CancelAction()
