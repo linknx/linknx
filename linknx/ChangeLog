@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Read version string and optional feature set on xml interface
     * Add "from" attribute for SMS gateway (Sender ID).
     * Add precision setting (rounding of value) for objects with floating point value.
     * Add locking to protect LUA scripting engine (stefdude)

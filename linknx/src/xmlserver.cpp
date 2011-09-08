@@ -290,6 +290,39 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     pMsg->SetAttribute("status", "success");
                     sendmessage (doc.GetAsString(), stop);
                 }
+                else if (pRead->Value() == "version")
+                {
+                    ticpp::Element value("value");
+                    value.SetText(VERSION);
+                    pRead->LinkEndChild(&value);
+
+                    ticpp::Element features("features");
+#ifdef HAVE_LIBCURL
+                    ticpp::Element sms("sms");
+                    features.LinkEndChild(&sms);
+#endif
+#ifdef HAVE_LIBESMTP
+                    ticpp::Element email("e-mail");
+                    features.LinkEndChild(&email);
+#endif
+#ifdef HAVE_MYSQL
+                    ticpp::Element mysql("mysql");
+                    features.LinkEndChild(&mysql);
+#endif
+#ifdef HAVE_LUA
+                    ticpp::Element lua("lua");
+                    features.LinkEndChild(&lua);
+#endif
+#ifdef HAVE_LOG4CPP
+                    ticpp::Element log4cpp("log4cpp");
+                    features.LinkEndChild(&log4cpp);
+#endif
+
+                    pRead->LinkEndChild(&features);
+
+                    pMsg->SetAttribute("status", "success");
+                    sendmessage (doc.GetAsString(), stop);
+                }
                 else
                     throw "Unknown read element";
             }
