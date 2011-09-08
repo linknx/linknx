@@ -41,6 +41,7 @@ void SmsGateway::importXml(ticpp::Element* pConfig)
         pConfig->GetAttribute("user", &user_m);
         pConfig->GetAttribute("pass", &pass_m);
         pConfig->GetAttribute("api_id", &data_m);
+        from_m = pConfig->GetAttribute("from");
 # else
         std::stringstream msg;
         msg << "SmsGateway: Gateway type 'clickatell' not supported, libcurl not available" << std::endl;
@@ -70,6 +71,8 @@ void SmsGateway::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("user", user_m);
         pConfig->SetAttribute("pass", pass_m);
         pConfig->SetAttribute("api_id", data_m);
+        if (!from_m.empty())
+            pConfig->SetAttribute("from", from_m);
     }
 }
 
@@ -88,8 +91,10 @@ void SmsGateway::sendSms(std::string &id, std::string &value)
             std::stringstream msg;
             msg << "http://api.clickatell.com/http/sendmsg?user=" << user_m
             << "&password=" << pass_m
-            << "&api_id=" << data_m
-            << "&to=" << id << "&text=" << escaped_value;
+            << "&api_id=" << data_m;
+            if (!from_m.empty())
+                msg << "&from=" << from_m;
+            msg << "&to=" << id << "&text=" << escaped_value;
             std::string url = msg.str();
             curl_free(escaped_value);
             //        curl_easy_setopt(curl, CURLOPT_VERBOSE, TRUE);

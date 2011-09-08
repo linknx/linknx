@@ -48,6 +48,7 @@ private:
     std::string user_m;
     std::string pass_m;
     std::string data_m;
+    std::string from_m;
 
     static Logger& logger_m;
 };
