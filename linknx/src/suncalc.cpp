@@ -561,6 +561,57 @@ bool SolarTimeSpec::adjustTime(struct tm * timeinfo)
     return true;
 }
 
+Logger& SolarInfo::logger_m(Logger::getInstance("SolarInfo"));
+
+SolarInfo::SolarInfo(struct tm * timeinfo) : rs_m(0)
+{
+    LocationInfo* params = Services::instance()->getLocationInfo();
+    double lon, lat;
+    params->getCoord(&lon, &lat);
+    tz_offset_m = params->getGmtOffset(timeinfo);
+
+    logger_m.infoStream() << "SolarInfo date " << timeinfo->tm_year+1900<< "-" <<timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday << endlog;
+    rs_m  = suncalc::sun_rise_set( timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday, lon, lat, &rise_m, &set_m );
+}
+
+SolarInfo::~SolarInfo() {};
+
+bool SolarInfo::getSunrise(int *min, int *hour)
+{
+    return get(rise_m, min, hour);
+}
+
+bool SolarInfo::getSunset(int *min, int *hour)
+{
+    return get(set_m, min, hour);
+}
+
+bool SolarInfo::getNoon(int *min, int *hour)
+{
+    return get((rise_m+set_m)/2.0, min, hour);
+}
+
+bool SolarInfo::get(double res, int *min, int *hour)
+{
+    if (rs_m == 0)
+    {
+        *min = minutes(res + minutes((double)tz_offset_m/3600));
+        *hour = hours(res + (double)tz_offset_m/3600);
+        if (*min < 0 || *hour < 0)
+        {
+            *min = 0;
+            *hour = 0;
+        }
+        logger_m.infoStream() << "returned " << *hour<< ":" << *min << endlog;
+    }
+    else
+    {
+        logger_m.errorStream() << "returned error." << endlog;
+        return false;
+    }
+    return true;
+}
+
 void LocationInfo::importXml(ticpp::Element* pConfig)
 {
     pConfig->GetAttributeOrDefault("lon", &lon_m, 0);

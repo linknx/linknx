@@ -290,6 +290,90 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     pMsg->SetAttribute("status", "success");
                     sendmessage (doc.GetAsString(), stop);
                 }
+                else if (pRead->Value() == "calendar")
+                {
+                    int year, month, day, h,m;
+                    time_t now = time(0);
+                    struct tm * date = localtime(&now);
+                    pRead->GetAttributeOrDefault("year", &year, 0);
+                    pRead->GetAttributeOrDefault("month", &month, 0);
+                    pRead->GetAttributeOrDefault("day", &day, 0);
+                    if (year != 0 || month != 0 || day != 0) {
+                        if (year == 0 && month == 0) {
+                            date->tm_mday += day;
+                        }
+                        else {
+                            if (year >= 1900)
+                                year -= 1900;
+                            if (month > 0)
+                                date->tm_mon = month-1;
+                            if (year > 0)
+                                date->tm_year = year;
+                            date->tm_mday = day;
+                        }
+                        mktime(date);
+                        pRead->SetAttribute("year", date->tm_year+1900);
+                        pRead->SetAttribute("month", date->tm_mon+1);
+                        pRead->SetAttribute("day", date->tm_mday);
+                    }
+
+                    SolarInfo info(date);
+                    ticpp::Element* pConfig = pRead->FirstChildElement(false);
+                    if (pConfig == 0)
+                    {
+                        bool isException = Services::instance()->getExceptionDays()->isException(now);
+                        ticpp::Element exceptionday("exception-day");
+                        exceptionday.SetText(isException ? "true" : "false");
+                        pRead->LinkEndChild(&exceptionday);
+
+                        if (info.getSunrise(&m, &h)) {
+                            ticpp::Element sunrise("sunrise");
+                            sunrise.SetAttribute("hour", h);
+                            sunrise.SetAttribute("min", m);
+                            pRead->LinkEndChild(&sunrise);
+                        }
+                        if (info.getSunset(&m, &h)) {
+                            ticpp::Element sunset("sunset");
+                            sunset.SetAttribute("hour", h);
+                            sunset.SetAttribute("min", m);
+                            pRead->LinkEndChild(&sunset);
+                        }
+                        if (info.getNoon(&m, &h)) {
+                            ticpp::Element noon("noon");
+                            noon.SetAttribute("hour", h);
+                            noon.SetAttribute("min", m);
+                            pRead->LinkEndChild(&noon);
+                        }
+                    }
+                    else if (pConfig->Value() == "exception-day")
+                    {
+                        bool isException = Services::instance()->getExceptionDays()->isException(now);
+                        pConfig->SetText(isException ? "true" : "false");
+                    }
+                    else if (pConfig->Value() == "sunrise")
+                    {
+                        if (!info.getSunrise(&m, &h))
+                            throw "Error while calculating sunrise";
+                        pConfig->SetAttribute("hour", h);
+                        pConfig->SetAttribute("min", m);
+                    }
+                    else if (pConfig->Value() == "sunset")
+                    {
+                        if (!info.getSunset(&m, &h))
+                            throw "Error while calculating sunset";
+                        pConfig->SetAttribute("hour", h);
+                        pConfig->SetAttribute("min", m);
+                    }
+                    else if (pConfig->Value() == "noon")
+                    {
+                        if (!info.getNoon(&m, &h))
+                            throw "Error while calculating solar noon";
+                        pConfig->SetAttribute("hour", h);
+                        pConfig->SetAttribute("min", m);
+                    }
+                    pMsg->SetAttribute("status", "success");
+                    sendmessage (doc.GetAsString(), stop);
+                }
                 else if (pRead->Value() == "version")
                 {
                     ticpp::Element value("value");

@@ -76,6 +76,23 @@ protected:
 
 };
 
+class SolarInfo
+{
+public:
+    SolarInfo(struct tm * timeinfo);
+    virtual ~SolarInfo();
+
+    virtual bool getSunrise(int *min, int *hour);
+    virtual bool getSunset(int *min, int *hour);
+    virtual bool getNoon(int *min, int *hour);
+private:
+    bool get(double res, int *min, int *hour);
+    double rise_m, set_m;
+    int    rs_m;
+    long tz_offset_m;
+    static Logger& logger_m;
+};
+
 class LocationInfo
 {
 public:
