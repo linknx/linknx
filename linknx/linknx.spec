@@ -42,6 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 /usr/bin/linknx
 /usr/share/doc/linknx/linknx.xml
+/usr/share/doc/linknx/sample.xml
 /usr/share/doc/linknx/linknx_doc.tgz
 
 

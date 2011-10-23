@@ -1,0 +1,194 @@
+<?xml version="1.0" ?>
+<config>
+    <objects>
+        <object id="absence" gad="1/1/60" init="request">Absence</object>
+        <object id="alarm_active" init="on">Alarme activée</object>
+        <object id="intrusion" init="off">Intrusion détectée</object>
+        <object id="intrusion_delay" init="off">Délai de désactivation d&apos;alarme</object>
+        <object id="chaudiere" gad="1/1/35">Chaudière</object>
+        <object id="chauffage_auto" init="persist">Mode chauffage automatique</object>
+        <object id="chauffage_bureau" gad="1/1/110" type="heat-mode">Mode chauffage bureau</object>
+        <object id="chauffage_ch1" gad="1/1/80" type="heat-mode">Mode chauffage chambre 1</object>
+        <object id="chauffage_ch2" gad="1/1/90" type="heat-mode">Mode chauffage chambre 2</object>
+        <object id="chauffage_cuisine" gad="1/1/100" type="heat-mode">Mode chauffage cuisine</object>
+        <object id="chauffage_salon" gad="1/1/70" type="heat-mode">Mode chauffage salon</object>
+        <object id="chauffage_sdb" gad="1/1/120">Mode chauffage SDB</object>
+        <object id="circulateur_ecs" gad="1/1/21">Eau chaude sanitaire</object>
+        <object id="dim_value_ch2" gad="1/1/47" type="EIS6">Valeur dimmer chambre 2</object>
+        <object id="dim_value_salon" gad="1/1/42" type="EIS6">Valeur dimmer salon</object>
+        <object id="dim_salon" gad="1/1/41" type="EIS2">Commande dimmer salon</object>
+        <object id="ecl_bureau" gad="1/1/7">Eclairage bureau</object>
+        <object id="ecl_couloir" gad="1/1/5">Eclairage couloir</object>
+        <object id="ecl_escalier" gad="1/1/6">Eclairage Escalier
+            <listener gad="1/1/206"/>
+        </object>
+        <object id="status_ecl_escalier" gad="1/1/206">Eclairage Escalier (status feedback)</object>
+        <object id="ecl_cuisine" gad="1/1/11">Eclairage cuisine</object>
+        <object id="ecl_salon" gad="1/1/40">Eclairage salon</object>
+        <object id="ecl_sam" gad="1/1/4">Eclairage salle à manger</object>
+        <object id="ecl_vestiaire" gad="1/1/3">Eclairage vestiaire</object>
+        <object id="ecl_wc0" gad="1/1/12">Eclairage WC rez</object>
+        <object id="ecl_wc1" gad="1/1/10">Eclairage WC 1er</object>
+        <object id="ecl_ch1" gad="1/1/8">Eclairage Chambre 1er</object>
+        <object id="ecl_ch2" gad="1/1/45">Eclairage Chambre 2er</object>
+        <object id="reveil_actif" init="persist">Réveil activé</object>
+        <object id="setpoint_bureau" gad="1/1/111" type="EIS5">Consigne T° bureau</object>
+        <object id="setpoint_ch1" gad="1/1/81" type="EIS5">Consigne T° chambre 1</object>
+        <object id="setpoint_ch2" gad="1/1/91" type="EIS5">Consigne T° chambre 2</object>
+        <object id="setpoint_cuisine" gad="1/1/101" type="EIS5">Consigne T° cuisine</object>
+        <object id="setpoint_salon" gad="1/1/71" type="EIS5">Consigne T° salon</object>
+        <object id="temp_bureau" gad="1/1/112" type="EIS5">T° bureau</object>
+        <object id="temp_ch1" gad="1/1/82" type="EIS5">T° chambre 1</object>
+        <object id="temp_ch2" gad="1/1/92" type="EIS5">T° chambre 2</object>
+        <object id="temp_cuisine" gad="1/1/102" type="EIS5">T° cuisine</object>
+        <object id="temp_salon" gad="1/1/72" type="EIS5">T° salon</object>
+        <object id="cur_time" gad="1/1/150" type="EIS3">Current Time</object>
+        <object id="cur_date" gad="1/1/151" type="EIS4" forcewrite="true">Current Date</object>
+        <object id="detecteur_couloir" gad="1/1/160">Détecteur de mouvement couloir</object>
+        <object id="detecteur_salon" gad="1/1/161">Détecteur de mouvement couloir</object>
+        <object id="detecteur_escalier" gad="1/1/162">Détecteur de mouvement couloir</object>
+        <object id="detecteur_cuisine" gad="1/1/163">Détecteur de mouvement couloir</object>
+        <object id="fenetre_salon" gad="1/1/171">Fenêtres salon</object>
+        <object id="fenetre_cuisine" gad="1/1/172">Fenêtre cuisine</object>
+    </objects>
+    <rules>
+        <rule id="cur_time_date">
+            <condition type="timer" trigger="true">
+                <every>3600</every>
+            </condition>
+            <actionlist>
+                <action type="set-value" id="cur_time" value="now" />
+                <action type="set-value" id="cur_date" value="now" />
+            </actionlist>
+        </rule>
+        <rule id="chauffage_matin">
+            <condition type="and">
+                <condition type="object" id="absence" value="off" />
+                <condition type="object" id="chauffage_auto" value="1" />
+                <condition type="or">
+                    <condition type="timer" trigger="true">
+                        <at hour="6" min="30" exception="no" wdays="12345" />
+                        <until hour="8" min="0" />
+                    </condition>
+                    <condition type="timer" trigger="true">
+                        <at hour="8" min="0" wdays="67" />
+                        <until hour="12" min="0" />
+                    </condition>
+                    <condition type="timer" trigger="true">
+                        <at hour="8" min="0" exception="yes" />
+                        <until hour="12" min="0" />
+                    </condition>
+                </condition>
+            </condition>
+            <actionlist>
+                <action type="set-value" id="chauffage_cuisine" value="comfort" />
+                <action type="set-value" id="chauffage_salon" value="standby" />
+                <action type="set-value" id="chauffage_sdb" value="on" />
+                <action type="set-value" id="chauffage_ch2" value="standby" />
+            </actionlist>
+            <actionlist type="on-false">
+                <action type="set-value" id="chauffage_cuisine" value="frost" />
+                <action type="set-value" id="chauffage_salon" value="frost" />
+                <action type="set-value" id="chauffage_ch1" value="frost" />
+                <action type="set-value" id="chauffage_ch2" value="frost" />
+                <action type="set-value" id="chauffage_bureau" value="frost" />
+                <action type="set-value" id="chauffage_sdb" value="off" />
+            </actionlist>
+        </rule>
+        <rule id="wakeup_alarm">
+            <condition type="and">
+                <condition type="object" id="absence" value="off" />
+                <condition type="object" id="reveil_actif" value="on" />
+                <condition type="timer" trigger="true">
+                    <at hour="6" min="30" exception="no" wdays="12345" />
+                </condition>
+            </condition>
+            <actionlist>
+                <action type="dim-up" id="dim_value_salon" start="0" stop="240" duration="1800" />
+            </actionlist>
+        </rule>
+        <rule id="chauffage_soir">
+            <condition type="and">
+                <condition type="object" id="absence" value="off" />
+                <condition type="object" id="chauffage_auto" value="on" />
+                <condition type="timer" trigger="true">
+                    <at hour="21" min="00" />
+                    <until hour="23" min="0" />
+                </condition>
+            </condition>
+            <actionlist>
+                <action type="set-value" id="chauffage_ch1" value="standby" />
+                <action type="set-value" id="chauffage_ch2" value="standby" />
+            </actionlist>
+            <actionlist type="on-false">
+                <action type="set-value" id="chauffage_cuisine" value="night" />
+                <action type="set-value" id="chauffage_salon" value="night" />
+                <action type="set-value" id="chauffage_ch1" value="standby" />
+                <action type="set-value" id="chauffage_ch2" value="night" />
+                <action type="set-value" id="chauffage_bureau" value="night" />
+                <action type="set-value" id="chauffage_sdb" value="off" />
+            </actionlist>
+        </rule>
+        <rule id="alarm">
+            <condition type="and">
+                <condition type="object" id="intrusion_delay" value="on" trigger="true" />
+                <condition type="object" id="intrusion" value="off" />
+                <condition type="object" id="alarm_active" value="on" />
+                <condition type="object" id="absence" value="on" />
+            </condition>
+            <actionlist>
+                <action type="set-value" id="intrusion" value="on" />
+                <action type="send-sms"  id="32494123456" value="Alarme intrusion" />
+                <action type="send-email"  to="user@domain.com" subject="Alarme intrusion" >There is somebody inside the house!!</action>
+            </actionlist>
+        </rule>
+        <rule id="alarm-detect">
+            <condition type="and">
+                <condition type="object" id="intrusion" value="off"/>
+                <condition type="object" id="alarm_active" value="on" />
+                <condition type="object" id="absence" value="on" />
+                <condition type="or">
+                    <condition type="object" id="detecteur_couloir"    value="on" trigger="true"/>
+                    <condition type="object" id="detecteur_salon"   value="on" trigger="true"/>
+                    <condition type="object" id="detecteur_escalier"   value="on" trigger="true"/>
+                    <condition type="object" id="detecteur_cuisine"   value="on" trigger="true"/>
+                    <condition type="object" id="fenetre_salon"   value="on" trigger="true"/>
+                    <condition type="object" id="fenetre_cuisine"   value="on" trigger="true"/>
+                </condition>
+            </condition>
+            <actionlist>
+                <action type="set-value" id="intrusion_delay" value="on" delay="60" />
+                <action type="set-value" id="intrusion_delay" value="off" delay="62" />
+                <action type="cycle-on-off" id="ecl_couloir" on="5" off="5" count="10" />
+            </actionlist>
+        </rule>
+    </rules>
+    <services>
+        <knxconnection url="ip:192.168.0.10" />
+        <xmlserver type="inet" port="1028"/>
+        <smsgateway type="clickatell" user="xyz" pass="xxx" api_id="123456"/>
+        <emailserver type="smtp" host="smtp.myprovider.com:25" from="linknx@mydomain.com"/>
+        <persistence type="file" path="/var/lib/linknx/persist"/>
+        <exceptiondays>
+            <date day="1" month="1" />
+            <date day="1" month="5" />
+            <date day="21" month="7" />
+            <date day="15" month="8" />
+            <date day="1" month="11" />
+            <date day="11" month="11" />
+            <date day="25" month="12" />
+            <date day="9" month="4" year="2007" />
+            <date day="17" month="5" year="2007" />
+            <date day="28" month="5" year="2007" />
+            <date day="24" month="3" year="2008" />
+            <date day="1" month="5" year="2008" />
+            <date day="12" month="5" year="2008" />
+            <date day="13" month="4" year="2009" />
+            <date day="21" month="5" year="2009" />
+            <date day="1" month="6" year="2009" />
+            <date day="5" month="4" year="2010" />
+            <date day="13" month="5" year="2010" />
+            <date day="24" month="5" year="2010" />
+        </exceptiondays>
+    </services>
+</config>
