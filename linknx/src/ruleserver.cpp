@@ -965,7 +965,14 @@ RepeatListAction::RepeatListAction()
 {}
 
 RepeatListAction::~RepeatListAction()
-{}
+{
+    Stop();
+    while (!actionsList_m.empty())
+    {
+        delete actionsList_m.front();
+        actionsList_m.pop_front();
+    }
+}
 
 void RepeatListAction::importXml(ticpp::Element* pConfig)
 {
@@ -1004,6 +1011,7 @@ void RepeatListAction::exportXml(ticpp::Element* pConfig)
 
 void RepeatListAction::Run (pth_sem_t * stop)
 {
+    bool running = true;
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute RepeatListAction" << endlog;
@@ -1019,6 +1027,27 @@ void RepeatListAction::Run (pth_sem_t * stop)
             return;
         }
     }
+    // Wait until all actions are finished to be able to cancel them if main action is canceled
+    while (running)
+    {
+        ActionsList_t::iterator it;
+        running = false;
+        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        {
+            if (!(*it)->isFinished())
+            {
+                running = true;
+                if (sleep(1000, stop))
+                {
+                    logger_m.infoStream() << "RepeatListAction canceled." << endlog;
+                    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+                        (*it)->cancel();
+                    return;
+                }
+                break;
+            }
+        }
+    }
 }
 
 ConditionalAction::ConditionalAction()
@@ -1027,8 +1056,14 @@ ConditionalAction::ConditionalAction()
 
 ConditionalAction::~ConditionalAction()
 {
+    Stop();
     if (condition_m)
         delete condition_m;
+    while (!actionsList_m.empty())
+    {
+        delete actionsList_m.front();
+        actionsList_m.pop_front();
+    }
 }
 
 void ConditionalAction::importXml(ticpp::Element* pConfig)
@@ -1069,6 +1104,7 @@ void ConditionalAction::exportXml(ticpp::Element* pConfig)
 
 void ConditionalAction::Run (pth_sem_t * stop)
 {
+    bool running = true;
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute ConditionalAction" << endlog;
@@ -1079,6 +1115,27 @@ void ConditionalAction::Run (pth_sem_t * stop)
         ActionsList_t::iterator it;
         for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
             (*it)->execute();
+    }
+    // Wait until all actions are finished to be able to cancel them if main action is canceled
+    while (running)
+    {
+        ActionsList_t::iterator it;
+        running = false;
+        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        {
+            if (!(*it)->isFinished())
+            {
+                running = true;
+                if (sleep(1000, stop))
+                {
+                    logger_m.infoStream() << "ConditionalAction canceled." << endlog;
+                    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+                        (*it)->cancel();
+                    return;
+                }
+                break;
+            }
+        }
     }
 }
 
