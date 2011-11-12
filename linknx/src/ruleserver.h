@@ -207,6 +207,7 @@ public:
 
     virtual void execute() { Start(true); };
     virtual void cancel() { Stop(); };
+    virtual bool isFinished() { return Thread::isFinished(); };
 private:
     virtual void Run (pth_sem_t * stop) = 0;
 protected:

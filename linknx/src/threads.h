@@ -75,6 +75,8 @@ public:
     void StopDelete ();
     /** is this thread currently running */
     bool isRunning ();
+    /** is thread processing finished */
+    bool isFinished();
 };
 
 

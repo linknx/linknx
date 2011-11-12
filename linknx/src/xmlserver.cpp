@@ -438,10 +438,30 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 throw "Unknown config element";
                         }
                     }
-                    else if (pWrite->Value() == "rule-actions")
+                    else
+                        throw "Unknown write element";
+                }
+                sendmessage ("<write status='success'/>\n", stop);
+            }
+            else if (msgType == "execute")
+            {
+                std::list<Action*> al;
+                int timeout;
+                int count = 0;
+                pMsg->GetAttributeOrDefault("timeout", &timeout, 60);
+                ticpp::Iterator< ticpp::Element > pExecute;
+                for ( pExecute = pMsg->FirstChildElement(); pExecute != pExecute.end(); pExecute++ )
+                {
+                    if (pExecute->Value() == "action")
                     {
-                        std::string id = pWrite->GetAttribute("id");
-                        std::string list = pWrite->GetAttribute("list");
+                        Action *action = Action::create(&(*pExecute));
+                        action->execute();
+                        al.push_back(action);
+                    }
+                    else if (pExecute->Value() == "rule-actions")
+                    {
+                        std::string id = pExecute->GetAttribute("id");
+                        std::string list = pExecute->GetAttribute("list");
                         Rule* rule = RuleServer::instance()->getRule(id.c_str());
                         if (rule == 0)
                             throw "Unknown rule id";
@@ -453,9 +473,25 @@ void ClientConnection::Run (pth_sem_t * stop1)
                             throw "Invalid list attribute. (Must be 'true' or 'false')";
                     }
                     else
-                        throw "Unknown write element";
+                        throw "Unknown execute element";
                 }
-                sendmessage ("<write status='success'/>\n", stop);
+                while (!al.empty()) {
+                    pth_yield(NULL);
+                    if (al.front()->isFinished() || count == timeout) {
+                        delete al.front();
+                        al.pop_front();
+                    }
+                    else {
+                        if (count++ == 0)
+                            sendmessage ("<execute status='ongoing'/>\n", stop);
+                        pth_sleep(1);
+                    }
+                }
+
+                if (count == timeout)
+                    sendmessage ("<execute status='timeout'/>\n", stop);
+                else
+                    sendmessage ("<execute status='success'/>\n", stop);
             }
             else if (msgType == "admin")
             {

@@ -22,9 +22,12 @@
 void *
 Thread::ThreadWrapper (void *arg)
 {
-    ((Thread *) arg)->Run (&((Thread *) arg)->should_stop);
-    if (((Thread *) arg)->autodel)
-        delete ((Thread *) arg);
+    Thread *t = (Thread *) arg;
+    t->Run (&t->should_stop);
+    if (!t->joinable)
+        t->tid = 0;
+    if (t->autodel)
+        delete t;
     pth_exit (0);
     return 0;
 }
@@ -101,3 +104,15 @@ bool Thread::isRunning ()
 {
     return tid == pth_self();
 }
+
+bool Thread::isFinished ()
+{
+    if (tid ==0)
+        return true;
+    pth_attr_t a = pth_attr_of (tid);
+    int state;
+    pth_attr_get (a, PTH_ATTR_STATE, &state);
+    pth_attr_destroy (a);
+    return (state == PTH_STATE_DEAD);
+}
+
