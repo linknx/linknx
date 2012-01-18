@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Add "threshold" condition to detect threshold crossing for numeric objects.
     * Add xml request to execute actions (<execute><action .../><action .../></execute>)
     * Change linknx.xml file to an almost empty config. Sample config is now in sample.xml
     * Add xml request for sunrise/sunset/noon time and for exception days (<read><calendar month="9" day="30" /></read>)

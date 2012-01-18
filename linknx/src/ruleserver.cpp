@@ -1394,6 +1394,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new ObjectComparisonCondition(cl);
     else if (type == "object-src")
         return new ObjectSourceCondition(cl);
+    else if (type == "threshold")
+        return new ObjectThresholdCondition(cl);
     else if (type == "time-counter")
         return new TimeCounterCondition(cl);
     else if (type == "ioport-rx")
@@ -1807,6 +1809,112 @@ void ObjectSourceCondition::statusXml(ticpp::Element* pStatus)
 {
     ObjectCondition::statusXml(pStatus);
     pStatus->SetAttribute("type", "object-src");
+}
+
+ObjectThresholdCondition::ObjectThresholdCondition(ChangeListener* cl) : ObjectCondition(cl), refValue_m(0), deltaUp_m(-1), deltaLow_m(-1), condition_m(0)
+{}
+
+ObjectThresholdCondition::~ObjectThresholdCondition()
+{
+    if (condition_m)
+        delete condition_m;
+}
+
+bool ObjectThresholdCondition::evaluate()
+{
+    bool val = condition_m->evaluate();
+    if (val)
+        refValue_m = object_m->get()->toNumber();
+    else
+    {
+        double delta = object_m->get()->toNumber() - refValue_m;
+        if (deltaUp_m >= 0 && delta > deltaUp_m)
+        {
+            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID() << "') upper threshold reached" << endlog;
+            return true;
+        }
+        if (deltaLow_m >= 0 && delta < -deltaLow_m)
+        {
+            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID() << "') lower threshold reached" << endlog;
+            return true;
+        }
+    }
+    return false;
+}
+
+void ObjectThresholdCondition::importXml(ticpp::Element* pConfig)
+{
+    if (!cl_m)
+        throw ticpp::Exception("Threshold condition not supported in this context");
+    pConfig->GetAttributeOrDefault("delta-up", &deltaUp_m, -1);
+    pConfig->GetAttributeOrDefault("delta-low", &deltaLow_m, -1);
+    condition_m = Condition::create(pConfig->FirstChildElement("resetcondition"), cl_m);
+
+    std::string trigger;
+    trigger = pConfig->GetAttribute("trigger");
+    std::string id;
+    id = pConfig->GetAttribute("id");
+    object_m = ObjectController::instance()->getObject(id);
+
+    if (trigger == "true")
+    {
+        if (!cl_m)
+            throw ticpp::Exception("Trigger not supported in this context");
+        trigger_m = true;
+        object_m->addChangeListener(cl_m);
+    }
+}
+
+void ObjectThresholdCondition::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "threshold");
+    if (deltaUp_m >= 0)
+        pConfig->SetAttribute("delta-up", deltaUp_m);
+    if (deltaLow_m >= 0)
+        pConfig->SetAttribute("delta-low", deltaLow_m);
+
+    if (condition_m)
+    {
+        ticpp::Element pElem("resetcondition");
+        condition_m->exportXml(&pElem);
+        pConfig->LinkEndChild(&pElem);
+    }
+
+
+
+    pConfig->SetAttribute("id", object_m->getID());
+    if (op_m != eq)
+    {
+        std::string op;
+        if (op_m == lt)
+            op = "lt";
+        else if (op_m == gt)
+            op = "gt";
+        else if (op_m == (lt | eq))
+            op = "lte";
+        else if (op_m == (gt | eq))
+            op = "gte";
+        else
+            op = "ne";
+        pConfig->SetAttribute("op", op);
+    }
+    if (trigger_m)
+        pConfig->SetAttribute("trigger", "true");
+}
+
+void ObjectThresholdCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "threshold");
+    if (condition_m)
+    {
+        ticpp::Element pElem("condition");
+        condition_m->statusXml(&pElem);
+        pStatus->LinkEndChild(&pElem);
+    }
+
+    pStatus->SetAttribute("id", object_m->getID());
+    if (trigger_m)
+        pStatus->SetAttribute("trigger", "true");
 }
 
 

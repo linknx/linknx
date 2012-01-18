@@ -150,6 +150,23 @@ private:
     eibaddr_t src_m;
 };
 
+class ObjectThresholdCondition : public ObjectCondition
+{
+public:
+    ObjectThresholdCondition(ChangeListener* cl);
+    virtual ~ObjectThresholdCondition();
+
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
+
+protected:
+    double refValue_m;
+    double deltaUp_m, deltaLow_m;
+    Condition* condition_m;
+};
+
 class TimerCondition : public Condition, public PeriodicTask
 {
 public:
