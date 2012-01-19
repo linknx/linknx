@@ -197,6 +197,8 @@ void Rule::importXml(ticpp::Element* pConfig)
     std::string value = pConfig->GetAttribute("active");
     setActive(value != "off" && value != "false" && value != "no");
 
+    pConfig->GetAttribute("description", &descr_m, false);
+
     logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
@@ -233,6 +235,8 @@ void Rule::updateXml(ticpp::Element* pConfig)
     std::string value = pConfig->GetAttribute("active");
     if (value != "")
         setActive(value != "off" && value != "false" && value != "no");
+
+    pConfig->GetAttribute("description", &descr_m, false);
 
     logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
@@ -290,6 +294,8 @@ void Rule::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("id", id_m);
     if (!(flags_m & Active))
         pConfig->SetAttribute("active", "no");
+    if (descr_m != "")
+        pConfig->SetAttribute("description", descr_m);
     if (condition_m)
     {
         ticpp::Element pCond("condition");

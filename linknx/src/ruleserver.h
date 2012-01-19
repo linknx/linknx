@@ -536,6 +536,7 @@ public:
 
 private:
     std::string id_m;
+    std::string descr_m;
     Condition* condition_m;
     typedef std::list<Action*> ActionsList_t;
     ActionsList_t actionsList_m;
