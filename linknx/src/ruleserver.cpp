@@ -1247,7 +1247,11 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
     if (varFlags_m & VarEnabled)
         pConfig->SetAttribute("var", "true");
     if (text_m != "")
-        pConfig->SetText(text_m);
+    {
+        ticpp::Text pText(text_m);
+        pText.SetCDATA(true);
+        pConfig->LinkEndChild(&pText);
+    }
 
     Action::exportXml(pConfig);
 }

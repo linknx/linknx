@@ -709,6 +709,16 @@ Text::Text( TiXmlText* text )
 {
 }
 
+void Text::SetCDATA( bool _cdata )
+{
+    m_tiXmlPointer->SetCDATA(_cdata);
+}
+
+bool Text::CDATA()
+{
+    return m_tiXmlPointer->CDATA();
+}
+
 
 //*****************************************************************************
 

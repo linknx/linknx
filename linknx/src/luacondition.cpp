@@ -106,7 +106,11 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "script");
     if (code_m.length())
-        pConfig->SetText(code_m);
+    {
+        ticpp::Text pText(code_m);
+        pText.SetCDATA(true);
+        pConfig->LinkEndChild(&pText);
+    }
 }
 
 void LuaCondition::statusXml(ticpp::Element* pStatus)
@@ -191,7 +195,11 @@ void LuaScriptAction::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "script");
     if (code_m.length())
-        pConfig->SetText(code_m);
+    {
+        ticpp::Text pText(code_m);
+        pText.SetCDATA(true);
+        pConfig->LinkEndChild(&pText);
+    }
     Action::exportXml(pConfig);
 }
 

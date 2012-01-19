@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Output LUA scripts and e-mail body text as CDATA sections for better readability 
     * Add an optional "description" attribute to rule definitions
     * Add action "set-rule-active" to enable or disable a given rule
     * Add "threshold" condition to detect threshold crossing for numeric objects.

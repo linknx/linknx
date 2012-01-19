@@ -1149,6 +1149,9 @@ namespace ticpp
 		*/
 		Text( const std::string& value );
 
+		void SetCDATA( bool _cdata );
+		bool CDATA();
+
 		/**
 		Streams value into a string and creates a Text with it.
 		Uses ToString to covert the parameter to a string.
