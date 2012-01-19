@@ -175,7 +175,7 @@ std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
 
 Logger& Rule::logger_m(Logger::getInstance("Rule"));
 
-Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(0)
+Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(None)
 {}
 
 Rule::~Rule()
@@ -195,7 +195,7 @@ void Rule::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("id", &id_m, false);
 
     std::string value = pConfig->GetAttribute("active");
-    flags_m = (value == "off" || value == "false" || value == "no")? None : Active;
+    setActive(value != "off" && value != "false" && value != "no");
 
     logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
@@ -232,7 +232,7 @@ void Rule::updateXml(ticpp::Element* pConfig)
 {
     std::string value = pConfig->GetAttribute("active");
     if (value != "")
-        flags_m = (value == "off" || value == "false" || value == "no")? None : Active;
+        setActive(value != "off" && value != "false" && value != "no");
 
     logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
@@ -381,6 +381,14 @@ void Rule::executeActionsFalse()
     logger_m.debugStream() << "Action list 'false' executed for rule " << id_m << endlog;
 }
 
+void Rule::setActive(bool active)
+{
+    if (active)
+        flags_m |= Active;
+    else
+        flags_m &= (~Active);
+}
+
 void Rule::cancel()
 {
     if (flags_m & Active)
@@ -432,6 +440,8 @@ Action* Action::create(const std::string& type)
         return new StartActionlistAction();
     else if (type == "cancel")
         return new CancelAction();
+    else if (type == "set-rule-active")
+        return new SetRuleActiveAction();
     else if (type == "formula")
         return new FormulaAction();
     else
@@ -1375,6 +1385,42 @@ void CancelAction::Run (pth_sem_t * stop)
         logger_m.errorStream() << "CancelAction: Rule not found '" << ruleId_m << "'" << endlog;
 }
 
+SetRuleActiveAction::SetRuleActiveAction() : active_m(true)
+{}
+
+SetRuleActiveAction::~SetRuleActiveAction()
+{}
+
+void SetRuleActiveAction::importXml(ticpp::Element* pConfig)
+{
+    pConfig->GetAttribute("rule-id", &ruleId_m);
+    std::string value = pConfig->GetAttribute("active");
+    active_m = (value != "off" && value != "false" && value != "no");
+
+    logger_m.infoStream() << "SetRuleActiveAction: Configured (" << (active_m ? "yes" : "no" ) << ") for rule " << ruleId_m << endlog;
+}
+
+void SetRuleActiveAction::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "set-rule-active");
+    pConfig->SetAttribute("rule-id", ruleId_m);
+    pConfig->SetAttribute("active", (active_m ? "yes" : "no" ));
+
+    Action::exportXml(pConfig);
+}
+
+void SetRuleActiveAction::Run (pth_sem_t * stop)
+{
+    if (sleep(delay_m, stop))
+        return;
+    logger_m.infoStream() << "Execute SetRuleActiveAction for rule ID: " << ruleId_m << endlog;
+
+    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    if (rule)
+        rule->setActive(active_m);
+    else
+        logger_m.errorStream() << "SetRuleActiveAction: Rule not found '" << ruleId_m << "'" << endlog;
+}
 
 Logger& Condition::logger_m(Logger::getInstance("Condition"));
 

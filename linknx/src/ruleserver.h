@@ -498,6 +498,22 @@ private:
     std::string ruleId_m;
 };
 
+class SetRuleActiveAction : public Action
+{
+public:
+    SetRuleActiveAction();
+    virtual ~SetRuleActiveAction();
+
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+
+private:
+    virtual void Run (pth_sem_t * stop);
+
+    std::string ruleId_m;
+    bool active_m;
+};
+
 class Rule : public ChangeListener
 {
 public:
@@ -515,6 +531,7 @@ public:
     void evaluate();
     void executeActionsTrue();
     void executeActionsFalse();
+    void setActive(bool active);
     void cancel();
 
 private:
