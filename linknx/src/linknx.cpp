@@ -226,9 +226,17 @@ main (int ac, char *ag[])
     }
     else 
     {
-        logging->defaultConfig();
-        logger.infoStream() << "No config file, using default values" << endlog;
-        services->createDefault();
+        try
+        {
+            logging->defaultConfig();
+            logger.infoStream() << "No config file, using default values" << endlog;
+            services->createDefault();
+        }
+        catch( ticpp::Exception& ex )
+        {
+            logger.errorStream() << "Error while loading default configuration: " << ex.m_details << endlog;
+            die ("Error in config");
+        }
     }
     sigset_t t1;
     sigemptyset (&t1);

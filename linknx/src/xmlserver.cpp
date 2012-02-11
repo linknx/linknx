@@ -63,7 +63,7 @@ XmlServer* XmlServer::create(ticpp::Element* pConfig)
     }
     else if (type == "unix")
     {
-        std::string path = pConfig->GetAttributeOrDefault("port", "/tmp/xmlserver.sock");
+        std::string path = pConfig->GetAttributeOrDefault("path", "/tmp/xmlserver.sock");
         return new XmlUnixServer(path.c_str());
     }
     else
@@ -89,15 +89,19 @@ XmlInetServer::XmlInetServer (int port)
 
     fd_m = socket (AF_INET, SOCK_STREAM, 0);
     if (fd_m == -1)
-        throw 1;
+        throw ticpp::Exception("XmlServer: Unable to create TCP socket");
 
     setsockopt (fd_m, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof (reuse));
 
     if (bind (fd_m, (struct sockaddr *) &addr, sizeof (addr)) == -1)
-        throw 1;
+    {
+        std::stringstream msg;
+        msg << "XmlServer: Unable to register server on TCP port " << port << ". Server is probably already started or was not cleanly stopped." << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
 
     if (listen (fd_m, 10) == -1)
-        throw 1;
+        throw ticpp::Exception("XmlServer: Unable to listen on TCP socket");
 
     Start ();
 }
@@ -112,6 +116,8 @@ XmlUnixServer::XmlUnixServer (const char *path)
 {
     struct sockaddr_un addr;
     addr.sun_family = AF_LOCAL;
+    if (strlen(path) >= sizeof (addr.sun_path))
+        throw ticpp::Exception("XmlServer: Unable to create UNIX socket (path is too long)");
     strncpy (addr.sun_path, path, sizeof (addr.sun_path));
 
     path_m = path;
@@ -119,14 +125,18 @@ XmlUnixServer::XmlUnixServer (const char *path)
 
     fd_m = socket (AF_LOCAL, SOCK_STREAM, 0);
     if (fd_m == -1)
-        throw 1;
+        throw ticpp::Exception("XmlServer: Unable to create UNIX socket");
 
     unlink (path);
     if (bind (fd_m, (struct sockaddr *) &addr, sizeof (addr)) == -1)
-        throw 1;
+    {
+        std::stringstream msg;
+        msg << "XmlServer: Unable to register server on UNIX path " << path << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
 
     if (listen (fd_m, 10) == -1)
-        throw 1;
+        throw ticpp::Exception("XmlServer: Unable to listen on UNIX socket");
 
     Start ();
 }

@@ -36,7 +36,10 @@ die (const char *msg, ...)
     va_start (ap, msg);
     vprintf (msg, ap);
     va_end (ap);
-    printf (": %s\n", strerror (errno));
+    if (errno)
+        printf (": %s\n", strerror (errno));
+    else
+        printf ("\n", strerror (errno));
     exit (1);
 }
 
