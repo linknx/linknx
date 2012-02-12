@@ -22,10 +22,6 @@
 #include "services.h"
 #include <cmath>
 #include <cassert>
-extern "C"
-{
-#include "common.h"
-}
 
 ObjectController* ObjectController::instance_m;
 
@@ -139,7 +135,7 @@ void Object::importXml(ticpp::Element* pConfig)
     if (gad == "")
         gad_m = 0;
     else if (gad != "nochange")
-        gad_m = readgaddr(gad.c_str());
+        gad_m = Object::ReadGroupAddr(gad);
     readRequestGad_m = gad_m;
 
     bool has_descr = false;
@@ -165,7 +161,7 @@ void Object::importXml(ticpp::Element* pConfig)
                 has_listener = true;
             }
             std::string listener_gad = child->ToElement()->GetAttribute("gad");
-            eibaddr_t gad = readgaddr(listener_gad.c_str());
+            eibaddr_t gad = Object::ReadGroupAddr(listener_gad);
             listenerGadList_m.push_back(gad);
             if (child->ToElement()->GetAttribute("read") == "true")
                 readRequestGad_m = gad;
@@ -240,7 +236,7 @@ void Object::importXml(ticpp::Element* pConfig)
         delete objval;
     }
 
-    logger_m.infoStream() << "Configured object '" << id_m << "': gad=" << writegaddr(gad_m) << endlog;
+    logger_m.infoStream() << "Configured object '" << id_m << "': gad=" << WriteGroupAddr(gad_m) << endlog;
 }
 
 void Object::exportXml(ticpp::Element* pConfig)
@@ -249,7 +245,7 @@ void Object::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("id", id_m);
 
     if (gad_m != 0)
-        pConfig->SetAttribute("gad", writegaddr(gad_m));
+        pConfig->SetAttribute("gad", WriteGroupAddr(gad_m));
 
     if (initValue_m != "")
         pConfig->SetAttribute("init", initValue_m);
@@ -284,7 +280,7 @@ void Object::exportXml(ticpp::Element* pConfig)
     for (it = listenerGadList_m.begin(); it != listenerGadList_m.end(); it++)
     {
         ticpp::Element pElem("listener");
-        pElem.SetAttribute("gad", writegaddr(*it));
+        pElem.SetAttribute("gad", WriteGroupAddr(*it));
         if (readRequestGad_m == (*it))
             pElem.SetAttribute("read", "true");
         pConfig->LinkEndChild(&pElem);
@@ -379,6 +375,46 @@ void Object::addChangeListener(ChangeListener* listener)
 void Object::removeChangeListener(ChangeListener* listener)
 {
     listenerList_m.remove(listener);
+}
+
+eibaddr_t Object::ReadGroupAddr(const std::string& addr)
+{
+    int a, b, c;
+    if (sscanf (addr.c_str(), "%d/%d/%d", &a, &b, &c) == 3)
+        return ((a & 0x01f) << 11) | ((b & 0x07) << 8) | ((c & 0xff));
+    if (sscanf (addr.c_str(), "%d/%d", &a, &b) == 2)
+        return ((a & 0x01f) << 11) | ((b & 0x7FF));
+    if (sscanf (addr.c_str(), "%x", &a) == 1)
+        return a & 0xffff;
+    std::stringstream msg;
+    msg << "Object: Invalid group address format: '" << addr << "'" << std::endl;
+    throw ticpp::Exception(msg.str());
+}
+
+eibaddr_t Object::ReadAddr(const std::string& addr)
+{
+    int a, b, c;
+    if (sscanf (addr.c_str(), "%d.%d.%d", &a, &b, &c) == 3)
+        return ((a & 0x0f) << 12) | ((b & 0x0f) << 8) | ((c & 0xff));
+    if (sscanf (addr.c_str(), "%x", &a) == 1)
+        return a & 0xffff;
+    std::stringstream msg;
+    msg << "Object: Invalid individual address format: '" << addr << "'" << std::endl;
+    throw ticpp::Exception(msg.str());
+}
+
+std::string Object::WriteGroupAddr(eibaddr_t addr)
+{
+    char writegaddr_buf[16];
+    sprintf (writegaddr_buf, "%d/%d/%d", (addr >> 11) & 0x1f, (addr >> 8) & 0x07, (addr) & 0xff);
+    return std::string(writegaddr_buf);
+}
+
+std::string Object::WriteAddr(eibaddr_t addr)
+{
+    char writeaddr_buf[16];
+    sprintf (writeaddr_buf, "%d.%d.%d", (addr >> 12) & 0x0f, (addr >> 8) & 0x0f, (addr) & 0xff);
+    return std::string(writeaddr_buf);
 }
 
 Logger& ObjectValue::logger_m(Logger::getInstance("ObjectValue"));

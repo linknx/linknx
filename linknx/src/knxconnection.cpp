@@ -24,10 +24,6 @@
 #include <iomanip>
 #include "objectcontroller.h"
 #include "knxconnection.h"
-extern "C"
-{
-#include "common.h"
-}
 
 Logger& KnxConnection::logger_m(Logger::getInstance("KnxConnection"));
 
@@ -74,13 +70,13 @@ void KnxConnection::write(eibaddr_t gad, uint8_t* buf, int len)
 {
     if(gad == 0)
         return;
-    logger_m.infoStream() << "write(gad=" << writegaddr(gad) << ", buf, len=" << len << ")" << endlog;
+    logger_m.infoStream() << "write(gad=" << Object::WriteGroupAddr(gad) << ", buf, len=" << len << ")" << endlog;
     if (con_m)
     {
         len = EIBSendGroup (con_m, gad, len, buf);
         if (len == -1)
         {
-            logger_m.errorStream() << "Write request failed (gad=" << writegaddr(gad) << ", buf, len=" << len << ")" << endlog;
+            logger_m.errorStream() << "Write request failed (gad=" << Object::WriteGroupAddr(gad) << ", buf, len=" << len << ")" << endlog;
         }
         else
         {
@@ -183,7 +179,7 @@ int KnxConnection::checkInput()
                 dbg << "Write";
                 break;
             }
-            dbg << " from " << writeaddr(src) << " to " << writegaddr(dest);
+            dbg << " from " << Object::WriteAddr(src) << " to " << Object::WriteGroupAddr(dest);
             if (buf[1] & 0xC0)
             {
                 dbg << ": " << std::hex << std::setfill ('0') << std::setw (2);

@@ -1,9 +1,5 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "objectcontroller.h"
-extern "C"
-{
-#include "common.h"
-}
 
 class ObjectControllerTest : public CppUnit::TestFixture
 {
@@ -113,16 +109,16 @@ public:
         obj2->setValue("down");
         oc_m->addObject(obj2);
 
-        src = readaddr("0.2.10");
-        dest = readgaddr("1/1/50");
+        src = Object::ReadAddr("0.2.10");
+        dest = Object::ReadGroupAddr("1/1/50");
         buf[1] = 0x81;
         oc_m->onWrite(src, dest, buf, 2);
 
         CPPUNIT_ASSERT(obj1->getValue() == "on");
         CPPUNIT_ASSERT(obj2->getValue() == "down");
 
-        src = readaddr("0.2.10");
-        dest = readgaddr("1/1/51");
+        src = Object::ReadAddr("0.2.10");
+        dest = Object::ReadGroupAddr("1/1/51");
         buf[1] = 0x8b;
         oc_m->onWrite(src, dest, buf, 2);
 
@@ -167,8 +163,8 @@ public:
         Object* dim2 = oc_m->getObject("test_dim2");
         CPPUNIT_ASSERT(strcmp(sw1->getID(), "test_sw1") == 0);
         CPPUNIT_ASSERT(strcmp(dim2->getID(), "test_dim2") == 0);
-        CPPUNIT_ASSERT_EQUAL(readgaddr("1/1/50"), sw1->getGad());
-        CPPUNIT_ASSERT_EQUAL(readgaddr("1/1/51"), dim2->getGad());
+        CPPUNIT_ASSERT_EQUAL(Object::ReadGroupAddr("1/1/50"), sw1->getGad());
+        CPPUNIT_ASSERT_EQUAL(Object::ReadGroupAddr("1/1/51"), dim2->getGad());
 
     }
 
@@ -193,8 +189,8 @@ public:
         obj3->setValue("off");
         oc_m->addObject(obj3);
 
-        src = readaddr("0.2.16");
-        dest = readgaddr("1/1/206");
+        src = Object::ReadAddr("0.2.16");
+        dest = Object::ReadGroupAddr("1/1/206");
         buf[1] = 0x81;
         oc_m->onWrite(src, dest, buf, 2);
 
@@ -212,15 +208,15 @@ public:
         obj1->setValue("off");
         oc_m->addObject(obj1);
 
-        src = readaddr("0.2.10");
-        dest = readgaddr("1/1/6");
+        src = Object::ReadAddr("0.2.10");
+        dest = Object::ReadGroupAddr("1/1/6");
         buf[1] = 0x81;
         oc_m->onWrite(src, dest, buf, 2);
 
         CPPUNIT_ASSERT(obj1->getValue() == "on");
 
-        src = readaddr("0.2.11");
-        dest = readgaddr("1/1/206");
+        src = Object::ReadAddr("0.2.11");
+        dest = Object::ReadGroupAddr("1/1/206");
         buf[1] = 0x80;
         oc_m->onWrite(src, dest, buf, 2);
 

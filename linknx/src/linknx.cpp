@@ -39,11 +39,6 @@
 #include "xmlserver.h"
 #include "smsgateway.h"
 
-extern "C"
-{
-#include "common.h"
-}
-
 /** structure to store the arguments */
 struct arguments
 {
@@ -131,6 +126,19 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
 /** information for the argument parser*/
 static struct argp argp = { options, parse_opt, args_doc, doc };
+
+void die (const char *msg, ...)
+{
+    va_list ap;
+    va_start (ap, msg);
+    vprintf (msg, ap);
+    va_end (ap);
+    if (errno)
+        printf (": %s\n", strerror (errno));
+    else
+        printf ("\n", strerror (errno));
+    exit (1);
+}
 
 int
 main (int ac, char *ag[])

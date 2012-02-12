@@ -52,9 +52,8 @@ am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
 	testmain-PeriodicTaskTest.$(OBJEXT) \
 	testmain-XmlServerTest.$(OBJEXT) testmain-IOPortTest.$(OBJEXT) \
 	testmain-testmain.$(OBJEXT) testmain-ruleserver.$(OBJEXT) \
-	testmain-objectcontroller.$(OBJEXT) common.$(OBJEXT) \
-	eibclient.$(OBJEXT) testmain-threads.$(OBJEXT) \
-	testmain-timermanager.$(OBJEXT) \
+	testmain-objectcontroller.$(OBJEXT) eibclient.$(OBJEXT) \
+	testmain-threads.$(OBJEXT) testmain-timermanager.$(OBJEXT) \
 	testmain-persistentstorage.$(OBJEXT) \
 	testmain-xmlserver.$(OBJEXT) testmain-smsgateway.$(OBJEXT) \
 	testmain-emailgateway.$(OBJEXT) \
@@ -195,7 +194,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp XmlServerTest.cpp IOPortTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/common.c ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/common.h ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp XmlServerTest.cpp IOPortTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS)
 testmain_LDFLAGS = $(CPPUNIT_LIBS) -ldl
@@ -247,7 +246,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eibclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ExceptionDaysTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-IOPortTest.Po@am__quote@
@@ -286,20 +284,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-common.o: ../src/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.o -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.o `test -f '../src/common.c' || echo '$(srcdir)/'`../src/common.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/common.c' object='common.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.o `test -f '../src/common.c' || echo '$(srcdir)/'`../src/common.c
-
-common.obj: ../src/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.obj -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.obj `if test -f '../src/common.c'; then $(CYGPATH_W) '../src/common.c'; else $(CYGPATH_W) '$(srcdir)/../src/common.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../src/common.c' object='common.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.obj `if test -f '../src/common.c'; then $(CYGPATH_W) '../src/common.c'; else $(CYGPATH_W) '$(srcdir)/../src/common.c'; fi`
 
 eibclient.o: ../src/eibclient.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT eibclient.o -MD -MP -MF $(DEPDIR)/eibclient.Tpo -c -o eibclient.o `test -f '../src/eibclient.c' || echo '$(srcdir)/'`../src/eibclient.c

@@ -24,12 +24,6 @@
 #include "ioport.h"
 #include <cmath>
 
-extern "C"
-{
-#include "common.h"
-}
-
-
 RuleServer* RuleServer::instance_m;
 
 RuleServer::RuleServer()
@@ -1850,7 +1844,7 @@ void ObjectSourceCondition::importXml(ticpp::Element* pConfig)
     std::string src;
     src = pConfig->GetAttribute("src");
 
-    src_m = readaddr(src.c_str());
+    src_m = Object::ReadAddr(src);
     ObjectCondition::importXml(pConfig);
 }
 
@@ -1858,7 +1852,7 @@ void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
 {
     ObjectCondition::exportXml(pConfig);
     pConfig->SetAttribute("type", "object-src");
-    pConfig->SetAttribute("src", writeaddr(src_m));
+    pConfig->SetAttribute("src", Object::WriteAddr(src_m));
 }
 
 void ObjectSourceCondition::statusXml(ticpp::Element* pStatus)

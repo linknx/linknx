@@ -2,7 +2,6 @@
 #include "xmlserver.h"
 extern "C"
 {
-#include "common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

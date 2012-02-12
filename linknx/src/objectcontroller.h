@@ -94,6 +94,11 @@ public:
     void onResponse(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
     virtual void doSend(bool isWrite) = 0;
+
+    static eibaddr_t ReadGroupAddr(const std::string& addr);
+    static eibaddr_t ReadAddr(const std::string& addr);
+    static std::string WriteGroupAddr(eibaddr_t addr);
+    static std::string WriteAddr(eibaddr_t addr);
 protected:
     virtual bool set(ObjectValue* value) = 0;
     virtual bool set(double value) = 0;
