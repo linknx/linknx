@@ -1769,6 +1769,8 @@ HeatingModeObjectValue::HeatingModeObjectValue(const std::string& value)
         value_m = 3;
     else if (value == "frost")
         value_m = 4;
+    else if (value == "auto")
+        value_m = 0;
     else
     {
         std::stringstream msg;
@@ -1781,6 +1783,8 @@ std::string HeatingModeObjectValue::toString()
 {
     switch (value_m)
     {
+    case 0:
+        return "auto";
     case 1:
         return "comfort";
     case 2:
