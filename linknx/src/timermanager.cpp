@@ -261,6 +261,10 @@ VariableTimeSpec::~VariableTimeSpec()
         time_m->removeChangeListener(cl_m);
     if (cl_m && date_m)
         date_m->removeChangeListener(cl_m);
+    if (time_m)
+        time_m->decRefCount();
+    if (date_m)
+        date_m->decRefCount();
 }
 
 
@@ -274,6 +278,7 @@ void VariableTimeSpec::importXml(ticpp::Element* pConfig)
         time_m = dynamic_cast<TimeObject*>(obj); 
         if (!time_m)
         {
+            obj->decRefCount();
             std::stringstream msg;
             msg << "Wrong Object type for time in VariableTimeSpec: '" << time << "'" << std::endl;
             throw ticpp::Exception(msg.str());
@@ -288,6 +293,7 @@ void VariableTimeSpec::importXml(ticpp::Element* pConfig)
         date_m = dynamic_cast<DateObject*>(obj); 
         if (!date_m)
         {
+            obj->decRefCount();
             std::stringstream msg;
             msg << "Wrong Object type for date in VariableTimeSpec: '" << date << "'" << std::endl;
             throw ticpp::Exception(msg.str());

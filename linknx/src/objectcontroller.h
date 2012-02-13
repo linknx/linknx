@@ -95,6 +95,11 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) = 0;
     virtual void doSend(bool isWrite) = 0;
 
+    void incRefCount() { refCount_m++; };
+    int decRefCount() { if (refCount_m < 1) { printf("REFCOUNT ERROR %d\n", refCount_m); exit(1); }
+        return --refCount_m; };
+    bool inUse() { return refCount_m > 0; };
+
     static eibaddr_t ReadGroupAddr(const std::string& addr);
     static eibaddr_t ReadAddr(const std::string& addr);
     static std::string WriteGroupAddr(eibaddr_t addr);
@@ -121,6 +126,7 @@ private:
     std::string id_m;
     std::string initValue_m;
     std::string descr_m;
+    int refCount_m;
     eibaddr_t gad_m;
     eibaddr_t readRequestGad_m;
     eibaddr_t lastTx_m;

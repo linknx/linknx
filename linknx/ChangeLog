@@ -1,4 +1,5 @@
 Release 0.0.1.29:
+    * Add usage count on objects to prevent removal of objects in use
     * Fix crash in case of invalid group address
     * Better error message when linknx server initialization fails 
     * Output LUA scripts and e-mail body text as CDATA sections for better readability 

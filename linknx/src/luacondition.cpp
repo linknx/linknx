@@ -130,6 +130,7 @@ int LuaCondition::obj(lua_State *L)
     try {
         Object* object = ObjectController::instance()->getObject(id);
         std::string ret = object->getValue();
+        object->decRefCount();
         debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
         lua_pushstring(L, ret.c_str());
     }
@@ -235,6 +236,7 @@ int LuaScriptAction::obj(lua_State *L)
     try {
         Object* object = ObjectController::instance()->getObject(id);
         std::string ret = object->getValue();
+        object->decRefCount();
         debugStream("LuaScriptAction") << "Object '" << id << "' has value '" << ret << "'" << endlog;
         lua_pushstring(L, ret.c_str());
     }
@@ -265,6 +267,7 @@ int LuaScriptAction::set(lua_State *L)
     try {
         Object* object = ObjectController::instance()->getObject(id);
         object->setValue(value);
+        object->decRefCount();
         debugStream("LuaScriptAction") << "Object '" << id << "' set to value '" << value << "'" << endlog;
     }
     catch( ticpp::Exception& ex )

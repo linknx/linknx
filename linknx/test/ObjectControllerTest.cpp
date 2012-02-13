@@ -84,6 +84,7 @@ public:
         oc_m->removeObject(obj2);
         CPPUNIT_ASSERT(oc_m->getObject("test_sw1") == obj1);
         CPPUNIT_ASSERT_THROW(oc_m->getObject("test_dim2"), ticpp::Exception);
+        obj1->decRefCount();
 
         oc_m->removeObject(obj1);
         CPPUNIT_ASSERT_THROW(oc_m->getObject("test_sw1"), ticpp::Exception);

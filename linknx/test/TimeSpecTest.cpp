@@ -177,6 +177,7 @@ public:
         ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
         CPPUNIT_ASSERT_EQUAL(51, min);
         CPPUNIT_ASSERT_EQUAL(22, hour);
+        delete ts;
     }
 
     void testCreateVarDate()
@@ -218,6 +219,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(31, mday);
         CPPUNIT_ASSERT_EQUAL(11, mon);
         CPPUNIT_ASSERT_EQUAL(108, year);
+        delete ts;
     }
 
 };

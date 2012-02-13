@@ -39,8 +39,8 @@ XmlServer::~XmlServer ()
         (*it)->RemoveServer();
         (*it)->StopDelete();
     }
-    //  while (!connections_m.empty())
-    //    pth_yield (0);
+    if (!connections_m.empty())
+        pth_sleep (1); // Wait some time to let client connections close
 
     close (fd_m);
 }
@@ -176,6 +176,7 @@ ClientConnection::~ClientConnection ()
     for (it = notifyList_m.begin(); it != notifyList_m.end(); it++)
     {
         (*it)->removeChangeListener(this);
+        (*it)->decRefCount();
     }
     notifyList_m.clear();
     if (server_m)
@@ -209,6 +210,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     Object* obj = ObjectController::instance()->getObject(id);
                     std::stringstream msg;
                     msg << "<read status='success'>" << obj->getValue() << "</read>" << std::endl;
+                    obj->decRefCount();
                     debugStream("ClientConnection") << "SENDING MESSAGE:" << endlog << msg.str() << endlog << "END OF MESSAGE" << endlog;
                     sendmessage (msg.str(), stop);
                 }
@@ -228,6 +230,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 std::string id = pObjects->GetAttribute("id");
                                 Object* obj = ObjectController::instance()->getObject(id);
                                 pObjects->SetAttribute("value", obj->getValue());
+                                obj->decRefCount();
                             }
                             else
                                 throw "Unknown objects element";
@@ -430,6 +433,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                         std::string id = pWrite->GetAttribute("id");
                         Object* obj = ObjectController::instance()->getObject(id);
                         obj->setValue(pWrite->GetAttribute("value"));
+                        obj->decRefCount();
                     }
                     else if (pWrite->Value() == "config")
                     {
@@ -565,7 +569,9 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 std::string id = pObjects->GetAttribute("id");
                                 Object* obj = ObjectController::instance()->getObject(id);
                                 notifyList_m.remove(obj);
+                                obj->decRefCount();
                                 obj->removeChangeListener(this);
+                                obj->decRefCount();
                             }
                             else if (pObjects->Value() == "registerall" || pObjects->Value() == "unregisterall")
                             {
@@ -573,6 +579,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 for (it=notifyList_m.begin(); it != notifyList_m.end(); it++)
                                 {
                                     (*it)->removeChangeListener(this);
+                                    (*it)->decRefCount();
                                 }
                                 notifyList_m.clear();
 

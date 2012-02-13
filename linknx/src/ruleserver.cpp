@@ -512,6 +512,7 @@ bool Action::parseVarString(std::string &str, bool checkOnly)
                 str.replace(idx-2, 3+idx2-idx, val);
                 idx += val.length()-2;
             }
+            obj->decRefCount();
             modified = true;
         }
         else if (c == '$')
@@ -527,16 +528,22 @@ DimUpAction::DimUpAction() : object_m(0), start_m(0), stop_m(255), duration_m(60
 {}
 
 DimUpAction::~DimUpAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+}
 
 void DimUpAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
     Object* obj = ObjectController::instance()->getObject(id); 
+    if (object_m)
+        object_m->decRefCount();
     object_m = dynamic_cast<UIntObject*>(obj);
     if (!object_m)
     {
+        obj->decRefCount();
         std::stringstream msg;
         msg << "Wrong Object type for DimUpAction: '" << id << "'" << std::endl;
         throw ticpp::Exception(msg.str());
@@ -606,6 +613,8 @@ SetValueAction::SetValueAction() : object_m(0), value_m(0)
 
 SetValueAction::~SetValueAction()
 {
+    if (object_m)
+        object_m->decRefCount();
     if (value_m)
         delete value_m;
 }
@@ -614,6 +623,8 @@ void SetValueAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
     std::string value;
@@ -653,8 +664,12 @@ void CopyValueAction::importXml(ticpp::Element* pConfig)
 {
     std::string obj;
     obj = pConfig->GetAttribute("to");
+    if (to_m)
+        to_m->decRefCount();
     to_m = ObjectController::instance()->getObject(obj);
     obj = pConfig->GetAttribute("from");
+    if (from_m)
+        from_m->decRefCount();
     from_m = ObjectController::instance()->getObject(obj);
     if (from_m->getType() != to_m->getType())
     {
@@ -698,16 +713,22 @@ ToggleValueAction::ToggleValueAction() : object_m(0)
 {}
 
 ToggleValueAction::~ToggleValueAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+}
 
 void ToggleValueAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
     Object* obj = ObjectController::instance()->getObject(id);
+    if (object_m)
+        object_m->decRefCount();
     object_m = dynamic_cast<SwitchingObject*>(obj);
     if (!object_m)
     {
+        obj->decRefCount();
         std::stringstream msg;
         msg << "Wrong Object type for ToggleValueAction: '" << id << "'" << std::endl;
         throw ticpp::Exception(msg.str());
@@ -739,20 +760,33 @@ FormulaAction::FormulaAction() : object_m(0), x_m(0), y_m(0), a_m(1), b_m(1), c_
 {}
 
 FormulaAction::~FormulaAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+    if (x_m)
+        x_m->decRefCount();
+    if (y_m)
+        y_m->decRefCount();
+}
 
 void FormulaAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
 //    float a, b, c;
+    if (x_m)
+        x_m->decRefCount();
     id = pConfig->GetAttribute("x");
     if (id.empty())
         x_m = 0;
     else
         x_m = ObjectController::instance()->getObject(id);
+    if (y_m)
+        y_m->decRefCount();
     id = pConfig->GetAttribute("y");
     if (id.empty())
         y_m = 0;
@@ -809,12 +843,17 @@ SetStringAction::SetStringAction() : object_m(0)
 {}
 
 SetStringAction::~SetStringAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+}
 
 void SetStringAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
     std::string value =pConfig->GetAttribute("value");
@@ -850,12 +889,17 @@ SendReadRequestAction::SendReadRequestAction() : object_m(0)
 {}
 
 SendReadRequestAction::~SendReadRequestAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+}
 
 void SendReadRequestAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
     logger_m.infoStream() << "SendReadRequestAction: Configured for object " << object_m->getID() << endlog;
@@ -885,16 +929,24 @@ CycleOnOffAction::CycleOnOffAction()
 {}
 
 CycleOnOffAction::~CycleOnOffAction()
-{}
+{
+    if (object_m)
+        object_m->decRefCount();
+    if (stopCondition_m)
+        delete stopCondition_m;
+}
 
 void CycleOnOffAction::importXml(ticpp::Element* pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     Object* obj = ObjectController::instance()->getObject(id); 
     object_m = dynamic_cast<SwitchingObject*>(obj); 
     if (!object_m)
     {
+        obj->decRefCount();
         std::stringstream msg;
         msg << "Wrong Object type for CycleOnOffAction: '" << id << "'" << std::endl;
         throw ticpp::Exception(msg.str());
@@ -1629,6 +1681,8 @@ ObjectCondition::~ObjectCondition()
         delete value_m;
     if (object_m && cl_m)
         object_m->removeChangeListener(cl_m);
+    if (object_m)
+        object_m->decRefCount();
 }
 
 bool ObjectCondition::evaluate()
@@ -1652,6 +1706,8 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
     trigger = pConfig->GetAttribute("trigger");
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
     if (trigger == "true")
@@ -1735,10 +1791,10 @@ ObjectComparisonCondition::ObjectComparisonCondition(ChangeListener* cl) : Objec
 
 ObjectComparisonCondition::~ObjectComparisonCondition()
 {
-    if (object_m && cl_m)
-        object_m->removeChangeListener(cl_m);
     if (object2_m && cl_m)
         object2_m->removeChangeListener(cl_m);
+    if (object2_m)
+        object2_m->decRefCount();
 }
 
 bool ObjectComparisonCondition::evaluate()
@@ -1756,8 +1812,12 @@ void ObjectComparisonCondition::importXml(ticpp::Element* pConfig)
     trigger = pConfig->GetAttribute("trigger");
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
     id = pConfig->GetAttribute("id2");
+    if (object2_m)
+        object2_m->decRefCount();
     object2_m = ObjectController::instance()->getObject(id);
 
     if (trigger == "true")
@@ -1904,6 +1964,8 @@ void ObjectThresholdCondition::importXml(ticpp::Element* pConfig)
     trigger = pConfig->GetAttribute("trigger");
     std::string id;
     id = pConfig->GetAttribute("id");
+    if (object_m)
+        object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
     if (trigger == "true")

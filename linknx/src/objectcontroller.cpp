@@ -27,11 +27,14 @@ ObjectController* ObjectController::instance_m;
 
 Logger& Object::logger_m(Logger::getInstance("Object"));
 
-Object::Object() : init_m(false), flags_m(Default), gad_m(0), readRequestGad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
+Object::Object() : init_m(false), flags_m(Default), refCount_m(0), gad_m(0), readRequestGad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
 {}
 
 Object::~Object()
-{}
+{
+    if (refCount_m > 0)
+        logger_m.errorStream() << "Object (id=" << getID() << "): deleted object still has " << refCount_m << " references" << endlog;
+}
 
 Object* Object::create(const std::string& type)
 {
@@ -2659,6 +2662,7 @@ Object* ObjectController::getObject(const std::string& id)
         msg << "ObjectController: Object ID not found: '" << id << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
+    it->second->incRefCount();
     return (*it).second;
 }
 
@@ -2702,6 +2706,8 @@ void ObjectController::removeObject(Object* object)
         for (it2=object->getListenerGad(); it2!=it_end; it2++)
             removeObjectFromAddressMap((*it2), object);
 
+        if (it->second->inUse())
+            throw ticpp::Exception("Delete failed! Object still in use.");
         delete it->second;
         objectIdMap_m.erase(it);
     }
@@ -2727,6 +2733,8 @@ void ObjectController::importXml(ticpp::Element* pConfig)
 
             if (del)
             {
+                if (object->inUse())
+                    throw ticpp::Exception("Delete failed! Object still in use.");
                 delete object;
                 objectIdMap_m.erase(it);
             }
@@ -2789,6 +2797,7 @@ std::list<Object*> ObjectController::getObjects()
     ObjectIdMap_t::iterator it;
     for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
     {
+      it->second->incRefCount();
       objects.push_back((*it).second);
     }
     return objects;
