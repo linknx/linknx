@@ -1,3 +1,5 @@
+Release 0.0.1.30:
+    * Increase version number to avoid confusion between this official release and previous CVS snapshots
 Release 0.0.1.29:
     * Add value "0" = auto for 20.102 HeatingMode (as defined in the Datapoint Types) (stefdude) 
     * Add usage count on objects to prevent removal of objects in use
