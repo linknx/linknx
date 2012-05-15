@@ -967,6 +967,7 @@ private:
     ObjectMap_t objectMap_m;
     ObjectIdMap_t objectIdMap_m;
     static ObjectController* instance_m;
+    static Logger& logger_m;
 };
 
 #endif

@@ -2613,6 +2613,8 @@ void String14AsciiObject::setStringValue(const std::string& value)
     Object::setValue(&val);
 }
 
+Logger& ObjectController::logger_m(Logger::getInstance("ObjectController"));
+
 ObjectController::ObjectController()
 {}
 
@@ -2637,6 +2639,10 @@ void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf
     ObjectMap_t::iterator it;
     for (it = range.first; it != range.second; it++)
         (*it).second->onWrite(buf, len, src);
+    if (range.first == range.second)
+        logger_m.debugStream() << "onWrite - dest eibaddr not found: "
+            << Object::WriteGroupAddr(dest)
+            << " sender=" << Object::WriteAddr( src ) << endlog;
 }
 
 void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
@@ -2646,6 +2652,10 @@ void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf,
     ObjectMap_t::iterator it;
     for (it = range.first; it != range.second; it++)
         (*it).second->onRead(buf, len, src);
+    if (range.first == range.second)
+        logger_m.debugStream() << "onRead - dest eibaddr not found: "
+            << Object::WriteGroupAddr(dest)
+            << " sender=" << Object::WriteAddr( src ) << endlog;
 }
 
 void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
@@ -2655,6 +2665,10 @@ void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* 
     ObjectMap_t::iterator it;
     for (it = range.first; it != range.second; it++)
         (*it).second->onResponse(buf, len, src);
+    if (range.first == range.second)
+        logger_m.debugStream() << "onResponse - dest eibaddr not found: "
+            << Object::WriteGroupAddr(dest)
+            << " sender=" << Object::WriteAddr( src ) << endlog;
 }
 
 Object* ObjectController::getObject(const std::string& id)
