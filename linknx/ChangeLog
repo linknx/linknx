@@ -1,5 +1,6 @@
 Release 0.0.1.31:
     * logging of unknown objects
+    * Enhanced pattern matching on ioport rx (POSIX regular expression)
 Release 0.0.1.30:
     * Increase version number to avoid confusion between this official release and previous CVS snapshots
 Release 0.0.1.29:

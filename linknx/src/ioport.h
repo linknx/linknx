@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <termios.h>
+#include <regex.h>
 
 
 
@@ -198,6 +199,9 @@ private:
     std::string dev_m;
     speed_t speed_m;
     int fd_m;
+    bool modeRaw_m;
+    int timeout_m;
+    int msglength_m;
     struct termios oldtio_m, newtio_m;
     static Logger& logger_m;
 };
@@ -242,7 +246,10 @@ public:
 private:
     std::string port_m;
     std::string exp_m;
+    regex_t regex_m;
+    bool regexFlag_m;
     bool value_m;
+    bool hex_m;
     ChangeListener* cl_m;
 };
 

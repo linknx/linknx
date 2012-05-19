@@ -450,6 +450,8 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
     struct termios newtio;
     std::string framing = pConfig->GetAttributeOrDefault("framing", "8N1");
     std::string flow = pConfig->GetAttributeOrDefault("flow", "none");
+    std::string mode = pConfig->GetAttributeOrDefault("mode", "text");
+    modeRaw_m = (mode == "raw");
     memset (&newtio, 0, sizeof (newtio));
     pConfig->GetAttribute("speed", &speed);
     newtio.c_cflag = CLOCAL | CREAD;
@@ -457,8 +459,15 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
     newtio.c_oflag = 0;
     newtio.c_lflag = ICANON;
 
-    newtio.c_cc[VTIME] = 0; // inter character timer disabled
-    newtio.c_cc[VMIN]  = 1; // block until 1 character arrives
+    if (modeRaw_m)
+    {
+        timeout_m = RuleServer::parseDuration(pConfig->GetAttributeOrDefault("timeout", "0"), false, true) / 100;
+        pConfig->GetAttributeOrDefault("msg-length", &msglength_m, 255);
+        newtio.c_iflag = 0;
+        newtio.c_lflag = 0;
+        newtio.c_cc[VTIME] = timeout_m; // inter character timer (x100ms; 0=disabled)
+        newtio.c_cc[VMIN]  = msglength_m; // block until timer expires or msglegth bytes are received
+    }
     switch (framing[0]) {
         case '5':
             newtio.c_cflag |= CS5;
@@ -659,6 +668,15 @@ void SerialIOPort::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("flow", "xon-xoff");
     else
         pConfig->SetAttribute("flow", "none");
+
+    if (modeRaw_m)
+    {
+        pConfig->SetAttribute("mode", "raw");
+        if (timeout_m != 0)
+            pConfig->SetAttribute("timeout", RuleServer::formatDuration(timeout_m*100, true));
+        if (msglength_m != 255)
+            pConfig->SetAttribute("msg-length", msglength_m);
+    }
 }
 
 int SerialIOPort::send(const uint8_t* buf, int len)
@@ -680,15 +698,27 @@ int SerialIOPort::send(const uint8_t* buf, int len)
 
 int SerialIOPort::get(uint8_t* buf, int len, pth_event_t stop)
 {
-    logger_m.debugStream() << "get(buf, len=" << len << "):"
-        << buf << endlog;
+    logger_m.debugStream() << "get(buf, len=" << len << ")" << endlog;
     if (fd_m >= 0) {
         ssize_t i = pth_read_ev(fd_m, buf, len, stop);
 //        logger_m.debugStream() << "Out of recvfrom " << i << " rl=" << rl << endlog;
         if (i > 0)
         {
             std::string msg(reinterpret_cast<const char*>(buf), i);
-            logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
+            if (logger_m.isDebugEnabled())
+            {
+                DbgStream dbg = logger_m.debugStream();
+                dbg << "Received message on ioport " << getID() << ": ";
+                if (modeRaw_m)
+                {
+                    dbg << std::hex << std::setfill ('0') << std::setw (2);
+                    for (uint8_t *p = buf; p < buf+i; p++)
+                        dbg << (int)*p << " ";
+                    dbg << std::dec << endlog;
+                }
+                else
+                    dbg << msg << endlog;
+            }
             return i;
         }
     }
@@ -804,7 +834,7 @@ void TxAction::sendData(IOPort* port)
     }
 }
 
-RxCondition::RxCondition(ChangeListener* cl) : value_m(false), cl_m(cl)
+RxCondition::RxCondition(ChangeListener* cl) : regexFlag_m(false), value_m(false), hex_m(false), cl_m(cl)
 {}
 
 RxCondition::~RxCondition()
@@ -812,6 +842,8 @@ RxCondition::~RxCondition()
     IOPort* port = IOPortManager::instance()->getPort(port_m);
     if (port)
         port->removeListener(this);
+    if (regexFlag_m)
+        regfree(&regex_m);
 }
 
 bool RxCondition::evaluate()
@@ -833,6 +865,16 @@ void RxCondition::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
     }
     port->addListener(this);
+    regexFlag_m = pConfig->GetAttributeOrDefault("regex", "false") != "false";
+    hex_m = pConfig->GetAttributeOrDefault("hex", "false") != "false";
+    if (regexFlag_m)
+    {
+        if (regcomp(&regex_m, exp_m.c_str(), REG_EXTENDED) != 0) {
+            std::stringstream msg;
+            msg << "RxCondition: Invalid regular expression: '" << exp_m << "'" << std::endl;
+            throw ticpp::Exception(msg.str());
+        }
+    }
     logger_m.infoStream() << "RxCondition: configured to watch for '" << exp_m << "' on ioport " << port_m << endlog;
 }
 
@@ -840,6 +882,10 @@ void RxCondition::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "ioport-rx");
     pConfig->SetAttribute("expected", exp_m);
+    if (hex_m)
+        pConfig->SetAttribute("hex", "true" );
+    if (regexFlag_m)
+        pConfig->SetAttribute("regex", "true" );
     pConfig->SetAttribute("ioport", port_m);
 }
 
@@ -851,15 +897,44 @@ void RxCondition::statusXml(ticpp::Element* pStatus)
 
 void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
 {
-    if (len > exp_m.length())
-        len = exp_m.length();
-    std::string rx(reinterpret_cast<const char*>(buf), len); 
-    if (cl_m && exp_m == rx)
+    std::string rx(reinterpret_cast<const char*>(buf), len);
+    if (hex_m)
     {
-        logger_m.debugStream() << "RxCondition: expected message received: '" << exp_m << "'" << endlog;
-        value_m = true;
-        cl_m->onChange(0);
-        value_m = false;
-        cl_m->onChange(0);
-    }        
+        int i = 0;
+        std::ostringstream ss;
+        ss.setf(std::ios::hex, std::ios::basefield);
+        ss.fill('0');
+        while (i < len)
+            ss << std::setw(2) << int(buf[i++]);
+        rx = ss.str();
+    }
+    if (cl_m)
+    {
+        if (regexFlag_m)
+        {
+            int status;
+            status = regexec(&regex_m, rx.c_str(), (size_t) 0, NULL, 0);
+//            logger_m.debugStream() << "RxCondition: match: '" << rx << "' " << status << endlog;
+            if (status == 0)
+            {
+                logger_m.debugStream() << "RxCondition: expected message received: '" << rx << "'" << endlog;
+                value_m = true;
+                cl_m->onChange(0);
+                value_m = false;
+                cl_m->onChange(0);
+            }
+        }
+        else
+        {
+            rx.resize(exp_m.length());
+            if (exp_m == rx)
+            {
+                logger_m.debugStream() << "RxCondition: expected message received: '" << exp_m << "'" << endlog;
+                value_m = true;
+                cl_m->onChange(0);
+                value_m = false;
+                cl_m->onChange(0);
+            }
+        }
+    }
 }
