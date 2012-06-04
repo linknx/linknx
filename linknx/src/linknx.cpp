@@ -256,6 +256,8 @@ main (int ac, char *ag[])
     services->setConfigFile(arg.writeconfig);
     services->getKnxConnection()->addTelegramListener(objects);
     services->start();
+    RuleInitializer initializer;
+    initializer.Start();
     int x;
     pth_sigwait (&t1, &x);
 

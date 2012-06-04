@@ -533,6 +533,7 @@ public:
     void executeActionsFalse();
     void setActive(bool active);
     void cancel();
+    void initialize();
 
 private:
     std::string id_m;
@@ -542,13 +543,14 @@ private:
     ActionsList_t actionsList_m;
     ActionsList_t actionsListFalse_m;
     bool prevValue_m;
-//    bool isActive_m;
     enum Flags
     {
         None = 0x00,
         Active = 0x01,
         StatelessIfTrue = 0x02,
         StatelessIfFalse = 0x04,
+        InitEval = 0x10,
+        InitTrue = 0x20,
         Stateless = StatelessIfFalse | StatelessIfTrue
     };
     int flags_m;
@@ -570,6 +572,8 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
     virtual void statusXml(ticpp::Element* pStatus);
+
+    void initialize();
     
     Rule *getRule(const char *id);
 
@@ -583,6 +587,12 @@ private:
     typedef std::map<std::string ,Rule*> RuleIdMap_t;
     RuleIdMap_t rulesMap_m;
     static RuleServer* instance_m;
+};
+
+class RuleInitializer : public Thread
+{
+private:
+    virtual void Run (pth_sem_t * stop);
 };
 
 #endif

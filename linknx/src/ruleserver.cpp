@@ -91,6 +91,22 @@ void RuleServer::statusXml(ticpp::Element* pStatus)
     }
 }
 
+void RuleServer::initialize()
+{
+    // Wait for knxconnection to be ready.
+    KnxConnection *conn = Services::instance()->getKnxConnection();
+    while(!conn->isReady())
+    {
+        pth_sleep(1);
+    }
+
+    for (RuleIdMap_t::iterator it = rulesMap_m.begin(); it != rulesMap_m.end(); it++)
+    {
+        Rule *rule = it->second;
+        rule->initialize();
+    }  
+}
+
 Rule *RuleServer::getRule(const char *id)
 {
     RuleIdMap_t::iterator it = rulesMap_m.find(id);
@@ -193,6 +209,20 @@ void Rule::importXml(ticpp::Element* pConfig)
 
     pConfig->GetAttribute("description", &descr_m, false);
 
+    std::string init = pConfig->GetAttributeOrDefault("init", "");
+    flags_m &= ~(InitEval|InitTrue);
+    if (init != "")
+    {
+        if (init == "eval")
+            flags_m |= InitEval;
+        else if (init == "true")
+            flags_m |= InitTrue;
+        else if(init != "false")
+            logger_m.warnStream() << "Unknown init value \"" << init << "\", assuming \"false\" instead." << endlog;
+    }
+    else
+        logger_m.infoStream() << "Initial value is not set, assuming \"false\". Please add init=\"false|true|eval\" to rule config." << endlog;
+
     logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
@@ -221,6 +251,14 @@ void Rule::importXml(ticpp::Element* pConfig)
                 actionsList_m.push_back(action);
         }
     }
+
+    // If init value is "eval", we better wait for a bus connection before we evaluate the condition
+    // If init value is "true", we can set prevValue_m even if no bus connection is available
+    if (Services::instance()->getKnxConnection()->isReady())
+        initialize();
+    else
+        prevValue_m = (flags_m & InitTrue);
+
     logger_m.infoStream() << "Rule: Configuration done" << endlog;
 }
 
@@ -231,6 +269,18 @@ void Rule::updateXml(ticpp::Element* pConfig)
         setActive(value != "off" && value != "false" && value != "no");
 
     pConfig->GetAttribute("description", &descr_m, false);
+
+    std::string init = pConfig->GetAttributeOrDefault("init", "");
+    if (init != "")
+    {
+        flags_m &= ~(InitEval|InitTrue);
+        if (init == "eval")
+            flags_m |= InitEval;
+        else if (init == "true")
+            flags_m |= InitTrue;
+        else if(init != "false")
+            logger_m.warnStream() << "Unknown init value \"" << init << "\", assuming \"false\" instead." << endlog;
+    }
 
     logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
@@ -279,6 +329,16 @@ void Rule::updateXml(ticpp::Element* pConfig)
             }
         }
     }
+
+    if (init != "")
+    {
+        // If init value is "eval", we better wait for a bus connection before we evaluate the condition
+        // If init value is "true", we can set prevValue_m even if no bus connection is available
+        if (Services::instance()->getKnxConnection()->isReady())
+            initialize();
+        else
+            prevValue_m = (flags_m & InitTrue);
+    }
     logger_m.infoStream() << "Rule: Reconfiguration done" << endlog;
 }
 
@@ -290,6 +350,12 @@ void Rule::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("active", "no");
     if (descr_m != "")
         pConfig->SetAttribute("description", descr_m);
+    if (flags_m & InitEval)
+        pConfig->SetAttribute("init", "eval");
+    else if (flags_m & InitTrue)
+        pConfig->SetAttribute("init", "true");
+    else
+        pConfig->SetAttribute("init", "false");
     if (condition_m)
     {
         ticpp::Element pCond("condition");
@@ -343,6 +409,22 @@ void Rule::statusXml(ticpp::Element* pStatus)
         condition_m->statusXml(&pElem);
         pStatus->LinkEndChild(&pElem);
     }
+}
+
+void Rule::initialize()
+{
+    if(flags_m & InitEval)
+        prevValue_m = condition_m->evaluate();
+    else
+        prevValue_m = (flags_m & InitTrue);
+
+    logger_m.infoStream() << "Rule " << id_m << " initialized with value " << prevValue_m << endlog;
+
+    // Execute actions if stateless.
+    if (prevValue_m && (flags_m & StatelessIfTrue) != 0)
+        executeActionsTrue();
+    else if (!prevValue_m && (flags_m & StatelessIfFalse) != 0)
+        executeActionsFalse();
 }
 
 void Rule::onChange(Object* object)
@@ -2253,4 +2335,9 @@ void TimeCounterCondition::statusXml(ticpp::Element* pStatus)
         condition_m->statusXml(&pElem);
         pStatus->LinkEndChild(&pElem);
     }
+}
+
+void RuleInitializer::Run (pth_sem_t * stop)
+{
+    RuleServer::instance()->initialize();
 }

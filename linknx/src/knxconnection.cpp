@@ -27,7 +27,7 @@
 
 Logger& KnxConnection::logger_m(Logger::getInstance("KnxConnection"));
 
-KnxConnection::KnxConnection() : con_m(0), isRunning_m(false), stop_m(0), listener_m(0)
+KnxConnection::KnxConnection() : con_m(0), isRunning_m(false), stop_m(0), listener_m(0), isReady_m(false)
 {}
 
 KnxConnection::~KnxConnection()
@@ -100,6 +100,11 @@ void KnxConnection::Run (pth_sem_t * stop1)
             if (EIBOpen_GroupSocket (con_m, 0) != -1)
             {
                 logger_m.infoStream() << "KnxConnection: Group socket opened. Waiting for messages." << endlog;
+
+                // If scope reached this point, there is no doubt that the
+                // connection with the bus is up and ready.
+                isReady_m = true;
+
                 int retval;
                 while ((retval = checkInput()) > 0)
                 {

@@ -57,12 +57,15 @@ public:
     void write(eibaddr_t gad, uint8_t* buf, int len);
     int checkInput();
 
+    bool isReady() const { return isReady_m; }
+
 private:
     EIBConnection *con_m;
     bool isRunning_m;
     pth_event_t stop_m;
     std::string url_m;
     TelegramListener *listener_m;
+    bool isReady_m;
 
     void Run (pth_sem_t * stop);
     static Logger& logger_m;
