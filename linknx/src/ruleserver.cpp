@@ -1584,6 +1584,8 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return new TimeCounterCondition(cl);
     else if (type == "ioport-rx")
         return new RxCondition(cl);
+    else if (type == "ioport-connect")
+        return new ConnectCondition(cl);
 #ifdef HAVE_LUA
     else if (type == "script")
         return new LuaCondition(cl);

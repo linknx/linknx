@@ -43,6 +43,7 @@ public:
 };
 
 class RxThread;
+class ConnectCondition;
 class IOPort;
 
 class IOPortManager
@@ -99,7 +100,11 @@ public:
 
     void addListener(IOPortListener *l); // { if (rxThread_m) rxThread_m->addListener(l); };
     bool removeListener(IOPortListener *l); // { if (rxThread_m) return (rxThread_m->removeListener(l)) else return false; };
+    void addConnectListener(ConnectCondition *c);
+    bool removeConnectListener(ConnectCondition *c);
+    void onConnect();
     virtual bool isRxEnabled() = 0;
+    virtual bool mustConnect() = 0;
     virtual int send(const uint8_t* buf, int len) = 0;
     virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
 
@@ -107,6 +112,9 @@ private:
     std::auto_ptr<RxThread> rxThread_m;
     std::string id_m;
     
+    typedef std::list<ConnectCondition*> ConnectListenerList_t;
+    ConnectListenerList_t connectListenerList_m;
+
     // Direction dir_m;
 
     static Logger& logger_m;
@@ -147,6 +155,7 @@ public:
     int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return rxport_m > 0; };
+    virtual bool mustConnect() { return false; };
 
 private:
     std::string host_m;
@@ -169,6 +178,7 @@ public:
     int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return permanent_m; };
+    virtual bool mustConnect() { return true; };
 
 private:
     std::string host_m;
@@ -194,6 +204,7 @@ public:
     int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return true; };
+    virtual bool mustConnect() { return false; };
 
 private:
     std::string dev_m;
@@ -250,6 +261,26 @@ private:
     bool regexFlag_m;
     bool value_m;
     bool hex_m;
+    Object* object_m;
+    ChangeListener* cl_m;
+};
+
+class ConnectCondition : public Condition
+{
+public:
+    ConnectCondition(ChangeListener* cl);
+    virtual ~ConnectCondition();
+
+    virtual bool evaluate();
+    virtual void importXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void statusXml(ticpp::Element* pStatus);
+
+    virtual void onConnect();
+
+private:
+    std::string port_m;
+    bool value_m;
     ChangeListener* cl_m;
 };
 

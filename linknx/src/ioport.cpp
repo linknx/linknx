@@ -176,6 +176,28 @@ bool IOPort::removeListener(IOPortListener *l)
         return false;
 }
 
+void IOPort::addConnectListener(ConnectCondition *c)
+{
+    if (connectListenerList_m.empty())
+    connectListenerList_m.push_back(c);
+}
+
+bool IOPort::removeConnectListener(ConnectCondition *c)
+{
+    connectListenerList_m.remove(c);
+    if (connectListenerList_m.empty())
+    return true;
+}
+
+void IOPort::onConnect()
+{
+    ConnectListenerList_t::iterator it;
+    for (it = connectListenerList_m.begin(); it != connectListenerList_m.end(); it++)
+    {
+        (*it)->onConnect();
+    }
+}
+
 RxThread::RxThread(IOPort *port) : port_m(port), isRunning_m(false), stop_m(0)
 {}
 
@@ -413,6 +435,7 @@ void TcpClientIOPort::connectToServer()
                 logger_m.errorStream() << "Unable to connect to server for ioport " << getID() << endlog;
                 disconnectFromServer();
             }
+            onConnect();
         }
         else {
             logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
@@ -574,6 +597,7 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
         tcflush(fd_m, TCIFLUSH);
         tcsetattr(fd_m, TCSANOW, &newtio_m);
         logger_m.infoStream() << "SerialIOPort configured for device " << dev_m << endlog;
+        onConnect();
     }
     else {
         logger_m.errorStream() << "Unable to open device '" << dev_m << "' for ioport " << getID() << endlog;
@@ -834,7 +858,7 @@ void TxAction::sendData(IOPort* port)
     }
 }
 
-RxCondition::RxCondition(ChangeListener* cl) : regexFlag_m(false), value_m(false), hex_m(false), cl_m(cl)
+RxCondition::RxCondition(ChangeListener* cl) : regexFlag_m(false), value_m(false), hex_m(false), object_m(0), cl_m(cl)
 {}
 
 RxCondition::~RxCondition()
@@ -844,6 +868,8 @@ RxCondition::~RxCondition()
         port->removeListener(this);
     if (regexFlag_m)
         regfree(&regex_m);
+    if (object_m)
+            object_m->decRefCount();
 }
 
 bool RxCondition::evaluate()
@@ -875,6 +901,16 @@ void RxCondition::importXml(ticpp::Element* pConfig)
             throw ticpp::Exception(msg.str());
         }
     }
+    
+    std::string id;
+    id = pConfig->GetAttributeOrDefault("object","");
+    if (object_m)
+        object_m->decRefCount();
+    if (id != "")
+        object_m = ObjectController::instance()->getObject(id);
+    else
+	object_m = 0;
+    
     logger_m.infoStream() << "RxCondition: configured to watch for '" << exp_m << "' on ioport " << port_m << endlog;
 }
 
@@ -897,6 +933,8 @@ void RxCondition::statusXml(ticpp::Element* pStatus)
 
 void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
 {
+    regmatch_t groupArray[2];
+    
     std::string rx(reinterpret_cast<const char*>(buf), len);
     if (hex_m)
     {
@@ -913,7 +951,7 @@ void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
         if (regexFlag_m)
         {
             int status;
-            status = regexec(&regex_m, rx.c_str(), (size_t) 0, NULL, 0);
+            status = regexec(&regex_m, rx.c_str(), (size_t) 2, groupArray, 0);
 //            logger_m.debugStream() << "RxCondition: match: '" << rx << "' " << status << endlog;
             if (status == 0)
             {
@@ -922,6 +960,20 @@ void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
                 cl_m->onChange(0);
                 value_m = false;
                 cl_m->onChange(0);
+                
+                if ((groupArray[1].rm_so != (size_t)-1) && (object_m)) {
+            	    std::string newValue(rx.c_str(), groupArray[1].rm_so, groupArray[1].rm_eo - groupArray[1].rm_so);
+            	    logger_m.debugStream() << "RxCondition: new value " << newValue << " found in regex for object " << object_m->getID() << endlog;
+            	    
+            	    try
+		    {
+            		object_m->setValue(newValue);
+		    }
+		    catch( ticpp::Exception& ex )
+		    {
+			logger_m.errorStream() << "RxCondition: Error cannot set value '" << newValue << "' to object '" << object_m->getID() << "'" << endlog;
+		    }
+                }
             }
         }
         else
@@ -937,4 +989,64 @@ void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
             }
         }
     }
+}
+
+ConnectCondition::ConnectCondition(ChangeListener* cl) : value_m(false), cl_m(cl)
+{}
+
+ConnectCondition::~ConnectCondition()
+{
+    IOPort* port = IOPortManager::instance()->getPort(port_m);
+    if (port)
+        port->removeConnectListener(this);
+}
+
+bool ConnectCondition::evaluate()
+{
+    return value_m;
+}
+
+void ConnectCondition::importXml(ticpp::Element* pConfig)
+{
+    if (!cl_m)
+        throw ticpp::Exception("Rx condition on IO port is not supported in this context");
+    port_m = pConfig->GetAttribute("ioport");
+    
+    IOPort* port = IOPortManager::instance()->getPort(port_m);
+    if (!port)
+    {
+        std::stringstream msg;
+        msg << "ConnectCondition: IO Port ID not found: '" << port_m << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
+    if (!port->mustConnect())
+    {
+        std::stringstream msg;
+        msg << "ConnectCondition: Only serial and TCP port can use connectCondition" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+
+    port->addConnectListener(this);
+}
+
+void ConnectCondition::exportXml(ticpp::Element* pConfig)
+{
+    pConfig->SetAttribute("type", "ioport-connect");
+    pConfig->SetAttribute("ioport", port_m);
+}
+
+void ConnectCondition::statusXml(ticpp::Element* pStatus)
+{
+    pStatus->SetAttribute("type", "ioport-connect");
+    pStatus->SetAttribute("ioport", port_m);
+}
+
+void ConnectCondition::onConnect()
+{
+    logger_m.debugStream() << "ConnectCondition: IOPort '" << port_m << "' is connected" << endlog;
+    value_m = true;
+    cl_m->onChange(0);
+    value_m = false;
+    cl_m->onChange(0);
 }
