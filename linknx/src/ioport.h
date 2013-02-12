@@ -261,7 +261,8 @@ private:
     bool regexFlag_m;
     bool value_m;
     bool hex_m;
-    Object* object_m;
+    regmatch_t* pmatch_m;
+    std::vector<Object*> objects_m;
     ChangeListener* cl_m;
 };
 

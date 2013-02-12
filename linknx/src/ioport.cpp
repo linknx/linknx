@@ -858,7 +858,7 @@ void TxAction::sendData(IOPort* port)
     }
 }
 
-RxCondition::RxCondition(ChangeListener* cl) : regexFlag_m(false), value_m(false), hex_m(false), object_m(0), cl_m(cl)
+RxCondition::RxCondition(ChangeListener* cl) : regexFlag_m(false), value_m(false), hex_m(false), pmatch_m(0), cl_m(cl)
 {}
 
 RxCondition::~RxCondition()
@@ -868,8 +868,12 @@ RxCondition::~RxCondition()
         port->removeListener(this);
     if (regexFlag_m)
         regfree(&regex_m);
-    if (object_m)
-            object_m->decRefCount();
+    if (pmatch_m)
+        delete pmatch_m;
+    std::vector<Object*>::iterator it;
+    for (it=objects_m.begin(); it!=objects_m.end(); it++)
+        if (*it)
+            (*it)->decRefCount();
 }
 
 bool RxCondition::evaluate()
@@ -900,16 +904,26 @@ void RxCondition::importXml(ticpp::Element* pConfig)
             msg << "RxCondition: Invalid regular expression: '" << exp_m << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
+        size_t nmatch = regex_m.re_nsub+1;
+        if (nmatch > 0)
+        {
+            pmatch_m = new regmatch_t[nmatch];
+            objects_m.resize(nmatch);
+        }
+        for (int i=0; i<nmatch; i++)
+        {
+            std::string id;
+            std::stringstream obj;
+            obj << "object" << i;
+            id = pConfig->GetAttributeOrDefault(obj.str(),"");
+            if (id != "")
+                objects_m[i] = ObjectController::instance()->getObject(id);
+            else
+                objects_m[i] = 0;
+            logger_m.debugStream() << "subgroup: " << i << " => Object '" << id << "'" << endlog;
+        }
     }
     
-    std::string id;
-    id = pConfig->GetAttributeOrDefault("object","");
-    if (object_m)
-        object_m->decRefCount();
-    if (id != "")
-        object_m = ObjectController::instance()->getObject(id);
-    else
-	object_m = 0;
     
     logger_m.infoStream() << "RxCondition: configured to watch for '" << exp_m << "' on ioport " << port_m << endlog;
 }
@@ -922,6 +936,19 @@ void RxCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("hex", "true" );
     if (regexFlag_m)
         pConfig->SetAttribute("regex", "true" );
+    std::vector<Object*>::iterator it;
+    int i=0;
+    for (it=objects_m.begin(); it!=objects_m.end(); it++)
+    {
+        if (*it)
+        {
+            std::stringstream obj;
+            obj << "object" << i;
+            pConfig->SetAttribute(obj.str(), (*it)->getID());
+        }
+        i++;
+    }
+
     pConfig->SetAttribute("ioport", port_m);
 }
 
@@ -933,8 +960,6 @@ void RxCondition::statusXml(ticpp::Element* pStatus)
 
 void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
 {
-    regmatch_t groupArray[2];
-    
     std::string rx(reinterpret_cast<const char*>(buf), len);
     if (hex_m)
     {
@@ -951,29 +976,44 @@ void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
         if (regexFlag_m)
         {
             int status;
-            status = regexec(&regex_m, rx.c_str(), (size_t) 2, groupArray, 0);
-//            logger_m.debugStream() << "RxCondition: match: '" << rx << "' " << status << endlog;
+            size_t nmatch = regex_m.re_nsub+1;
+            status = regexec(&regex_m, rx.c_str(), nmatch, pmatch_m, 0);
             if (status == 0)
             {
-                logger_m.debugStream() << "RxCondition: expected message received: '" << rx << "'" << endlog;
+                logger_m.debugStream() << "RxCondition: expected message received: '" << rx << "'" << regex_m.re_nsub << endlog;
+                for (int i=0; i<nmatch; i++)
+                {
+                    Object* obj = objects_m[i];
+                    regmatch_t match = pmatch_m[i];
+                    logger_m.debugStream() << "subgroup: " << i << " '" << match.rm_so << ":" << match.rm_eo << "'" << endlog;
+                    if ((match.rm_so != (size_t)-1) && (obj)) {
+                        std::string newValue(rx.c_str(), match.rm_so, match.rm_eo - match.rm_so);
+                        logger_m.debugStream() << "RxCondition: new value " << newValue << " found in regex for object " << obj->getID() << endlog;
+
+                        if (hex_m && newValue.length() <= 8)
+                        {
+                            unsigned int value;
+                            std::istringstream val(newValue);
+                            val >> std::hex >> value;
+                            std::stringstream out;
+                            out << value;
+                            newValue = out.str();
+                        }
+                        try
+                        {
+                            obj->setValue(newValue);
+                        }
+                        catch( ticpp::Exception& ex )
+                        {
+                            logger_m.errorStream() << "RxCondition: Error cannot set value '" << newValue << "' to object '" << obj->getID() << "'" << endlog;
+                        }
+                    }
+                }
                 value_m = true;
                 cl_m->onChange(0);
                 value_m = false;
                 cl_m->onChange(0);
                 
-                if ((groupArray[1].rm_so != (size_t)-1) && (object_m)) {
-            	    std::string newValue(rx.c_str(), groupArray[1].rm_so, groupArray[1].rm_eo - groupArray[1].rm_so);
-            	    logger_m.debugStream() << "RxCondition: new value " << newValue << " found in regex for object " << object_m->getID() << endlog;
-            	    
-            	    try
-		    {
-            		object_m->setValue(newValue);
-		    }
-		    catch( ticpp::Exception& ex )
-		    {
-			logger_m.errorStream() << "RxCondition: Error cannot set value '" << newValue << "' to object '" << object_m->getID() << "'" << endlog;
-		    }
-                }
             }
         }
         else
