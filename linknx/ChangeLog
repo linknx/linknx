@@ -1,4 +1,5 @@
 Release 0.0.1.31:
+    * max 2 events per second for DimUp Action (Othmar) and fix underflow bug when dimming down to zero
     * allow evaluation of condition to set rule's initial state (Cyrille Defranoux)
     * logging of unknown objects
     * Enhanced pattern matching on ioport rx (POSIX regular expression)

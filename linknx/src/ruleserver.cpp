@@ -657,12 +657,14 @@ void DimUpAction::Run (pth_sem_t * stop)
     if (stop_m > start_m)
     {
         logger_m.infoStream() << "Execute DimUpAction" << endlog;
+        /* set increment to send 2 values per second at most */
+        unsigned long incr = (((stop_m - start_m) * 1000/2 / duration_m) + 1);
 
         unsigned long step = (duration_m / (stop_m - start_m));
-        for (unsigned int idx=start_m; idx <= stop_m; idx++)
+        for (unsigned int idx=start_m; idx < stop_m; idx+=incr)
         {
             object_m->setIntValue(idx);
-            if (sleep(step, stop))
+            if (sleep(step*incr, stop))
                 return;
             if (object_m->getIntValue() < idx)
             {
@@ -670,23 +672,28 @@ void DimUpAction::Run (pth_sem_t * stop)
                 return;
             }
         }
+        object_m->setIntValue(stop_m);
     }
     else
     {
         logger_m.infoStream() << "Execute DimUpAction (decrease)" << endlog;
+        unsigned int incr = (((start_m - stop_m) * 500 / duration_m) + 1.0);
 
         unsigned long step = (duration_m / (start_m - stop_m));
-        for (unsigned int idx=start_m; idx >= stop_m; idx--)
+        for (unsigned int idx=start_m; idx > stop_m; idx-=incr)
         {
             object_m->setIntValue(idx);
-            if (sleep(step, stop))
+            if (sleep(step*incr, stop))
                 return;
             if (object_m->getIntValue() > idx)
             {
                 logger_m.infoStream() << "Abort DimUpAction" << endlog;
                 return;
             }
+            if (idx < incr)
+                break; // since idx is unsigned, we need to avoid underflow
         }
+        object_m->setIntValue(stop_m);
     }
 }
 
