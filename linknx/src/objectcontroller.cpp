@@ -120,6 +120,17 @@ ObjectValue* Object::get()
 
 void Object::importXml(ticpp::Element* pConfig)
 {
+    std::string type = pConfig->GetAttribute("type");
+    if (type != getType())
+    {
+        // sometimes, different type strings refer to the same type
+        // in that case, create a temporary object just to get the type string.
+        Object* obj = Object::create(type);
+        type = obj->getType();
+        delete obj;
+        if (type != getType())
+            throw ticpp::Exception("Changing type of existing object is not allowed");
+    }
     std::string id = pConfig->GetAttribute("id");
     if (id == "")
         throw ticpp::Exception("Missing or empty object ID");
