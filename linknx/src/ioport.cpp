@@ -178,14 +178,12 @@ bool IOPort::removeListener(IOPortListener *l)
 
 void IOPort::addConnectListener(ConnectCondition *c)
 {
-    if (connectListenerList_m.empty())
     connectListenerList_m.push_back(c);
 }
 
 bool IOPort::removeConnectListener(ConnectCondition *c)
 {
     connectListenerList_m.remove(c);
-    if (connectListenerList_m.empty())
     return true;
 }
 
@@ -1049,7 +1047,7 @@ bool ConnectCondition::evaluate()
 void ConnectCondition::importXml(ticpp::Element* pConfig)
 {
     if (!cl_m)
-        throw ticpp::Exception("Rx condition on IO port is not supported in this context");
+        throw ticpp::Exception("Connect condition on IO port is not supported in this context");
     port_m = pConfig->GetAttribute("ioport");
     
     IOPort* port = IOPortManager::instance()->getPort(port_m);

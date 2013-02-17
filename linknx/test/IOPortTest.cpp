@@ -45,6 +45,7 @@ public:
             return buflen;
         };
         virtual bool isRxEnabled() { return true; };
+        virtual bool mustConnect() { return false; };
 
         int buflen;
         uint8_t* buffer;

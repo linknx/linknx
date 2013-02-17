@@ -204,7 +204,7 @@ public:
     int send(const uint8_t* buf, int len);
     int get(uint8_t* buf, int len, pth_event_t stop);
     virtual bool isRxEnabled() { return true; };
-    virtual bool mustConnect() { return false; };
+    virtual bool mustConnect() { return true; };
 
 private:
     std::string dev_m;
