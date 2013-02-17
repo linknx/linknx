@@ -21,6 +21,7 @@
 #include <iomanip>
 #include "ioport.h"
 #include <fcntl.h>
+#include <unistd.h>
 
 Logger& IOPort::logger_m(Logger::getInstance("IOPort"));
 Logger& RxThread::logger_m(Logger::getInstance("RxThread"));
