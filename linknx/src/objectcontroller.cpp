@@ -311,15 +311,20 @@ void Object::read()
     }
     readPending_m = true;
 
+    pth_event_t tmout = pth_event (PTH_EVENT_TIME, pth_timeout(1,0));
     int cnt = 0;
     while (cnt < 100 && readPending_m)
     {
         if (con->isRunning())
-            con->checkInput();
+        {
+            if (con->checkInput(tmout) == -1)
+                cnt = 100;
+        }
         else
             pth_usleep(10000);
         ++cnt;
     }
+    pth_event_free (tmout, PTH_FREE_THIS);
     // If the device didn't answer after 1 second, we consider the object's
     // default value as the current value to avoid waiting forever.
     init_m = true;

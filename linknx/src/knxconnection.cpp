@@ -142,7 +142,7 @@ void KnxConnection::Run (pth_sem_t * stop1)
     stop_m = 0;
 }
 
-int KnxConnection::checkInput()
+int KnxConnection::checkInput(pth_event_t ev)
 {
     int len;
     eibaddr_t dest;
@@ -150,7 +150,15 @@ int KnxConnection::checkInput()
     uint8_t buf[200];
     if (!con_m)
         return 0;
+    if (ev)
+        EIBSetEvent (con_m, ev);
     len = EIBGetGroup_Src (con_m, sizeof (buf), buf, &src, &dest);
+    if (ev)
+    {
+        EIBSetEvent (con_m, stop_m);
+        if (pth_event_status (ev) == PTH_STATUS_OCCURRED)
+            return -1;
+    }
     if (pth_event_status (stop_m) == PTH_STATUS_OCCURRED)
         return -1;
     if (len == -1)

@@ -55,7 +55,7 @@ public:
     void addTelegramListener(TelegramListener *listener);
     bool removeTelegramListener(TelegramListener *listener);
     void write(eibaddr_t gad, uint8_t* buf, int len);
-    int checkInput();
+    int checkInput(pth_event_t ev = 0);
 
     bool isReady() const { return isReady_m; }
 
