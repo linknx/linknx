@@ -126,6 +126,7 @@ protected:
     bool value_m;
 
     time_t findNext(time_t start, TimeSpec* next);
+    time_t mktimeNoDst(struct tm * timeinfo);
     static Logger& logger_m;
 };
 

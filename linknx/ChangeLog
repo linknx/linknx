@@ -1,4 +1,5 @@
 Release 0.0.1.31:
+    * Fix timers going completely nuts when there is a time change from summer to winter time
     * Fix bug "#13 Rules not working if read request fails"
     * Fix compile problem with "close" function and gcc 4.7
     * max 2 events per second for DimUp Action (Othmar) and fix underflow bug when dimming down to zero

@@ -451,6 +451,23 @@ void PeriodicTask::reschedule(time_t now)
 
 }
 
+time_t PeriodicTask::mktimeNoDst(struct tm * timeinfo)
+{
+    time_t ret;
+    int dst = timeinfo->tm_isdst;
+    ret = mktime(timeinfo);
+    if (dst != timeinfo->tm_isdst)
+    {
+        logger_m.infoStream() << "PeriodicTask: DST change detected" << endlog;
+        if (dst == 1) // If day changed due to DST adjustment, we revert the change.
+            timeinfo->tm_hour++;
+        else if (dst == 0)
+            timeinfo->tm_hour--;
+        ret = mktime(timeinfo);
+    }
+    return ret;
+}
+
 time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 {
     struct tm timeinfostruct;
@@ -500,7 +517,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         }
     }
 
-    mktime(timeinfo);
+    mktimeNoDst(timeinfo);
 
     if (wdays == 0)
     {
@@ -565,18 +582,16 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
     }
 
     timeinfo->tm_sec = 0;
-    time_t nextExecTime = mktime(timeinfo);
-    
-    if (hour != -1 && timeinfo->tm_hour != hour)
-    {
-        // deal with clock shift due to DST
-        timeinfo->tm_hour = hour;
-        nextExecTime = mktime(timeinfo);
-    }
+    time_t nextExecTime = mktimeNoDst(timeinfo);
     
     if (nextExecTime < 0)
     {
         logger_m.infoStream() << "No more schedule available" << endlog;
+        return 0;
+    }
+    if (nextExecTime <= start)
+    {
+        logger_m.errorStream() << "Timer error, nextExecTime(" << nextExecTime << ") is before startTime(" << start << ")" << endlog;
         return 0;
     }
     if (exception != TimeSpec::DontCare)
