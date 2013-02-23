@@ -461,7 +461,15 @@ time_t PeriodicTask::mktimeNoDst(struct tm * timeinfo)
         logger_m.infoStream() << "PeriodicTask: DST change detected" << endlog;
         if (dst == 1) // If day changed due to DST adjustment, we revert the change.
             timeinfo->tm_hour++;
-        else if (dst == 0)
+        else if (dst == 0 && timeinfo->tm_hour == 3)
+        {
+            // If between 3am and 4am, do not go back before 3am
+            // because we would fall inside the non-existing hour
+            timeinfo->tm_hour = 3;
+            timeinfo->tm_min = 0;
+            timeinfo->tm_sec = 0;
+        }
+        else
             timeinfo->tm_hour--;
         ret = mktime(timeinfo);
     }
