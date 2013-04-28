@@ -31,7 +31,7 @@ public:
 
     void testAddGet()
     {
-        Object* obj1 = new SwitchingObject();
+        Object* obj1 = new SwitchingSwitchObject();
         obj1->setID("test_sw1");
         oc_m->addObject(obj1);
 
@@ -42,13 +42,13 @@ public:
         CPPUNIT_ASSERT(oc_m->getObject("test_sw1") == obj1);
         CPPUNIT_ASSERT(oc_m->getObject("test_dim2") == obj2);
 
-        CPPUNIT_ASSERT(dynamic_cast<SwitchingObject*>(oc_m->getObject("test_sw1")));
+        CPPUNIT_ASSERT(dynamic_cast<SwitchingSwitchObject*>(oc_m->getObject("test_sw1")));
         CPPUNIT_ASSERT(dynamic_cast<DimmingObject*>(oc_m->getObject("test_dim2")));
     }
 
     void testAddSameID()
     {
-        Object* obj1 = new SwitchingObject();
+        Object* obj1 = new SwitchingSwitchObject();
         obj1->setID("test_sw1");
         oc_m->addObject(obj1);
 
@@ -60,7 +60,7 @@ public:
 
     void testGetNotFound()
     {
-        Object* obj1 = new SwitchingObject();
+        Object* obj1 = new SwitchingSwitchObject();
         obj1->setID("test_sw1");
         oc_m->addObject(obj1);
 
@@ -73,7 +73,7 @@ public:
 
     void testAddRemove()
     {
-        Object* obj1 = new SwitchingObject();
+        Object* obj1 = new SwitchingSwitchObject();
         obj1->setID("test_sw1");
         oc_m->addObject(obj1);
 
@@ -157,7 +157,7 @@ public:
 
         oc_m->importXml(&pObjects);
 
-        CPPUNIT_ASSERT(dynamic_cast<SwitchingObject*>(oc_m->getObject("test_sw1")));
+        CPPUNIT_ASSERT(dynamic_cast<SwitchingSwitchObject*>(oc_m->getObject("test_sw1")));
         CPPUNIT_ASSERT(dynamic_cast<DimmingObject*>(oc_m->getObject("test_dim2")));
 
         Object* sw1 = oc_m->getObject("test_sw1");

@@ -104,6 +104,12 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
 
 private:
     bool isOnChangeCalled_m;
+    
+    void cleanTestDir()
+    {
+        CPPUNIT_ASSERT(system("rm -rf /tmp/linknx_unittest") != -1);
+        CPPUNIT_ASSERT(system("mkdir /tmp/linknx_unittest") != -1);
+    }
 public:
     void setUp()
     {
@@ -126,28 +132,22 @@ public:
         const std::string off = "off";
         const std::string zero = "0";
         const std::string one = "1";
-        const std::string tr = "true";
-        const std::string fa = "false";
         ObjectValue* val;
-        SwitchingObject sw, sw2;
+        SwitchingSwitchObject sw, sw2;
         sw.setValue("on");
         CPPUNIT_ASSERT(sw.getValue() == "on");
         sw.setValue("1");
-        CPPUNIT_ASSERT(sw.getValue() == "on");
-        sw.setValue("true");
         CPPUNIT_ASSERT(sw.getValue() == "on");
 
         sw2.setValue("off");
         CPPUNIT_ASSERT(sw2.getValue() == "off");
         sw2.setValue("0");
         CPPUNIT_ASSERT(sw2.getValue() == "off");
-        sw2.setValue("false");
-        CPPUNIT_ASSERT(sw2.getValue() == "off");
 
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
         CPPUNIT_ASSERT(sw2.getBoolValue() == false);
 
-        SwitchingObjectValue swval(tr);
+        SwitchingObjectValue swval(on);
         CPPUNIT_ASSERT(sw.equals(&swval));
         CPPUNIT_ASSERT(!sw2.equals(&swval));
 
@@ -160,7 +160,7 @@ public:
         CPPUNIT_ASSERT(!sw.equals(&swval2));
         CPPUNIT_ASSERT(sw2.equals(&swval2));
 
-        val = sw.createObjectValue(fa);
+        val = sw.createObjectValue(off);
         CPPUNIT_ASSERT(!sw.equals(val));
         CPPUNIT_ASSERT(sw2.equals(val));
         delete val;      
@@ -173,12 +173,12 @@ public:
 
     void testSwitchingObjectWrite()
     {
-        SwitchingObject sw;
+        SwitchingSwitchObject sw;
         sw.setBoolValue(false);
         sw.addChangeListener(this);
 
-        const std::string tr = "true";
-        const std::string fa = "false";
+        const std::string tr = "on";
+        const std::string fa = "off";
         SwitchingObjectValue swvaltrue(tr);
         SwitchingObjectValue swvalfalse(fa);
 
@@ -213,7 +213,7 @@ public:
 
     void testSwitchingObjectUpdate()
     {
-        SwitchingObject sw;
+        SwitchingSwitchObject sw;
         sw.addChangeListener(this);
 
         isOnChangeCalled_m = false;
@@ -237,7 +237,7 @@ public:
 
     void testSwitchingExportImport()
     {
-        SwitchingObject orig;
+        SwitchingSwitchObject orig;
         Object *res;
         ticpp::Element pConfig;
 
@@ -251,8 +251,7 @@ public:
     
     void testSwitchingPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -455,8 +454,7 @@ public:
     
     void testDimmingPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -665,8 +663,7 @@ public:
     
     void testBlindsPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -868,8 +865,7 @@ public:
 
     void testTimePersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1055,8 +1051,7 @@ public:
 
     void testDatePersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1091,7 +1086,7 @@ public:
     void testValueObject()
     {
         ObjectValue* val;
-        ValueObject v, v2;
+        ValueObject0 v, v2;
         v.setValue("25");
         CPPUNIT_ASSERT(v.getValue() == "25");
         v2.setValue("14.55");
@@ -1132,7 +1127,7 @@ public:
         CPPUNIT_ASSERT_THROW(v.setValue("10.1aaaa"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(v.setValue("10,5"), ticpp::Exception);
 
-        ValueObjectValue fval("670760.96");
+        ValueObjectValue0 fval("670760.96");
         CPPUNIT_ASSERT(v.equals(&fval));
         CPPUNIT_ASSERT(!v2.equals(&fval));
 
@@ -1141,7 +1136,7 @@ public:
         CPPUNIT_ASSERT(!v2.equals(val));
         delete val;
 
-        ValueObjectValue fval2("-671088.64");
+        ValueObjectValue0 fval2("-671088.64");
         CPPUNIT_ASSERT(!v.equals(&fval2));
         CPPUNIT_ASSERT(v2.equals(&fval2));
 
@@ -1157,7 +1152,7 @@ public:
 
     void testValueObjectWrite()
     {
-        ValueObject v;
+        ValueObject0 v;
         v.setValue("27.1");
         v.addChangeListener(this);
 
@@ -1166,7 +1161,7 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);        
         CPPUNIT_ASSERT(v.getValue() == "27.2");
-        ValueObjectValue fval1("27.2");
+        ValueObjectValue0 fval1("27.2");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -1175,7 +1170,7 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);       
         CPPUNIT_ASSERT(v.getValue() == "-320");
-        ValueObjectValue fval2("-320");
+        ValueObjectValue0 fval2("-320");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -1198,7 +1193,7 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 4, src);       
         CPPUNIT_ASSERT(v.getValue() == "0.02");
-        ValueObjectValue fval3("0.02");
+        ValueObjectValue0 fval3("0.02");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -1207,7 +1202,7 @@ public:
 
     void testValueObjectUpdate()
     {
-        ValueObject v;
+        ValueObject0 v;
         v.addChangeListener(this);
 
         isOnChangeCalled_m = false;
@@ -1231,7 +1226,7 @@ public:
 
     void testValueExportImport()
     {
-        ValueObject orig;
+        ValueObject0 orig;
         Object *res;
         ticpp::Element pConfig;
 
@@ -1239,14 +1234,13 @@ public:
         orig.exportXml(&pConfig);
         res = Object::create(&pConfig);
         CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
-        CPPUNIT_ASSERT(dynamic_cast<ValueObject*>(res));
+        CPPUNIT_ASSERT(dynamic_cast<ValueObject0*>(res));
         delete res;
     }
 
     void testValuePersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1289,8 +1283,8 @@ public:
         isOnChangeCalled_m = false;
         v.onWrite(buf, 6, src);        
         CPPUNIT_ASSERT(v.getValue() == "3.1415");
-        ValueObjectValue fval1("3.1414");
-        ValueObjectValue fval2("3.1416");
+        ValueObjectValue0 fval1("3.1414");
+        ValueObjectValue0 fval2("3.1416");
         CPPUNIT_ASSERT_EQUAL(1, v.compare(&fval1));
         CPPUNIT_ASSERT_EQUAL(-1, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
@@ -1423,8 +1417,7 @@ public:
 
     void testU8Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1580,8 +1573,7 @@ public:
 
     void testScalingPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1751,8 +1743,7 @@ public:
 
     void testHeatingModePersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -1918,8 +1909,7 @@ public:
 
     void testU16Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2084,8 +2074,7 @@ public:
 
     void testU32Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2244,8 +2233,7 @@ public:
 
     void testS8Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2406,8 +2394,7 @@ public:
 
     void testS16Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2572,8 +2559,7 @@ public:
 
     void testS32Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2746,8 +2732,7 @@ public:
 
     void testS64Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -2899,8 +2884,7 @@ public:
 
     void testString14Persist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -3059,8 +3043,7 @@ public:
 
     void testString14AsciiPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");
@@ -3213,8 +3196,7 @@ public:
 
     void testStringPersist()
     {
-        system ("rm -rf /tmp/linknx_unittest");
-        system ("mkdir /tmp/linknx_unittest");
+        cleanTestDir();
         ticpp::Element pSvcConfig("services");
         ticpp::Element pPersistenceConfig("persistence");
         pPersistenceConfig.SetAttribute("type", "file");

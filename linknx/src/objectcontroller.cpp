@@ -22,6 +22,7 @@
 #include "services.h"
 #include <cmath>
 #include <cassert>
+#include <iomanip>
 
 ObjectController* ObjectController::instance_m;
 
@@ -39,17 +40,123 @@ Object::~Object()
 Object* Object::create(const std::string& type)
 {
     if (type == "" || type == "EIS1" || type == "1.001")
-        return new SwitchingObject();
+        return new SwitchingSwitchObject();
+    else if (type.compare(0, 2, "1.") == 0)
+    {    
+        if (type == "1.002")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<2> >();
+        else if (type == "1.003")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<3> >();
+        else if (type == "1.004")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<4> >();
+        else if (type == "1.005")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<5> >();
+        else if (type == "1.006")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<6> >();
+        else if (type == "1.007")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<7> >();
+        else if (type == "1.008")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<8> >();
+        else if (type == "1.009")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<9> >();
+        else if (type == "1.010")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<10> >();
+        else if (type == "1.011")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<11> >();
+        else if (type == "1.012")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<12> >();
+        else if (type == "1.013")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<13> >();
+        else if (type == "1.014")
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<14> >();
+        else return 0;
+    }
+    else if (type.compare(0, 2, "2.") == 0)
+    {
+        if (type == "2.xxx")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<0> >();
+        else if (type == "2.001")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<1> >();
+        else if (type == "2.002")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<2> >();
+        else if (type == "2.003")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<3> >();
+        else if (type == "2.004")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<4> >();
+        else if (type == "2.005")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<5> >();
+        else if (type == "2.006")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<6> >();
+        else if (type == "2.007")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<7> >();
+        else if (type == "2.008")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<8> >();
+        else if (type == "2.009")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<9> >();
+        else if (type == "2.010")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<10> >();
+        else if (type == "2.011")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<11> >();
+        else if (type == "2.012")
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<12> >();
+        else return 0;
+    }
     else if (type == "EIS2" || type == "3.007")
         return new DimmingObject();
     else if (type == "3.008")
         return new BlindsObject();
+    else if (type == "4.001")
+        return new AsciiCharObject();
+    else if (type == "4.002")
+        return new Latin1CharObject();
     else if (type == "EIS3" || type == "10.001")
         return new TimeObject();
     else if (type == "EIS4" || type == "11.001")
         return new DateObject();
     else if (type == "EIS5" || type == "9.xxx")
-        return new ValueObject();
+        return new ValueObjectImpl<ValueImplObjectValue<0> >();
+    else if (type.compare(0, 2, "9.") == 0)
+    {    
+        if (type == "9.001")
+            return new ValueObjectImpl<ValueImplObjectValue<1> >();
+        else if (type == "9.002")
+            return new ValueObjectImpl<ValueImplObjectValue<2> >();
+        else if (type == "9.003")
+            return new ValueObjectImpl<ValueImplObjectValue<3> >();
+        else if (type == "9.004")
+            return new ValueObjectImpl<ValueImplObjectValue<4> >();
+        else if (type == "9.005")
+            return new ValueObjectImpl<ValueImplObjectValue<5> >();
+        else if (type == "9.006")
+            return new ValueObjectImpl<ValueImplObjectValue<6> >();
+        else if (type == "9.007")
+            return new ValueObjectImpl<ValueImplObjectValue<7> >();
+        else if (type == "9.008")
+            return new ValueObjectImpl<ValueImplObjectValue<8> >();
+        else if (type == "9.010")
+            return new ValueObjectImpl<ValueImplObjectValue<10> >();
+        else if (type == "9.011")
+            return new ValueObjectImpl<ValueImplObjectValue<11> >();
+        else if (type == "9.020")
+            return new ValueObjectImpl<ValueImplObjectValue<20> >();
+        else if (type == "9.021")
+            return new ValueObjectImpl<ValueImplObjectValue<21> >();
+        else if (type == "9.022")
+            return new ValueObjectImpl<ValueImplObjectValue<22> >();
+        else if (type == "9.023")
+            return new ValueObjectImpl<ValueImplObjectValue<23> >();
+        else if (type == "9.024")
+            return new ValueObjectImpl<ValueImplObjectValue<24> >();
+        else if (type == "9.025")
+            return new ValueObjectImpl<ValueImplObjectValue<25> >();
+        else if (type == "9.026")
+            return new ValueObjectImpl<ValueImplObjectValue<26> >();
+        else if (type == "9.027")
+            return new ValueObjectImpl<ValueImplObjectValue<27> >();
+        else if (type == "9.028")
+            return new ValueObjectImpl<ValueImplObjectValue<28> >();
+        else return 0;
+    }
     else if (type == "14.xxx")
         return new ValueObject32();
     else if (type == "EIS6" || type == "5.xxx")
@@ -58,6 +165,8 @@ Object* Object::create(const std::string& type)
         return new ScalingObject();
     else if (type == "5.003")
         return new AngleObject();
+    else if (type == "5.010")
+        return new U8CountObject();
     else if (type == "heat-mode" || type == "20.102")
         return new HeatingModeObject();
     else if (type == "EIS10" || type == "7.xxx")
@@ -80,6 +189,8 @@ Object* Object::create(const std::string& type)
         return new String14AsciiObject();
     else if (type == "28.001")
         return new StringObject();
+    else if (type == "232.600")
+        return new RGBObject();
     else
         return 0;
 }
@@ -436,25 +547,30 @@ std::string Object::WriteAddr(eibaddr_t addr)
     return std::string(writeaddr_buf);
 }
 
+KnxConnection* Object::getKnxConnection()
+{
+    return Services::instance()->getKnxConnection();
+}
+
 Logger& ObjectValue::logger_m(Logger::getInstance("ObjectValue"));
 
 SwitchingObjectValue::SwitchingObjectValue(const std::string& value)
 {
-    if (value == "1" || value == "on" || value == "true")
+    if (value == "1" || value == "on" || value == getValueString(true))
         value_m = true;
-    else if (value == "0" || value == "off" || value == "false")
+    else if (value == "0" || value == "off" || value == getValueString(false))
         value_m = false;
     else
     {
         std::stringstream msg;
-        msg << "SwitchingObjectValue: Bad value: '" << value << "'" << std::endl;
+        msg << "SwitchingObjectValue: Bad value: '" << value << "' for object type " << getType() << std::endl;
         throw ticpp::Exception(msg.str());
     }
 }
 
 std::string SwitchingObjectValue::toString()
 {
-    return value_m ? "on" : "off";
+    return getValueString(value_m);
 }
 
 double SwitchingObjectValue::toNumber()
@@ -493,6 +609,16 @@ int SwitchingObjectValue::compare(ObjectValue* value)
         return -1;
 }
 
+bool SwitchingObjectValue::set(bool value)
+{
+    if (value_m != value)
+    {
+        value_m = value;
+        return true;
+    }
+    return false;
+}
+
 bool SwitchingObjectValue::set(ObjectValue* value)
 {
     SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
@@ -501,43 +627,15 @@ bool SwitchingObjectValue::set(ObjectValue* value)
         logger_m.errorStream()  << "SwitchingObjectValue: ERROR, set() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    if (value_m != val->value_m)
-    {
-        value_m = val->value_m;
-        return true;
-    }
-    return false;
+    return set(val->value_m);
 }
 
 bool SwitchingObjectValue::set(double value)
 {
-    bool val = (value != 0.0);
-    if (value_m != val)
-    {
-        value_m = val;
-        return true;
-    }
-    return false;
+    return set(value != 0.0);
 }
 
 Logger& SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
-
-SwitchingObject::SwitchingObject() : SwitchingObjectValue(false)
-{}
-
-SwitchingObject::~SwitchingObject()
-{}
-
-ObjectValue* SwitchingObject::createObjectValue(const std::string& value)
-{
-    return new SwitchingObjectValue(value);
-}
-
-void SwitchingObject::setValue(const std::string& value)
-{
-    SwitchingObjectValue val(value);
-    Object::setValue(&val);
-}
 
 void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
@@ -546,22 +644,108 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         newValue = (buf[1] & 0x3F) != 0;
     else
         newValue = buf[2] != 0;
-    SwitchingObjectValue val(newValue);
 
-    if (set(&val) || forceUpdate())
+    if (set(newValue) || forceUpdate())
         onUpdate();
 }
 
 void SwitchingObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (value_m ? 1 : 0) };
+    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
-void SwitchingObject::setBoolValue(bool value)
+SwitchingControlObjectValue::SwitchingControlObjectValue(const std::string& value)
 {
-    SwitchingObjectValue val(value);
-    Object::setValue(&val);
+    control_m = (value != "-1" && value != "no control");
+    if (value == "1" || value == "on" || value == getValueString(true))
+        value_m = true;
+    else if (!control_m || value == "0" || value == "off" || value == getValueString(false))
+        value_m = false;
+    else
+    {
+        std::stringstream msg;
+        msg << "SwitchingObjectValue: Bad value: '" << value << "' for object type " << getType() << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string SwitchingControlObjectValue::toString()
+{
+    if (!control_m)
+        return "no control";
+    return getValueString(value_m);
+}
+
+double SwitchingControlObjectValue::toNumber()
+{
+    return control_m ? (value_m ? 1.0 : 0.0) : -1.0;
+}
+
+bool SwitchingControlObjectValue::equals(ObjectValue* value)
+{
+    assert(value);
+    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream() << "SwitchingControlObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='" << control_m << "' to value='" << val->value_m << "' : control='" << val->control_m << "'" << endlog;
+    return (!control_m && !val->control_m) || (control_m && val->control_m && value_m == val->value_m);
+}
+
+int SwitchingControlObjectValue::compare(ObjectValue* value)
+{
+    assert(value);
+    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream()  << "SwitchingControlObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='" << control_m << "' with value='" << val->value_m << "' : control='" << val->control_m << "'" << endlog;
+    if (!control_m && !val->control_m)
+        return 0;
+    else if (control_m && !val->control_m)
+        return 1;
+    else if (!control_m && val->control_m)
+        return -1;
+    else if (value_m == val->value_m)
+        return 0;
+    else if (value_m)
+        return 1;
+    else
+        return -1;
+}
+
+bool SwitchingControlObjectValue::set(bool value, bool control)
+{
+    if (control_m != control || (control && (value_m != value)))
+    {
+        value_m = value;
+        control_m = control;
+        return true;
+    }
+    return false;
+}
+
+bool SwitchingControlObjectValue::set(ObjectValue* value)
+{
+    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream()  << "SwitchingControlObjectValue: ERROR, set() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    return set(val->value_m, val->control_m);
+}
+
+bool SwitchingControlObjectValue::set(double value)
+{
+    if (value < 0)
+        return set(false, false);
+    return set(value != 0.0, true);
 }
 
 bool StepDirObjectValue::equals(ObjectValue* value)
@@ -1277,7 +1461,7 @@ void DateObject::getDate(int *day, int *month, int *year)
         *year = 1900;
 }
 
-ValueObjectValue::ValueObjectValue(const std::string& value)
+ValueObjectValue::ValueObjectValue(const std::string& value) : precision_m(0)
 {
     std::istringstream val(value);
     val >> value_m;
@@ -1382,12 +1566,12 @@ bool ValueObjectValue::set(double value)
 
 Logger& ValueObject::logger_m(Logger::getInstance("ValueObject"));
 
-ValueObject::ValueObject() : ValueObjectValue(0)
+ValueObject::ValueObject()
 {}
 
 ValueObject::~ValueObject()
 {}
-
+/*
 ObjectValue* ValueObject::createObjectValue(const std::string& value)
 {
     return new ValueObjectValue(value);
@@ -1398,7 +1582,7 @@ void ValueObject::setValue(const std::string& value)
     ValueObjectValue val(value);
     Object::setValue(&val);
 }
-
+*/
 void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     if (len < 4)
@@ -1423,7 +1607,7 @@ void ValueObject::doSend(bool isWrite)
 {
     uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), 0, 0 };
     int ex = 0;
-    int m = (int)rint(value_m * 100);
+    int m = (int)rint(getFloatValue() * 100);
     if (m < 0)
     {
         m = -m;
@@ -1448,12 +1632,12 @@ void ValueObject::doSend(bool isWrite)
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
 }
-
-void ValueObject::setFloatValue(double value)
+/*
+void ValueObjectImpl::setFloatValue(double value)
 {
     ValueObjectValue val(value);
     Object::setValue(&val);
-}
+}*/
 
 ValueObject32Value::ValueObject32Value(const std::string& value)
 {
@@ -1826,6 +2010,94 @@ void HeatingModeObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 
+Latin1CharObjectValue::Latin1CharObjectValue(const std::string& value)
+{
+    unsigned char chvalue;
+    std::istringstream val(value);
+    val >> chvalue;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         chvalue > 255 ||
+         chvalue < 0)
+    {
+        std::stringstream msg;
+        msg << "Latin1CharObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    value_m = (int)chvalue;
+}
+
+std::string Latin1CharObjectValue::toString()
+{
+    std::ostringstream out;
+    out << (unsigned char)value_m;
+    return out.str();
+}
+
+Logger& Latin1CharObject::logger_m(Logger::getInstance("Latin1CharObject"));
+
+Latin1CharObject::Latin1CharObject() : Latin1CharObjectValue(0)
+{}
+
+Latin1CharObject::~Latin1CharObject()
+{}
+
+ObjectValue* Latin1CharObject::createObjectValue(const std::string& value)
+{
+    return new Latin1CharObjectValue(value);
+}
+
+void Latin1CharObject::setValue(const std::string& value)
+{
+    Latin1CharObjectValue val(value);
+    Object::setValue(&val);
+}
+
+AsciiCharObjectValue::AsciiCharObjectValue(const std::string& value)
+{
+    unsigned char chvalue;
+    std::istringstream val(value);
+    val >> chvalue;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         chvalue > 127 ||
+         chvalue < 0)
+    {
+        std::stringstream msg;
+        msg << "AsciiCharObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    value_m = (int)chvalue;
+}
+
+std::string AsciiCharObjectValue::toString()
+{
+    std::ostringstream out;
+    out << (unsigned char)value_m;
+    return out.str();
+}
+
+Logger& AsciiCharObject::logger_m(Logger::getInstance("AsciiCharObject"));
+
+AsciiCharObject::AsciiCharObject() : AsciiCharObjectValue(0)
+{}
+
+AsciiCharObject::~AsciiCharObject()
+{}
+
+ObjectValue* AsciiCharObject::createObjectValue(const std::string& value)
+{
+    return new AsciiCharObjectValue(value);
+}
+
+void AsciiCharObject::setValue(const std::string& value)
+{
+    AsciiCharObjectValue val(value);
+    Object::setValue(&val);
+}
+
 U16ObjectValue::U16ObjectValue(const std::string& value)
 {
     std::istringstream val(value);
@@ -1940,6 +2212,66 @@ void U32Object::doSend(bool isWrite)
 {
     uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+}
+
+RGBObjectValue::RGBObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val.setf(std::ios::hex, std::ios::basefield);
+    val >> value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "RGBObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string RGBObjectValue::toString()
+{
+    std::ostringstream out;
+    out.setf(std::ios::hex, std::ios::basefield);
+    out.fill('0');
+    out << std::setw(6) << value_m;
+    return out.str();
+}
+
+Logger& RGBObject::logger_m(Logger::getInstance("RGBObject"));
+
+RGBObject::RGBObject()
+{}
+
+RGBObject::~RGBObject()
+{}
+
+ObjectValue* RGBObject::createObjectValue(const std::string& value)
+{
+    return new RGBObjectValue(value);
+}
+
+void RGBObject::setValue(const std::string& value)
+{
+    RGBObjectValue val(value);
+    Object::setValue(&val);
+}
+
+void RGBObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    unsigned int newValue;
+    newValue = (buf[2]<<16) | (buf[3]<<8) | buf[4];
+    if (forceUpdate() || newValue != value_m)
+    {
+        value_m = newValue;
+        onUpdate();
+    }
+}
+
+void RGBObject::doSend(bool isWrite)
+{
+    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
+    Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
 }
 
 IntObjectValue::IntObjectValue(const std::string& value)

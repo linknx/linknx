@@ -1,4 +1,5 @@
 Release 0.0.1.31:
+    * Add some KNX datatypes
     * Fix timers going completely nuts when there is a time change from summer to winter time
     * Fix bug "#13 Rules not working if read request fails"
     * Fix compile problem with "close" function and gcc 4.7

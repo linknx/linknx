@@ -108,6 +108,7 @@ protected:
     virtual bool set(ObjectValue* value) = 0;
     virtual bool set(double value) = 0;
     virtual ObjectValue* getObjectValue() = 0;
+    KnxConnection* getKnxConnection();
     bool init_m;
     enum Flags
     {
@@ -139,6 +140,56 @@ private:
     ListenerGadList_t listenerGadList_m;
 };
 
+class SwitchingObject : public Object
+{
+public:
+    virtual ~SwitchingObject() {};
+
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getType() = 0;
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual void setBoolValue(bool value) = 0;
+    virtual bool getBoolValue() = 0;
+protected:
+    virtual bool set(bool value) = 0;
+    virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) = 0;
+    virtual bool getBoolObjectValue() = 0;
+    virtual ObjectValue* getObjectValue() = 0;
+    static Logger& logger_m;
+};
+
+template <typename TObjectValue>
+class SwitchingObjectImpl : public SwitchingObject, public TObjectValue
+{
+public:
+    SwitchingObjectImpl() : TObjectValue(false) {};
+    virtual ~SwitchingObjectImpl() {};
+
+    virtual ObjectValue* createObjectValue(const std::string& value) { return new TObjectValue(value); };
+    virtual void setValue(const std::string& value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
+    virtual std::string getType() { return TObjectValue::getType(); };
+
+    void setBoolValue(bool value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
+    bool getBoolValue() { get(); return TObjectValue::value_m; };
+protected:
+    virtual bool set(bool value) { return TObjectValue::set(value); };
+    virtual bool set(ObjectValue* value) { return TObjectValue::set(value); };
+    virtual bool set(double value) { return TObjectValue::set(value); };
+    virtual bool getBoolObjectValue() { return TObjectValue::value_m; };
+    virtual ObjectValue* getObjectValue() { return static_cast<TObjectValue*>(this); };
+    static Logger& logger_m;
+};
+
 class SwitchingObjectValue : public ObjectValue
 {
 public:
@@ -149,31 +200,141 @@ public:
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
     virtual double toNumber();
+    virtual std::string getType() { return "1.001"; };
+    virtual std::string getValueString(bool value) { return value ? "on" : "off"; };
 protected:
+    SwitchingObjectValue() : value_m(false) {};
+    virtual bool set(bool value);
     virtual bool set(ObjectValue* value);
     virtual bool set(double value);
     bool value_m;
 };
+typedef SwitchingObjectImpl<SwitchingObjectValue> SwitchingSwitchObject;
+struct SwitchingType {
+    const char *type;
+    const char *valueTrue;
+    const char *valueFalse;
+};
+static const SwitchingType SwitchingTypes[] = {
+    {"1.xxx", "1", "0"},
+    {"1.001", "on", "off"},
+    {"1.002", "true", "false"},
+    {"1.003", "enable", "disable"},
+    {"1.004", "ramp", "no ramp"},
+    {"1.005", "alarm", "no alarm"},
+    {"1.006", "high", "low"},
+    {"1.007", "increase", "decrease"},
+    {"1.008", "down", "up"},
+    {"1.009", "close", "open"},
+    {"1.010", "start", "stop"},
+    {"1.011", "active", "inactive"},
+    {"1.012", "inverted", "not inverted"},
+    {"1.013", "cyclically", "start stop"},
+    {"1.014", "calculated", "fixed"}
+};
 
-class SwitchingObject : public Object, public SwitchingObjectValue
+template <int eis>
+class SwitchingImplObjectValue : public SwitchingObjectValue
 {
 public:
-    SwitchingObject();
-    virtual ~SwitchingObject();
+    SwitchingImplObjectValue(const std::string& value) : SwitchingObjectValue(value) {};
+    SwitchingImplObjectValue(bool value) : SwitchingObjectValue(value) {};
+    virtual ~SwitchingImplObjectValue() {};
+    virtual std::string getType() { return SwitchingTypes[eis].type; };
+    virtual std::string getValueString(bool value) { return value ? SwitchingTypes[eis].valueTrue : SwitchingTypes[eis].valueFalse; };
+};
 
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getType() { return "1.001"; };
+template <typename TObjectValue>
+class SwitchingControlObject : public Object, public TObjectValue
+{
+public:
+    SwitchingControlObject() : TObjectValue(false, false) {};
+    virtual ~SwitchingControlObject() {};
 
-    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
-    virtual void doSend(bool isWrite);
-    void setBoolValue(bool value);
-    bool getBoolValue() { get(); return value_m; };
+    virtual ObjectValue* createObjectValue(const std::string& value) { return new TObjectValue(value); };
+    virtual void setValue(const std::string& value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
+    virtual std::string getType() { return TObjectValue::getType(); };
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src) {
+        int newValue;
+        if (len == 2)
+            newValue = (buf[1] & 0x3F);
+        else
+            newValue = buf[2];
+
+        if (set(newValue) || forceUpdate())
+            onUpdate();
+    };
+    virtual void doSend(bool isWrite) {
+        uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (TObjectValue::control_m ? 2 : 0) | (TObjectValue::value_m ? 1 : 0) };
+        getKnxConnection()->write(getGad(), buf, 2);
+    };
+    void setBoolValue(bool value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
 protected:
-    virtual bool set(ObjectValue* value) { return SwitchingObjectValue::set(value); };
-    virtual bool set(double value) { return SwitchingObjectValue::set(value); };
-    virtual ObjectValue* getObjectValue() { return static_cast<SwitchingObjectValue*>(this); };
+    virtual bool set(bool value, bool control) { return TObjectValue::set(value, control); };
+    virtual bool set(ObjectValue* value) { return TObjectValue::set(value); };
+    virtual bool set(double value) { return TObjectValue::set(value); };
+    virtual ObjectValue* getObjectValue() { return static_cast<TObjectValue*>(this); };
     static Logger& logger_m;
+};
+
+class SwitchingControlObjectValue : public ObjectValue
+{
+public:
+    SwitchingControlObjectValue(const std::string& value);
+    SwitchingControlObjectValue(bool value, bool control) : value_m(value), control_m(control) {};
+    virtual ~SwitchingControlObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString();
+    virtual double toNumber();
+    virtual std::string getType() { return "1.001"; };
+    virtual std::string getValueString(bool value) { return value ? "on" : "off"; };
+protected:
+    SwitchingControlObjectValue() : value_m(false), control_m(false) {};
+    virtual bool set(bool value, bool control);
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
+    bool value_m;
+    bool control_m;
+};
+
+struct SwitchingControlType {
+    const char *type;
+    const char *valueTrue;
+    const char *valueFalse;
+};
+static const SwitchingControlType SwitchingControlTypes[] = {
+    {"2.xxx", "1", "0"},
+    {"2.001", "on", "off"},
+    {"2.002", "true", "false"},
+    {"2.003", "enable", "disable"},
+    {"2.004", "ramp", "no ramp"},
+    {"2.005", "alarm", "no alarm"},
+    {"2.006", "high", "low"},
+    {"2.007", "increase", "decrease"},
+    {"2.008", "down", "up"},
+    {"2.009", "close", "open"},
+    {"2.010", "start", "stop"},
+    {"2.011", "active", "inactive"},
+    {"2.012", "inverted", "not inverted"}
+};
+
+template <int eis>
+class SwitchingControlImplObjectValue : public SwitchingControlObjectValue
+{
+public:
+    SwitchingControlImplObjectValue(const std::string& value) : SwitchingControlObjectValue(value) {};
+    SwitchingControlImplObjectValue(bool value, bool control) : SwitchingControlObjectValue(value, control) {};
+    virtual ~SwitchingControlImplObjectValue() {};
+    virtual std::string getType() { return SwitchingControlTypes[eis].type; };
+    virtual std::string getValueString(bool value) { return value ? SwitchingControlTypes[eis].valueTrue : SwitchingControlTypes[eis].valueFalse; };
 };
 
 class StepDirObjectValue : public ObjectValue
@@ -379,26 +540,104 @@ protected:
     ValueObjectValue() : value_m(0), precision_m(0) {};
 };
 
-class ValueObject : public Object, public ValueObjectValue
+class ValueObject : public Object
 {
 public:
     ValueObject();
     virtual ~ValueObject();
 
-    virtual ObjectValue* createObjectValue(const std::string& value);
-    virtual void setValue(const std::string& value);
-    virtual std::string getType() { return "9.xxx"; };
+    virtual ObjectValue* createObjectValue(const std::string& value) = 0;
+    virtual void setValue(const std::string& value) = 0;
+    virtual std::string getType() = 0;
 
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
-    void setFloatValue(double value);
-    double getFloatValue() { get(); return value_m; };
+    void setFloatValue(double value) = 0;
+    double getFloatValue() = 0;
 protected:
-    virtual bool set(ObjectValue* value) { return ValueObjectValue::set(value); };
-    virtual bool set(double value) { return ValueObjectValue::set(value); };
-    virtual ObjectValue* getObjectValue() { return static_cast<ValueObjectValue*>(this); };
+    virtual bool set(ObjectValue* value) = 0;
+    virtual bool set(double value) = 0;
+    virtual ObjectValue* getObjectValue() = 0;
     static Logger& logger_m;
 };
+
+template <typename TObjectValue>
+class ValueObjectImpl : public ValueObject, public TObjectValue
+{
+public:
+    ValueObjectImpl() : TObjectValue(0) {};
+    virtual ~ValueObjectImpl() {};
+
+    virtual ObjectValue* createObjectValue(const std::string& value) { return new TObjectValue(value); };
+    virtual void setValue(const std::string& value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
+    virtual std::string getType() { return TObjectValue::getType(); };
+
+    void setFloatValue(double value) {
+        TObjectValue val(value);
+        Object::setValue(&val);
+    };
+    double getFloatValue() { get(); return TObjectValue::value_m; };
+protected:
+    virtual bool set(bool value) { return TObjectValue::set(value); };
+    virtual bool set(ObjectValue* value) { return TObjectValue::set(value); };
+    virtual bool set(double value) { return TObjectValue::set(value); };
+    virtual ObjectValue* getObjectValue() { return static_cast<TObjectValue*>(this); };
+    static Logger& logger_m;
+};
+
+struct FloatValueType {
+    const char *type;
+    double valueMin;
+    double valueMax;
+};
+static const FloatValueType FloatValueTypes[] = {
+    {"9.xxx", -671088.64, 670760.96},
+    {"9.001", -273, 670760},
+    {"9.002", -670760, 670760},
+    {"9.003", -670760, 670760},
+    {"9.004", 0, 670760},
+    {"1.005", 0, 670760},
+    {"1.006", 0, 670760},
+    {"1.007", 0, 670760},
+    {"1.008", 0, 670760},
+    {0, 0, 0},
+    {"1.010", -670760, 670760},
+    {"1.011", -670760, 670760},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {"1.020", -670760, 670760},
+    {"1.021", -670760, 670760},
+    {"1.022", -670760, 670760},
+    {"1.023", -670760, 670760},
+    {"1.024", -670760, 670760},
+    {"1.025", -670760, 670760},
+    {"1.026", -671088.64, 670760.96},
+    {"1.027", -459.6, 670760.96},
+    {"1.028", 0, 670760.96}
+};
+
+template <int subtype>
+class ValueImplObjectValue : public ValueObjectValue
+{
+public:
+    ValueImplObjectValue(const std::string& value) : ValueObjectValue(value) {};
+    ValueImplObjectValue(double value) : ValueObjectValue(value) {};
+    virtual ~ValueImplObjectValue() {};
+    virtual std::string getType() { return FloatValueTypes[subtype].type; };
+    virtual double getBound(bool upper) { return upper ? FloatValueTypes[subtype].valueMax : FloatValueTypes[subtype].valueMin; };
+};
+
+typedef ValueImplObjectValue<0> ValueObjectValue0;
+typedef ValueObjectImpl<ValueImplObjectValue<0> > ValueObject0;
 
 class ValueObject32Value : public ValueObjectValue
 {
@@ -517,6 +756,15 @@ protected:
     static Logger& logger_m;
 };
 
+class U8CountObject : public U8Object
+{
+public:
+    U8CountObject() {};
+    virtual ~U8CountObject() {};
+
+    virtual std::string getType() { return "5.010"; };
+};
+
 class ScalingObjectValue : public U8ObjectValue
 {
 public:
@@ -597,6 +845,60 @@ protected:
     static Logger& logger_m;
 };
 
+class Latin1CharObjectValue : public U8ObjectValue
+{
+public:
+    Latin1CharObjectValue(const std::string& value);
+    virtual std::string toString();
+protected:
+    Latin1CharObjectValue(uint32_t value) : U8ObjectValue(value) {};
+};
+
+class AsciiCharObjectValue : public U8ObjectValue
+{
+public:
+    AsciiCharObjectValue(const std::string& value);
+    virtual std::string toString();
+protected:
+    AsciiCharObjectValue(uint32_t value) : U8ObjectValue(value) {};
+};
+
+class Latin1CharObject : public U8ImplObject, public Latin1CharObjectValue
+{
+public:
+    Latin1CharObject();
+    virtual ~Latin1CharObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "4.002"; };
+    virtual std::string toString() { return Latin1CharObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return Latin1CharObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual ObjectValue* getObjectValue() { return static_cast<Latin1CharObjectValue*>(this); };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
+};
+
+class AsciiCharObject : public U8ImplObject, public AsciiCharObjectValue
+{
+public:
+    AsciiCharObject();
+    virtual ~AsciiCharObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "4.001"; };
+    virtual std::string toString() { return AsciiCharObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return AsciiCharObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual ObjectValue* getObjectValue() { return static_cast<AsciiCharObjectValue*>(this); };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
+};
+
 class U16ObjectValue : public UIntObjectValue
 {
 public:
@@ -655,6 +957,37 @@ protected:
     virtual bool set(ObjectValue* value) { return U32ObjectValue::set(value); };
     virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
     virtual ObjectValue* getObjectValue() { return static_cast<U32ObjectValue*>(this); };
+    virtual uint32_t getInt() { return value_m; };
+    static Logger& logger_m;
+};
+
+class RGBObjectValue : public UIntObjectValue
+{
+public:
+    RGBObjectValue(const std::string& value);
+    virtual ~RGBObjectValue() {};
+    virtual std::string toString();
+protected:
+    RGBObjectValue(uint32_t value) : UIntObjectValue(value) {};
+    RGBObjectValue() {};
+};
+
+class RGBObject : public UIntObject, public RGBObjectValue
+{
+public:
+    RGBObject();
+    virtual ~RGBObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "232.600"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return RGBObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return RGBObjectValue::set(value); };
+    virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
+    virtual ObjectValue* getObjectValue() { return static_cast<RGBObjectValue*>(this); };
     virtual uint32_t getInt() { return value_m; };
     static Logger& logger_m;
 };
