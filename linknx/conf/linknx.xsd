@@ -2,13 +2,13 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:simpleType name="durationType">
     <xs:restriction base="xs:string">
-      <xs:pattern value="-?[0-9]*[dhms]?"/>
+      <xs:pattern value="-?[0-9]*([dhms]|ms)?"/>
     </xs:restriction>
   </xs:simpleType>
 
   <xs:simpleType name="positiveDurationType">
     <xs:restriction base="xs:string">
-      <xs:pattern value="[0-9]*[dhms]?"/>
+      <xs:pattern value="[0-9]*([dhms]|ms)?"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -37,6 +37,7 @@
   <xs:complexType name="conditionType" mixed="true">
     <xs:choice>
       <xs:element ref="condition" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="resetcondition" minOccurs="0"/>
       <xs:sequence>
         <xs:element ref="every" minOccurs="0"/>
         <xs:element ref="at" minOccurs="0"/>
@@ -61,10 +62,12 @@
           <xs:enumeration value="object"/>
           <xs:enumeration value="object-compare"/>
           <xs:enumeration value="object-src"/>
+          <xs:enumeration value="threshold"/>
           <xs:enumeration value="timer"/>
           <xs:enumeration value="time-counter"/>
           <xs:enumeration value="script"/>
           <xs:enumeration value="ioport-rx"/>
+          <xs:enumeration value="ioport-connect"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -96,7 +99,22 @@
     <xs:attribute name="threshold" type="positiveDurationType" use="optional"/>
     <xs:attribute name="reset-delay" type="positiveDurationType" use="optional"/>
     <xs:attribute name="ioport" type="xs:string" use="optional"/>
+    <xs:attribute name="hex" type="xs:string" use="optional"/>
+    <xs:attribute name="regex" type="xs:string" use="optional"/>
     <xs:attribute name="expected" type="xs:string" use="optional"/>
+    <xs:attribute name="delta-up" type="xs:double" use="optional"/>
+    <xs:attribute name="delta-low" type="xs:double" use="optional"/>
+    <xs:attribute name="object0" type="xs:string" use="optional"/>
+    <xs:attribute name="object1" type="xs:string" use="optional"/>
+    <xs:attribute name="object2" type="xs:string" use="optional"/>
+    <xs:attribute name="object3" type="xs:string" use="optional"/>
+    <xs:attribute name="object4" type="xs:string" use="optional"/>
+    <xs:attribute name="object5" type="xs:string" use="optional"/>
+    <xs:attribute name="object6" type="xs:string" use="optional"/>
+    <xs:attribute name="object7" type="xs:string" use="optional"/>
+    <xs:attribute name="object8" type="xs:string" use="optional"/>
+    <xs:attribute name="object9" type="xs:string" use="optional"/>
+    <!-- Is there a way to define a pattern for valid attribute name in xsd ??? -->
   </xs:complexType>
 
   <xs:complexType name="actionType" mixed="true">
@@ -134,7 +152,10 @@
           <xs:enumeration value="shell-cmd"/>
           <xs:enumeration value="ioport-tx"/>
           <xs:enumeration value="script"/>
+          <xs:enumeration value="start-actionlist"/>
           <xs:enumeration value="cancel"/>
+          <xs:enumeration value="set-rule-active"/>
+          <xs:enumeration value="formula"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -160,7 +181,32 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
+    <xs:attribute name="list" use="optional" default="true">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="active" use="optional" default="yes">
+      <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="yes"/>
+          <xs:enumeration value="no"/>
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
     <xs:attribute name="cmd" type="xs:string" use="optional"/>
+    <xs:attribute name="x" type="xs:string" use="optional"/>
+    <xs:attribute name="y" type="xs:string" use="optional"/>
+    <xs:attribute name="a" type="xs:float" use="optional"/>
+    <xs:attribute name="b" type="xs:float" use="optional"/>
+    <xs:attribute name="c" type="xs:float" use="optional"/>
+    <xs:attribute name="m" type="xs:float" use="optional"/>
+    <xs:attribute name="n" type="xs:float" use="optional"/>
   </xs:complexType>
 
   <xs:element name="action" type="actionType"/>
@@ -258,6 +304,9 @@
 
   <xs:element name="exceptiondays">
     <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="date" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
       <xs:attribute name="clear" use="optional" default="false">
         <xs:simpleType>
           <xs:restriction base="xs:NMTOKEN">
@@ -266,9 +315,6 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:sequence>
-        <xs:element ref="date" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
     </xs:complexType>
   </xs:element>
 
@@ -284,6 +330,9 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+      <xs:attribute name="mode" type="xs:string" use="optional"/>
+      <xs:attribute name="timeout" type="positiveDurationType" use="optional"/>
+      <xs:attribute name="msg-length" type="xs:nonNegativeInteger" use="optional"/>
       <xs:attribute name="host" type="xs:string" use="optional"/>
       <xs:attribute name="port" type="xs:string" use="optional"/>
       <xs:attribute name="rxport" type="xs:string" use="optional"/>
@@ -377,20 +426,68 @@
           <xs:restriction base="xs:NMTOKEN">
             <xs:enumeration value="EIS1"/>
             <xs:enumeration value="1.001"/>
+            <xs:enumeration value="1.002"/>
+            <xs:enumeration value="1.003"/>
+            <xs:enumeration value="1.004"/>
+            <xs:enumeration value="1.005"/>
+            <xs:enumeration value="1.006"/>
+            <xs:enumeration value="1.007"/>
+            <xs:enumeration value="1.008"/>
+            <xs:enumeration value="1.009"/>
+            <xs:enumeration value="1.010"/>
+            <xs:enumeration value="1.011"/>
+            <xs:enumeration value="1.012"/>
+            <xs:enumeration value="1.013"/>
+            <xs:enumeration value="1.014"/>
+            <xs:enumeration value="2.xxx"/>
+            <xs:enumeration value="2.001"/>
+            <xs:enumeration value="2.002"/>
+            <xs:enumeration value="2.003"/>
+            <xs:enumeration value="2.004"/>
+            <xs:enumeration value="2.005"/>
+            <xs:enumeration value="2.006"/>
+            <xs:enumeration value="2.007"/>
+            <xs:enumeration value="2.008"/>
+            <xs:enumeration value="2.009"/>
+            <xs:enumeration value="2.010"/>
+            <xs:enumeration value="2.011"/>
+            <xs:enumeration value="2.012"/>
             <xs:enumeration value="EIS2"/>
             <xs:enumeration value="3.007"/>
             <xs:enumeration value="3.008"/>
+            <xs:enumeration value="4.001"/>
+            <xs:enumeration value="4.002"/>
             <xs:enumeration value="EIS3"/>
             <xs:enumeration value="10.001"/>
             <xs:enumeration value="EIS4"/>
             <xs:enumeration value="11.001"/>
             <xs:enumeration value="EIS5"/>
             <xs:enumeration value="9.xxx"/>
+            <xs:enumeration value="9.001"/>
+            <xs:enumeration value="9.002"/>
+            <xs:enumeration value="9.003"/>
+            <xs:enumeration value="9.004"/>
+            <xs:enumeration value="9.005"/>
+            <xs:enumeration value="9.006"/>
+            <xs:enumeration value="9.007"/>
+            <xs:enumeration value="9.008"/>
+            <xs:enumeration value="9.010"/>
+            <xs:enumeration value="9.011"/>
+            <xs:enumeration value="9.020"/>
+            <xs:enumeration value="9.021"/>
+            <xs:enumeration value="9.022"/>
+            <xs:enumeration value="9.023"/>
+            <xs:enumeration value="9.024"/>
+            <xs:enumeration value="9.025"/>
+            <xs:enumeration value="9.026"/>
+            <xs:enumeration value="9.027"/>
+            <xs:enumeration value="9.028"/>
             <xs:enumeration value="14.xxx"/>
             <xs:enumeration value="EIS6"/>
             <xs:enumeration value="5.xxx"/>
             <xs:enumeration value="5.001"/>
             <xs:enumeration value="5.003"/>
+            <xs:enumeration value="5.010"/>
             <xs:enumeration value="heat-mode"/>
             <xs:enumeration value="20.102"/>
             <xs:enumeration value="EIS10"/>
@@ -406,12 +503,14 @@
             <xs:enumeration value="16.000"/>
             <xs:enumeration value="16.001"/>
             <xs:enumeration value="28.001"/>
+            <xs:enumeration value="232.600"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name="log" type="xs:string" use="optional" default="false"/>
       <xs:attribute name="init" type="xs:string" use="optional" default="request"/>
       <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="precision" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 
@@ -445,6 +544,16 @@
       </xs:sequence>
       <xs:attribute name="id" type="xs:string" use="required"/>
       <xs:attribute name="active" type="xs:string" use="optional" default="true"/>
+      <xs:attribute name="init" use="optional" default="false">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="false"/>
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="eval"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="description" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 
@@ -477,10 +586,12 @@
       <xs:attribute name="user" type="xs:string" use="optional"/>
       <xs:attribute name="type" type="xs:string" use="optional"/>
       <xs:attribute name="pass" type="xs:string" use="optional"/>
+      <xs:attribute name="from" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 
   <xs:element name="stopcondition" type="conditionType"/>
+  <xs:element name="resetcondition" type="conditionType"/>
 
   <xs:element name="until" type="timespecType"/>
 
