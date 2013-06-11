@@ -82,6 +82,7 @@ private:
     std::string db_m;
     std::string table_m;
     std::string logtable_m;
+    std::string charset_m;
 protected:
     static Logger& logger_m;
 };

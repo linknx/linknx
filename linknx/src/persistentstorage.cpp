@@ -136,6 +136,7 @@ MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
     db_m = pConfig->GetAttribute("db");
     table_m = pConfig->GetAttribute("table");
     logtable_m = pConfig->GetAttribute("logtable");
+    charset_m = pConfig->GetAttribute("charset");
 
     if(mysql_init(&con_m)==NULL)
     {
@@ -143,11 +144,21 @@ MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
     }
     mysql_options(&con_m, MYSQL_OPT_RECONNECT, &reconnect);
 
+    if(!charset_m.empty())
+    {
+        mysql_options(&con_m, MYSQL_SET_CHARSET_NAME, charset_m.c_str());
+    }
+
     if (!mysql_real_connect(&con_m, host_m.c_str(), user_m.c_str(), pass_m.c_str(), db_m.c_str(), 0,NULL,0)) 
     {
         std::stringstream msg;
         msg << "MysqlPersistentStorage: error connecting to '" << db_m << "' on host '" << host_m << "' with user '" << user_m << "', error was '" << mysql_error(&con_m) << "'" <<std::endl;
         throw ticpp::Exception(msg.str());
+    }
+
+    if(!charset_m.empty())
+    {
+        mysql_options(&con_m, MYSQL_SET_CHARSET_NAME, ("set names " + charset_m).c_str());
     }
 }
 
@@ -165,6 +176,8 @@ void MysqlPersistentStorage::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("db", db_m);
     pConfig->SetAttribute("table", table_m);
     pConfig->SetAttribute("logtable", logtable_m);
+    if (charset_m != "")
+        pConfig->SetAttribute("charset", charset_m);
 }
 
 void MysqlPersistentStorage::write(const std::string& id, const std::string& value)
