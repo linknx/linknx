@@ -22,6 +22,7 @@
 #include "ioport.h"
 #include <fcntl.h>
 #include <unistd.h>
+#include <unistd.h>
 
 Logger& IOPort::logger_m(Logger::getInstance("IOPort"));
 Logger& RxThread::logger_m(Logger::getInstance("RxThread"));
@@ -333,15 +334,58 @@ int UdpIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     return -1;
 }
 
-TcpClientIOPort::TcpClientIOPort() : sockfd_m(-1), port_m(0)
+TcpClientIOPort::Socket::Socket(TcpClientIOPort *ioport)
+    : ioport_m(ioport), sockfd_m(-1)
+{
+    // Reuse permanent socket?
+    if(ioport->permanent_m)
+    {
+        sockfd_m = ioport->permanentSockfd_m;
+    }
+
+    // Allocate new socket?
+    if(sockfd_m < 0)
+    {
+        // Allocate a new socket.
+        sockfd_m = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd_m >= 0) {
+            if (pth_connect(sockfd_m, (const struct sockaddr *)&ioport->addr_m, sizeof (ioport_m->addr_m)) < 0) {
+                logger_m.errorStream() << "Unable to connect to server for ioport " << ioport->getID() << endlog;
+            }
+        }
+        else {
+            logger_m.errorStream() << "Unable to create  socket for ioport " << ioport_m->getID() << endlog;
+        }
+    }    
+
+    // Keep socket?
+    if (ioport->permanent_m)
+    {
+        ioport->permanentSockfd_m = sockfd_m;
+    }
+}
+
+TcpClientIOPort::Socket::~Socket()
+{
+    // Close socket unless connection is permanent.
+    if (sockfd_m > 0 && !ioport_m->permanent_m)
+    {
+        if (close(sockfd_m) < 0) {
+            logger_m.errorStream() << "Unable to close connection to server for ioport " << ioport_m->getID() << endlog;
+        }
+    }
+}
+
+TcpClientIOPort::TcpClientIOPort() : port_m(0), permanentSockfd_m(-1)
 {
     memset (&addr_m, 0, sizeof (addr_m));
 }
 
 TcpClientIOPort::~TcpClientIOPort()
 {
-    if (sockfd_m >= 0)
-        close(sockfd_m);
+    // Close permanent socket if applicable.
+    if (permanentSockfd_m >= 0)
+        close(permanentSockfd_m);
     Logger::getInstance("TcpClientIOPort").debugStream() << "Deleting TcpClientIOPort " << endlog;
 }
 
@@ -375,17 +419,14 @@ int TcpClientIOPort::send(const uint8_t* buf, int len)
     logger_m.infoStream() << "send(buf, len=" << len << "):"
         << buf << endlog;
 
-    connectToServer();
-    if (sockfd_m >= 0) {
-        ssize_t nbytes = pth_write(sockfd_m, buf, len);
+    Socket so(this);
+    if (so.sockfd_m >= 0) {
+        ssize_t nbytes = pth_write(so.sockfd_m, buf, len);
         if (nbytes == len) {
-            if (!permanent_m)
-                disconnectFromServer();
             return nbytes;
         }
         else {
             logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
-            disconnectFromServer();
         }
     }
     return -1;
@@ -396,9 +437,9 @@ int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     logger_m.debugStream() << "get(buf, len=" << len << ")" << endlog;
     bool retry = true;
     while (retry) {
-        connectToServer();
-        if (sockfd_m >= 0) {
-            ssize_t i = pth_read_ev(sockfd_m, buf, len, stop);
+        Socket so(this);
+        if (so.sockfd_m >= 0) {
+            ssize_t i = pth_read_ev(so.sockfd_m, buf, len, stop);
             logger_m.debugStream() << "Out of read " << i << endlog;
             if (i > 0)
             {
@@ -407,7 +448,6 @@ int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
                 return i;
             }
             else {
-                disconnectFromServer();
                 if (pth_event_status (stop) == PTH_STATUS_OCCURRED)
                     retry = false;
             }
@@ -423,31 +463,6 @@ int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
     }
     logger_m.debugStream() << "Abort get() on ioport " << getID() << endlog;
     return -1;
-}
-
-void TcpClientIOPort::connectToServer()
-{
-    if (sockfd_m < 0) {
-        sockfd_m = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd_m >= 0) {
-            if (pth_connect(sockfd_m, (const struct sockaddr *) &addr_m, sizeof (addr_m)) < 0) {
-                logger_m.errorStream() << "Unable to connect to server for ioport " << getID() << endlog;
-                disconnectFromServer();
-            }
-            onConnect();
-        }
-        else {
-            logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
-        }    
-    }
-}
-
-void TcpClientIOPort::disconnectFromServer()
-{
-    if (close(sockfd_m) < 0) {
-        logger_m.errorStream() << "Unable to close connection to server for ioport " << getID() << endlog;
-    }
-    sockfd_m = -1;
 }
 
 SerialIOPort::SerialIOPort() : fd_m(-1)

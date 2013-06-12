@@ -181,15 +181,26 @@ public:
     virtual bool mustConnect() { return true; };
 
 private:
+    struct Socket
+    {
+        Socket(TcpClientIOPort *ioport);
+
+        ~Socket();
+
+        TcpClientIOPort *ioport_m;
+        int sockfd_m;
+    };
+
     std::string host_m;
-    int sockfd_m;
+    // Permanent socket or -1 if connection is not permanent.
+    int permanentSockfd_m;
     int port_m;
     bool permanent_m;
     struct sockaddr_in addr_m;
     static Logger& logger_m;
     
-    void connectToServer();
-    void disconnectFromServer();
+    // void connectToServer();
+    // void disconnectFromServer();
 };
 
 class SerialIOPort : public IOPort
