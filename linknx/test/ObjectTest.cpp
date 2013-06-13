@@ -701,12 +701,12 @@ public:
         TimeObject t, t2;
         int wday, hour, min, sec;
         t.setValue("00:00:00");
-        CPPUNIT_ASSERT(t.getValue() == "0:0:0");
+        CPPUNIT_ASSERT(t.getValue() == "00:00:00");
         t2.setValue("now");
-        CPPUNIT_ASSERT(t2.getValue() != "0:0:0" || (sleep(2) == 0 && t2.getValue() != "0:0:0"));
+        CPPUNIT_ASSERT(t2.getValue() != "00:00:00" || (sleep(2) == 0 && t2.getValue() != "00:00:00"));
 
         t.setValue("17:30:05");
-        CPPUNIT_ASSERT(t.getValue() == "17:30:5");
+        CPPUNIT_ASSERT(t.getValue() == "17:30:05");
         t2.setValue("18:30:29");
         CPPUNIT_ASSERT(t2.getValue() == "18:30:29");
 
@@ -724,12 +724,12 @@ public:
         CPPUNIT_ASSERT_THROW(t.setValue("24:30:00"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("23:-1:10"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("23:-1"), ticpp::Exception);
-        CPPUNIT_ASSERT_THROW(t.setValue("23:60:0"), ticpp::Exception);
-        CPPUNIT_ASSERT_THROW(t.setValue("0:50:111"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("23:60:00"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("00:50:111"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("now:10:50"), ticpp::Exception);
         CPPUNIT_ASSERT_THROW(t.setValue("0:50:11:1"), ticpp::Exception);
 
-        TimeObjectValue tval("17:30:5");
+        TimeObjectValue tval("17:30:05");
         CPPUNIT_ASSERT(t.equals(&tval));
         CPPUNIT_ASSERT(!t2.equals(&tval));
 
@@ -748,7 +748,7 @@ public:
         delete val;      
 
         t.setTime(1, 20, 45, 0);
-        CPPUNIT_ASSERT(t.getValue() == "20:45:0");
+        CPPUNIT_ASSERT(t.getValue() == "20:45:00");
         t.getTime(&wday, &hour, &min, &sec);
         CPPUNIT_ASSERT_EQUAL(1, wday);
         CPPUNIT_ASSERT_EQUAL(20, hour);
@@ -774,8 +774,8 @@ public:
         eibaddr_t src;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
-        CPPUNIT_ASSERT(t.getValue() == "0:0:0");
-        TimeObjectValue tval1("0:0:0");
+        CPPUNIT_ASSERT(t.getValue() == "00:00:00");
+        TimeObjectValue tval1("00:00:00");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -784,15 +784,15 @@ public:
         buf[4] = 4;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
-        CPPUNIT_ASSERT(t.getValue() == "23:10:4");
-        TimeObjectValue tval2("23:10:4");
+        CPPUNIT_ASSERT(t.getValue() == "23:10:04");
+        TimeObjectValue tval2("23:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);        
-        CPPUNIT_ASSERT(t.getValue() == "23:10:4");
-        TimeObjectValue tval3("23:10:4");
+        CPPUNIT_ASSERT(t.getValue() == "23:10:04");
+        TimeObjectValue tval3("23:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
@@ -801,8 +801,8 @@ public:
         buf[4] = 4;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
-        CPPUNIT_ASSERT(t.getValue() == "20:10:4");
-        TimeObjectValue tval4("20:10:4");
+        CPPUNIT_ASSERT(t.getValue() == "20:10:04");
+        TimeObjectValue tval4("20:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
@@ -811,7 +811,7 @@ public:
         buf[4] = 4;
         isOnChangeCalled_m = false;
         t.onWrite(buf, 5, src);       
-        CPPUNIT_ASSERT(t.getValue() == "20:10:4");
+        CPPUNIT_ASSERT(t.getValue() == "20:10:04");
 //      TODO: implement weekday support in TimeObjectValue
 //        TimeObjectValue tval5("20:10:4");
 //        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval5));
@@ -831,21 +831,21 @@ public:
         t.addChangeListener(this);
 
         isOnChangeCalled_m = false;
-        t.setValue("6:30:00");
+        t.setValue("06:30:00");
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.setValue("6:30:01");
+        t.setValue("06:30:01");
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.setValue("6:30:01");
+        t.setValue("06:30:01");
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         t.removeChangeListener(this);
 
         isOnChangeCalled_m = false;
-        t.setValue("7:20:00");
+        t.setValue("07:20:00");
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
     }
 
@@ -883,7 +883,7 @@ public:
         delete orig;
 
         Object *res = Object::create(&pConfig);
-        CPPUNIT_ASSERT(res->getValue() == "7:25:0");
+        CPPUNIT_ASSERT(res->getValue() == "07:25:00");
         res->setValue("23:59:59");
         delete res;
 

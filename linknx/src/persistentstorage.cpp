@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <iomanip>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -118,7 +119,10 @@ void FilePersistentStorage::writelog(const std::string& id, const std::string& v
     struct tm * timeinfo = localtime(&tim);
 
     fp_out << timeinfo->tm_year+1900 << "-" << timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday << " ";
-    fp_out << timeinfo->tm_hour      << ":" << timeinfo->tm_min   << ":" << timeinfo->tm_sec;
+    fp_out << std::setfill('0') << std::setw(2) 
+    << timeinfo->tm_hour << ":" << std::setfill('0') << std::setw(2)
+    << timeinfo->tm_min << ":" << std::setfill('0') << std::setw(2)
+    << timeinfo->tm_sec;
     fp_out << " > " << value << "\n";
     fp_out.close(); 
 }

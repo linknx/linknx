@@ -100,6 +100,7 @@ protected:
     TimeObject* time_m;
     DateObject* date_m;
     ChangeListener* cl_m;
+    int offset_m;
 };
 
 class PeriodicTask : public TimerTask, public ChangeListener

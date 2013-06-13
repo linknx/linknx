@@ -1036,7 +1036,10 @@ std::string TimeObjectValue::toString()
     if (hour_m == -1)
         return "now";
     std::ostringstream out;
-    out << hour_m << ":" << min_m << ":" << sec_m;
+    out << std::setfill('0') << std::setw(2) 
+    << hour_m << ":" << std::setfill('0') << std::setw(2) 
+    << min_m << ":" << std::setfill('0') << std::setw(2)
+    << sec_m;
     return out.str();
 }
 

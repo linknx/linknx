@@ -22,6 +22,7 @@
 #include "services.h"
 #include <iostream>
 #include <ctime>
+#include <iomanip>
 
 Logger& TimerManager::logger_m(Logger::getInstance("TimerManager"));
 
@@ -197,8 +198,11 @@ void TimeSpec::importXml(ticpp::Element* pConfig)
     infoStream("TimeSpec")
     << year_m+1900 << "-"
     << mon_m+1 << "-"
+    << std::setfill('0') << std::setw(2)
     << mday_m << " "
+    << std::setfill('0') << std::setw(2)
     << hour_m << ":"
+    << std::setfill('0') << std::setw(2)
     << min_m << ":0 (wdays="
     << wdays_m << "; exception=" << exception_m << ")" << endlog;
 }
@@ -251,7 +255,7 @@ void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int 
     *exception = exception_m;
 }
 
-VariableTimeSpec::VariableTimeSpec(ChangeListener* cl) : time_m(0), date_m(0), cl_m(cl)
+VariableTimeSpec::VariableTimeSpec(ChangeListener* cl) : time_m(0), date_m(0), cl_m(cl), offset_m(0)
 {
 }
 
@@ -283,6 +287,7 @@ void VariableTimeSpec::importXml(ticpp::Element* pConfig)
             msg << "Wrong Object type for time in VariableTimeSpec: '" << time << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
+        offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
         if (cl_m)
             time_m->addChangeListener(cl_m);
     }
@@ -312,6 +317,8 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("time", time_m->getID());
     if (date_m)
         pConfig->SetAttribute("date", date_m->getID());
+    if (offset_m != 0)
+        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
 }
 
 void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
@@ -329,11 +336,11 @@ void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *ye
         int sec_l, min_l, hour_l, wday_l;
         time_m->getTime(&wday_l, &hour_l, &min_l, &sec_l);
         if (*min == -1)
-            *min = min_l;    
+            *min = min_l;
         if (*hour == -1)
-            *hour = hour_l;    
+            *hour = hour_l;
         if (*wdays == All && wday_l > 0)
-            *wdays = 1 << (wday_l - 1);    
+            *wdays = 1 << (wday_l - 1);
     }
     if (date_m)
     {
@@ -347,6 +354,16 @@ void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *ye
             *year = year_l-1900;    
     }
 
+    int off_min = offset_m / 60;
+    int off_hour = off_min / 60;
+    int off_day = off_hour / 24;
+
+    if (*mday != -1)
+        *mday += off_day;
+    if (*hour != -1)
+        *hour += off_hour % 24;
+    if (*min != -1)
+        *min += off_min % 60;
 }
 
 Logger& PeriodicTask::logger_m(Logger::getInstance("PeriodicTask"));
@@ -440,8 +457,11 @@ void PeriodicTask::reschedule(time_t now)
         << timeinfo.tm_year + 1900 << "-"
         << timeinfo.tm_mon + 1 << "-"
         << timeinfo.tm_mday << " "
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_hour << ":"
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_min << ":"
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_sec << " ("
         << nextExecTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
@@ -625,8 +645,11 @@ void PeriodicTask::statusXml(ticpp::Element* pStatus)
     execTime << timeinfo.tm_year + 1900 << "-"
     << timeinfo.tm_mon + 1 << "-"
     << timeinfo.tm_mday << " "
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_hour << ":"
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_min << ":"
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_sec;
     pStatus->SetAttribute("next-exec", execTime.str());
     if (cl_m)
@@ -655,8 +678,11 @@ void FixedTimeTask::reschedule(time_t now)
         << timeinfo.tm_year + 1900 << "-"
         << timeinfo.tm_mon + 1 << "-"
         << timeinfo.tm_mday << " "
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_hour << ":"
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_min << ":"
+        << std::setfill('0') << std::setw(2)
         << timeinfo.tm_sec << " ("
         << execTime_m << ")" << endlog;
         Services::instance()->getTimerManager()->addTask(this);
@@ -673,8 +699,11 @@ void FixedTimeTask::statusXml(ticpp::Element* pStatus)
     execTime << timeinfo.tm_year + 1900 << "-"
     << timeinfo.tm_mon + 1 << "-"
     << timeinfo.tm_mday << " "
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_hour << ":"
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_min << ":"
+    << std::setfill('0') << std::setw(2)
     << timeinfo.tm_sec;
     pStatus->SetAttribute("next-exec", execTime.str());
 }
