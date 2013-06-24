@@ -23,6 +23,7 @@
 #include <list>
 #include <string>
 #include <map>
+#include <cfloat>
 #include <stdint.h>
 #include "config.h"
 #include "logger.h"
@@ -49,6 +50,7 @@ public:
     virtual bool set(ObjectValue* value) = 0;
     virtual double toNumber() = 0;
     virtual void setPrecision(std::string precision) {};
+    virtual std::string getPrecision() { return ""; };
 protected:
     static Logger& logger_m;
 };
@@ -193,9 +195,10 @@ protected:
 class SwitchingObjectValue : public ObjectValue
 {
 public:
-    SwitchingObjectValue(const std::string& value);
+    SwitchingObjectValue(const std::string& value) { init(value); };
     SwitchingObjectValue(bool value) : value_m(value) {};
     virtual ~SwitchingObjectValue() {};
+    void init (const std::string& value);
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
@@ -237,7 +240,7 @@ template <int eis>
 class SwitchingImplObjectValue : public SwitchingObjectValue
 {
 public:
-    SwitchingImplObjectValue(const std::string& value) : SwitchingObjectValue(value) {};
+    SwitchingImplObjectValue(const std::string& value) { init(value); };
     SwitchingImplObjectValue(bool value) : SwitchingObjectValue(value) {};
     virtual ~SwitchingImplObjectValue() {};
     virtual std::string getType() { return SwitchingTypes[eis].type; };
@@ -273,9 +276,11 @@ public:
         getKnxConnection()->write(getGad(), buf, 2);
     };
     void setBoolValue(bool value) {
-        TObjectValue val(value);
+        TObjectValue val(value, true);
         Object::setValue(&val);
     };
+    bool getBoolValue() { get(); return TObjectValue::value_m; };
+    bool getControlValue() { get(); return TObjectValue::control_m; };
 protected:
     virtual bool set(bool value, bool control) { return TObjectValue::set(value, control); };
     virtual bool set(ObjectValue* value) { return TObjectValue::set(value); };
@@ -287,14 +292,15 @@ protected:
 class SwitchingControlObjectValue : public ObjectValue
 {
 public:
-    SwitchingControlObjectValue(const std::string& value);
+    SwitchingControlObjectValue(const std::string& value) { init(value); };
     SwitchingControlObjectValue(bool value, bool control) : value_m(value), control_m(control) {};
     virtual ~SwitchingControlObjectValue() {};
+    void init(const std::string& value);
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
     virtual double toNumber();
-    virtual std::string getType() { return "1.001"; };
+    virtual std::string getType() { return "2.001"; };
     virtual std::string getValueString(bool value) { return value ? "on" : "off"; };
 protected:
     SwitchingControlObjectValue() : value_m(false), control_m(false) {};
@@ -330,7 +336,7 @@ template <int eis>
 class SwitchingControlImplObjectValue : public SwitchingControlObjectValue
 {
 public:
-    SwitchingControlImplObjectValue(const std::string& value) : SwitchingControlObjectValue(value) {};
+    SwitchingControlImplObjectValue(const std::string& value)  { init(value); };
     SwitchingControlImplObjectValue(bool value, bool control) : SwitchingControlObjectValue(value, control) {};
     virtual ~SwitchingControlImplObjectValue() {};
     virtual std::string getType() { return SwitchingControlTypes[eis].type; };
@@ -523,13 +529,18 @@ protected:
 class ValueObjectValue : public ObjectValue
 {
 public:
-    ValueObjectValue(const std::string& value);
+    ValueObjectValue(const std::string& value) { init(value); };
     virtual ~ValueObjectValue() {};
+    void init(const std::string& value);
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
     virtual double toNumber();
     virtual void setPrecision(std::string precision);
+    virtual std::string getPrecision();
+    virtual double roundToKnxPrecision(double value);
+    virtual std::string getType() = 0;
+    virtual double getBound(bool upper) = 0;
 protected:
     virtual bool set(ObjectValue* value);
     virtual bool set(double value);
@@ -629,7 +640,7 @@ template <int subtype>
 class ValueImplObjectValue : public ValueObjectValue
 {
 public:
-    ValueImplObjectValue(const std::string& value) : ValueObjectValue(value) {};
+    ValueImplObjectValue(const std::string& value) { init(value); };
     ValueImplObjectValue(double value) : ValueObjectValue(value) {};
     virtual ~ValueImplObjectValue() {};
     virtual std::string getType() { return FloatValueTypes[subtype].type; };
@@ -645,6 +656,9 @@ public:
     ValueObject32Value(const std::string& value);
     virtual ~ValueObject32Value() {};
     virtual std::string toString();
+    virtual double roundToKnxPrecision(double value) { return value; };
+    virtual std::string getType() { return "14.xxx"; };
+    virtual double getBound(bool upper) { return upper ? DBL_MAX : DBL_MIN; };
 protected:
     ValueObject32Value(double value) : ValueObjectValue(value) {};
     ValueObject32Value() {};

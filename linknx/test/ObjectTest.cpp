@@ -11,6 +11,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testSwitchingObjectUpdate );
     CPPUNIT_TEST( testSwitchingExportImport );
     CPPUNIT_TEST( testSwitchingPersist );
+    CPPUNIT_TEST( testSwitchCtrlObject );
+    CPPUNIT_TEST( testSwitchCtrlObjectWrite );
+    CPPUNIT_TEST( testSwitchCtrlObjectUpdate );
+    CPPUNIT_TEST( testSwitchCtrlExportImport );
+    CPPUNIT_TEST( testSwitchCtrlPersist );
     CPPUNIT_TEST( testDimmingObject );
     CPPUNIT_TEST( testDimmingObjectWrite );
     CPPUNIT_TEST( testDimmingObjectUpdate );
@@ -261,6 +266,185 @@ public:
         
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("on");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "on");
+        res->setValue("off");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "off");
+        delete res2;
+    }
+    
+
+    void testSwitchCtrlObject()
+    {
+        const std::string on = "on";
+        const std::string off = "off";
+        const std::string nc = "no control";
+        const std::string zero = "0";
+        const std::string one = "1";
+        const std::string neg = "-1";
+        ObjectValue* val;
+        SwitchingControlObject<SwitchingControlImplObjectValue<1> > sw, sw2, sw3;
+        sw.setValue("on");
+        CPPUNIT_ASSERT(sw.getValue() == "on");
+        sw.setValue("1");
+        CPPUNIT_ASSERT(sw.getValue() == "on");
+
+        sw2.setValue("off");
+        CPPUNIT_ASSERT(sw2.getValue() == "off");
+        sw2.setValue("0");
+        CPPUNIT_ASSERT(sw2.getValue() == "off");
+
+        sw3.setValue("no control");
+        CPPUNIT_ASSERT(sw3.getValue() == "no control");
+        sw3.setValue("-1");
+        CPPUNIT_ASSERT(sw3.getValue() == "no control");
+
+        CPPUNIT_ASSERT(sw.getBoolValue() == true);
+        CPPUNIT_ASSERT(sw.getControlValue() == true);
+        CPPUNIT_ASSERT(sw2.getBoolValue() == false);
+        CPPUNIT_ASSERT(sw2.getControlValue() == true);
+        CPPUNIT_ASSERT(sw3.getBoolValue() == false);
+        CPPUNIT_ASSERT(sw3.getControlValue() == false);
+
+        SwitchingControlImplObjectValue<1> swval(on);
+        CPPUNIT_ASSERT(sw.equals(&swval));
+        CPPUNIT_ASSERT(!sw2.equals(&swval));
+        CPPUNIT_ASSERT(!sw3.equals(&swval));
+
+        val = sw.createObjectValue(one);
+        CPPUNIT_ASSERT(sw.equals(val));
+        CPPUNIT_ASSERT(!sw2.equals(val));
+        CPPUNIT_ASSERT(!sw3.equals(val));
+        delete val;      
+
+        SwitchingControlImplObjectValue<1> swval2(zero);
+        CPPUNIT_ASSERT(!sw.equals(&swval2));
+        CPPUNIT_ASSERT(sw2.equals(&swval2));
+        CPPUNIT_ASSERT(!sw3.equals(&swval2));
+
+        val = sw.createObjectValue(off);
+        CPPUNIT_ASSERT(!sw.equals(val));
+        CPPUNIT_ASSERT(sw2.equals(val));
+        CPPUNIT_ASSERT(!sw3.equals(val));
+        delete val;      
+
+        SwitchingControlImplObjectValue<1> swval3(neg);
+        CPPUNIT_ASSERT(!sw.equals(&swval3));
+        CPPUNIT_ASSERT(!sw2.equals(&swval3));
+        CPPUNIT_ASSERT(sw3.equals(&swval3));
+
+        val = sw.createObjectValue(nc);
+        CPPUNIT_ASSERT(!sw.equals(val));
+        CPPUNIT_ASSERT(!sw2.equals(val));
+        CPPUNIT_ASSERT(sw3.equals(val));
+        delete val;      
+
+        sw.setBoolValue(false);
+        CPPUNIT_ASSERT(sw.getValue() == "off");
+        sw2.setBoolValue(true);
+        CPPUNIT_ASSERT(sw2.getValue() == "on");
+    }
+
+    void testSwitchCtrlObjectWrite()
+    {
+        SwitchingControlObject<SwitchingControlImplObjectValue<0> > sw;
+        sw.setBoolValue(false);
+        sw.addChangeListener(this);
+
+        const std::string tr = "on";
+        const std::string fa = "off";
+        SwitchingControlImplObjectValue<0> swvaltrue(tr);
+        SwitchingControlImplObjectValue<0> swvalfalse(fa);
+
+        uint8_t buf[3] = {0, 0x81, 0};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        sw.onWrite(buf, 2, src);        
+        CPPUNIT_ASSERT(sw.getBoolValue() == true);
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[1] = 0x80;
+        isOnChangeCalled_m = false;
+        sw.onWrite(buf, 2, src);       
+        CPPUNIT_ASSERT(sw.getBoolValue() == false);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0x00;
+        isOnChangeCalled_m = false;
+        sw.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(sw.getBoolValue() == false);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0x01;
+        isOnChangeCalled_m = false;
+        sw.onWrite(buf, 3, src);        
+        CPPUNIT_ASSERT(sw.getBoolValue() == true);
+        CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvaltrue));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+    }
+
+    void testSwitchCtrlObjectUpdate()
+    {
+        SwitchingControlObject<SwitchingControlImplObjectValue<0> > sw;
+        sw.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        sw.setValue("on");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        sw.setValue("off");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        sw.setValue("off");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        sw.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        sw.setValue("on");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testSwitchCtrlExportImport()
+    {
+        SwitchingControlObject<SwitchingControlImplObjectValue<0> > orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<SwitchingControlObject<SwitchingControlImplObjectValue<0> > *>(res));
+        delete res;
+    }
+    
+    void testSwitchCtrlPersist()
+    {
+        cleanTestDir();
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+        
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("type", "2.001");
         pConfig.SetAttribute("init", "persist");
 
         Object *orig = Object::create(&pConfig);
@@ -1260,10 +1444,11 @@ public:
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "21.5");
         res->setValue("3.1415");
+        CPPUNIT_ASSERT_EQUAL(3.14, res->getFloatValue());
         delete res;
 
         Object *res2 = Object::create(&pConfig);
-        CPPUNIT_ASSERT(res2->getValue() == "3.1415");
+        CPPUNIT_ASSERT(res2->getValue() == "3.14");
         res2->setValue("-2");
         delete res2;
 

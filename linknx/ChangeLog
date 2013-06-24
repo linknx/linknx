@@ -1,5 +1,6 @@
 Release 0.0.1.31:
-    * Offset parameter for variaable timespecs (fraxinas)
+    * Value for 16 bit float is rounded to the closest valid value
+    * Offset parameter for variable timespecs (fraxinas)
     * Timestrings padding (e.g. 08:05:00 instead of 8:5:0 ) (fraxinas)
     * Fix threading issue with ioport actions (Cyrille Defranoux)
     * Mysql character set config (fraxinas)

@@ -377,6 +377,11 @@ void Object::exportXml(ticpp::Element* pConfig)
 
     if (writeLog_m)
         pConfig->SetAttribute("log", "true");
+        
+    std::string precision = getObjectValue()->getPrecision();
+    if (!precision.empty())
+        pConfig->SetAttribute("precision", precision);
+
 
     if (flags_m != Default)
     {
@@ -554,7 +559,7 @@ KnxConnection* Object::getKnxConnection()
 
 Logger& ObjectValue::logger_m(Logger::getInstance("ObjectValue"));
 
-SwitchingObjectValue::SwitchingObjectValue(const std::string& value)
+void SwitchingObjectValue::init(const std::string& value)
 {
     if (value == "1" || value == "on" || value == getValueString(true))
         value_m = true;
@@ -655,7 +660,7 @@ void SwitchingObject::doSend(bool isWrite)
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
-SwitchingControlObjectValue::SwitchingControlObjectValue(const std::string& value)
+void SwitchingControlObjectValue::init(const std::string& value)
 {
     control_m = (value != "-1" && value != "no control");
     if (value == "1" || value == "on" || value == getValueString(true))
@@ -1464,18 +1469,19 @@ void DateObject::getDate(int *day, int *month, int *year)
         *year = 1900;
 }
 
-ValueObjectValue::ValueObjectValue(const std::string& value) : precision_m(0)
+void ValueObjectValue::init(const std::string& value)
 {
+    precision_m = 0;
     std::istringstream val(value);
     val >> value_m;
 
     if ( val.fail() ||
          val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > 670760.96 ||
-         value_m < -671088.64)
+         value_m > getBound(true) ||
+         value_m < getBound(false))
     {
         std::stringstream msg;
-        msg << "ValueObjectValue: Bad value: '" << value << "'" << std::endl;
+        msg << "ValueObjectValue: Bad value: '" << value << "' for object type " << getType() << std::endl;
         throw ticpp::Exception(msg.str());
     }
 }
@@ -1491,6 +1497,18 @@ void ValueObjectValue::setPrecision(std::string precision)
         std::stringstream msg;
         msg << "ValueObjectValue: Bad precision: '" << precision << "'" << std::endl;
         throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string ValueObjectValue::getPrecision()
+{
+    if (precision_m == 0)
+        return "";
+    else
+    {
+        std::ostringstream out;
+        out << precision_m;
+        return out.str();
     }
 }
 
@@ -1552,12 +1570,40 @@ bool ValueObjectValue::set(ObjectValue* value)
     return false;
 }
 
+double ValueObjectValue::roundToKnxPrecision(double value)
+{
+    int ex = 0;
+    int m = (int)rint(value * 100);
+    if (m < 0)
+    {
+        m = -m;
+        while (m > 2048)
+        {
+            m = m >> 1;
+            ex++;
+        }
+        m = -m;
+    }
+    else
+    {
+        while (m > 2047)
+        {
+            m = m >> 1;
+            ex++;
+        }
+    }
+    return ((double)m * (1 << ex) / 100);
+}
+
 bool ValueObjectValue::set(double value)
 {
     if (precision_m != 0) {
         int div = (int) (value/precision_m + (value >= 0 ? 0.5 : -0.5));
         value = div*precision_m;
         logger_m.debugStream() << "ValueObject: rounded value "<< value << endlog;
+    }
+    else {
+        value = roundToKnxPrecision(value);
     }
     if (value_m != value)
     {
