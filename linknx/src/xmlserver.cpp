@@ -306,8 +306,8 @@ void ClientConnection::Run (pth_sem_t * stop1)
                 else if (pRead->Value() == "calendar")
                 {
                     int year, month, day, h,m;
-                    time_t now = time(0);
-                    struct tm * date = localtime(&now);
+                    time_t ts = time(0);
+                    struct tm * date = localtime(&ts);
                     pRead->GetAttributeOrDefault("year", &year, 0);
                     pRead->GetAttributeOrDefault("month", &month, 0);
                     pRead->GetAttributeOrDefault("day", &day, 0);
@@ -324,7 +324,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                                 date->tm_year = year;
                             date->tm_mday = day;
                         }
-                        mktime(date);
+                        ts = mktime(date);
                         pRead->SetAttribute("year", date->tm_year+1900);
                         pRead->SetAttribute("month", date->tm_mon+1);
                         pRead->SetAttribute("day", date->tm_mday);
@@ -334,7 +334,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     ticpp::Element* pConfig = pRead->FirstChildElement(false);
                     if (pConfig == 0)
                     {
-                        bool isException = Services::instance()->getExceptionDays()->isException(now);
+                        bool isException = Services::instance()->getExceptionDays()->isException(ts);
                         ticpp::Element exceptionday("exception-day");
                         exceptionday.SetText(isException ? "true" : "false");
                         pRead->LinkEndChild(&exceptionday);
@@ -360,7 +360,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     }
                     else if (pConfig->Value() == "exception-day")
                     {
-                        bool isException = Services::instance()->getExceptionDays()->isException(now);
+                        bool isException = Services::instance()->getExceptionDays()->isException(ts);
                         pConfig->SetText(isException ? "true" : "false");
                     }
                     else if (pConfig->Value() == "sunrise")
