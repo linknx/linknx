@@ -686,7 +686,7 @@ void SerialIOPort::exportXml(ticpp::Element* pConfig)
             framing.push_back('8');
             break;
     }
-    if (newtio_m.c_cflag & PARENB == 0)
+    if ((newtio_m.c_cflag & PARENB) == 0)
         framing.push_back('N');
     else if (newtio_m.c_cflag & PARODD)
         framing.push_back('O');

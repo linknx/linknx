@@ -1,4 +1,5 @@
 Release 0.0.1.31:
+    * Fix error when saving serial ioport parity settings
     * Value for 16 bit float is rounded to the closest valid value
     * Offset parameter for variable timespecs (fraxinas)
     * Timestrings padding (e.g. 08:05:00 instead of 8:5:0 ) (fraxinas)
