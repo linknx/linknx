@@ -351,7 +351,9 @@ TcpClientIOPort::Socket::Socket(TcpClientIOPort *ioport)
         if (sockfd_m >= 0) {
             if (pth_connect(sockfd_m, (const struct sockaddr *)&ioport->addr_m, sizeof (ioport_m->addr_m)) < 0) {
                 logger_m.errorStream() << "Unable to connect to server for ioport " << ioport->getID() << endlog;
-            }
+            } else { 
+        	ioport->onConnect(); 
+    	    }
         }
         else {
             logger_m.errorStream() << "Unable to create  socket for ioport " << ioport_m->getID() << endlog;
@@ -1078,6 +1080,14 @@ void ConnectCondition::importXml(ticpp::Element* pConfig)
     {
         std::stringstream msg;
         msg << "ConnectCondition: Only serial and TCP port can use connectCondition" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+    
+    TcpClientIOPort* tcpPort = dynamic_cast<TcpClientIOPort*>(port);
+    if ((tcpPort) && (!tcpPort->isRxEnabled()))
+    {
+        std::stringstream msg;
+        msg << "ConnectCondition: TCP port must be permanent to use connectCondition" << std::endl;
         throw ticpp::Exception(msg.str());
     }
 
