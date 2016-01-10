@@ -1,0 +1,8 @@
+This repository is a migration of the legacy one hosted on Sourceforge
+(:pserver:anonymous@linknx.cvs.sourceforge.net:/cvsroot/linknx)
+
+The migration is aimed at simplifying the collaboration and maintenance of
+Linknx's source code in the future.
+
+The migration process is still under progress. A clearer communication through
+the usual KNX forums will happen once it is completed.
