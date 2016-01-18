@@ -43,7 +43,31 @@ else
     fi
 fi
 
-WITH_MYSQL()
+dnl check for mysql
+AC_ARG_WITH(mysql, AC_HELP_STRING([--with-mysql@<:@=DIR@>:@],
+            [Include support for mysql]),
+            mysql=$withval, mysql=yes)
+if test "$mysql" != "no"; then
+    if test "$mysql" != "yes"; then
+        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[$mysql/bin/mysql_config],[no],[$mysql/bin])
+    else
+        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[mysql_config],[no])
+    fi
+    if test "$MYSQL_CONFIG" != "no"; then
+        MYSQL_CFLAGS=`$MYSQL_CONFIG --cflags`
+        MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+        AC_SUBST(MYSQL_CFLAGS)
+        AC_SUBST(MYSQL_LIBS)
+    else
+        mysql=no
+    fi
+fi
+AC_MSG_CHECKING([for mysql])
+AC_MSG_RESULT($mysql)
+if test "$mysql" != "no"; then
+    AC_DEFINE(HAVE_MYSQL,,[mysql is available])
+fi
+
 
 dnl #########################################################################
 dnl Check if using libesmtp
@@ -142,39 +166,21 @@ if test x"$WITH_LUA" != xno ; then
     LUAPC=$WITH_LUA
   fi
 
-  if test x"$WITH_LUA" = xauto; then
-    PKG_CHECK_MODULES(LUA, lua >= 5.1, [
+  PKG_CHECK_MODULES([LUA], "$LUAPC" >= 5.1, [
+    AC_DEFINE([HAVE_LUA], [1], [liblua])
+     AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
+     AC_SUBST(LUA_CFLAGS)
+     AC_SUBST(LUA_LIBS)
+  ],[
+    PKG_CHECK_MODULES([LUA], "$LUAPC"5.1 >= 5.1, [
       AC_DEFINE([HAVE_LUA], [1], [liblua])
       AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
       AC_SUBST(LUA_CFLAGS)
       AC_SUBST(LUA_LIBS)
     ],[
-      AC_MSG_RESULT([no])    
-      PKG_CHECK_MODULES(LUA, lua5.1 >= 5.1, [
-        AC_DEFINE([HAVE_LUA], [1], [liblua])
-        AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
-        AC_SUBST(LUA_CFLAGS)
-        AC_SUBST(LUA_LIBS)
-      ],[
-        AC_MSG_RESULT([no])    
-      ])
+      AC_MSG_RESULT([no])
     ])
-  else
-    PKG_CHECK_MODULES(LUA, $LUAPC >= 5.1, [
-      AC_DEFINE([HAVE_LUA], [1], [liblua])
-      AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
-      AC_SUBST(LUA_CFLAGS)
-      AC_SUBST(LUA_LIBS)
-    ],[
-      AC_MSG_RESULT([no])    
-      PKG_CHECK_MODULES(LUA, "$LUAPC"5.1 >= 5.1, [
-        AC_DEFINE([HAVE_LUA], [1], [liblua])
-        AC_DEFINE([HAVE_LUA_H], [1], [lua.h])
-        AC_SUBST(LUA_CFLAGS)
-        AC_SUBST(LUA_LIBS)
-      ])
-    ])
-  fi
+  ])
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.
