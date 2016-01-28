@@ -136,7 +136,7 @@ void die (const char *msg, ...)
     if (errno)
         printf (": %s\n", strerror (errno));
     else
-        printf ("\n", strerror (errno));
+        printf ("\n");
     exit (1);
 }
 
