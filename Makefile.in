@@ -78,7 +78,7 @@ POST_UNINSTALL = :
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in AUTHORS ChangeLog NEWS README compile \
+	$(srcdir)/config.h.in AUTHORS ChangeLog NEWS compile depcomp \
 	install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libcurl.m4 \
@@ -301,6 +301,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.9 foreign
+ACLOCAL_AMFLAGS = -I m4
 @CPPUNIT_FALSE@CPPUNIT_DIR = 
 @CPPUNIT_TRUE@CPPUNIT_DIR = test
 EXTRA_DIST = linknx.spec
