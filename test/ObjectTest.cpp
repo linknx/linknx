@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include "objectcontroller.h"
 #include "services.h"
+#include "unistd.h"
 
 class ObjectTest : public CppUnit::TestFixture, public ChangeListener
 {
