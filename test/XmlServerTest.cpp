@@ -5,6 +5,7 @@ extern "C"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 }
 
 class XmlServerTest : public CppUnit::TestFixture
