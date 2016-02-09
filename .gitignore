@@ -1,0 +1,10 @@
+Makefile
+*.o
+*.cache
+*.log
+stamp-h1
+config.h
+.deps
+*.a
+config.status
+.dirstamp
