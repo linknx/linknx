@@ -8,3 +8,5 @@ config.h
 *.a
 config.status
 .dirstamp
+Makefile.in
+*.m4
