@@ -4,6 +4,8 @@ Makefile
 *.log
 stamp-h1
 config.h
+config.h.in
+configure
 .deps
 *.a
 config.status
