@@ -27,9 +27,9 @@ public:
     {
         cc_m = 0; 
         if (system ("rm -rf /tmp/linknx_unittest_tmp") != 0)
-		{
-			CPPUNIT_FAIL("Test fixture setup failed.");
-		}
+        {
+            CPPUNIT_FAIL("Test fixture setup failed.");
+        }
     }
 
     void tearDown()
@@ -41,7 +41,7 @@ public:
     int createMsgFd(const char *msg)
     {
         int fd = creat("/tmp/linknx_unittest_tmp", 00644);
-		size_t messageLength = strlen(msg);
+        size_t messageLength = strlen(msg);
         CPPUNIT_ASSERT_EQUAL_MESSAGE("Write failed.", messageLength, (size_t)write(fd, msg, messageLength));
         close(fd);
         return open("/tmp/linknx_unittest_tmp", O_RDONLY);
