@@ -2654,7 +2654,7 @@ public:
         CPPUNIT_ASSERT(t2.equals(val));
         delete val;      
 
-        t.setIntValue(-2000000000UL);
+        t.setIntValue(-2000000000L);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
         CPPUNIT_ASSERT_EQUAL((int32_t)-2000000000UL, t.getIntValue());
     }
