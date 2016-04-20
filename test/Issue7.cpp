@@ -38,6 +38,7 @@ public:
 
 		String14Object stringObject;
 		stringObject.setValue(value);	
+		CPPUNIT_ASSERT(stringObject.toString() == value);
     }
 };
 

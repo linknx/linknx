@@ -3101,6 +3101,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() == "14  characters");
         res3->setValue("");
         delete res3;
+		return;
 
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");

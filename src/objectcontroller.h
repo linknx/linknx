@@ -1187,6 +1187,10 @@ public:
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
     virtual double toNumber();
+
+	static std::string transcode(const std::string &source, const std::string &sourceEncoding, const std::string &targetEncoding);
+	static const std::string &getUTF8Encoding();
+	static const std::string &getLatin1Encoding();
 protected:
     virtual bool set(ObjectValue* value);
     virtual bool set(double value);

@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cassert>
 #include <iomanip>
+#include <iconv.h>
 
 ObjectController* ObjectController::instance_m;
 
@@ -2061,8 +2062,10 @@ void HeatingModeObject::setValue(const std::string& value)
 
 Latin1CharObjectValue::Latin1CharObjectValue(const std::string& value)
 {
+	// Transcode passed value to latin1.
+	std::string latin1Value = StringObjectValue::transcode(value, StringObjectValue::getUTF8Encoding(), StringObjectValue::getLatin1Encoding());
     unsigned char chvalue;
-    std::istringstream val(value);
+    std::istringstream val(latin1Value);
     val >> chvalue;
 
     if ( val.fail() ||
@@ -2081,7 +2084,7 @@ std::string Latin1CharObjectValue::toString()
 {
     std::ostringstream out;
     out << (unsigned char)value_m;
-    return out.str();
+    return StringObjectValue::transcode(out.str(), StringObjectValue::getLatin1Encoding(), StringObjectValue::getUTF8Encoding());
 }
 
 Logger& Latin1CharObject::logger_m(Logger::getInstance("Latin1CharObject"));
@@ -2815,6 +2818,45 @@ bool StringObjectValue::set(double value)
     return false;
 }
 
+const std::string &StringObjectValue::getLatin1Encoding()
+{
+	static const std::string encoding("ISO-8859-1"); // As iconv expects it (see https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
+	return encoding;
+}
+
+const std::string &StringObjectValue::getUTF8Encoding()
+{
+	static const std::string encoding("UTF-8"); // As iconv expects it (see https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
+	return encoding;
+}
+
+std::string StringObjectValue::transcode(const std::string &source, const std::string &sourceEncoding, const std::string &targetEncoding)
+{
+	if (source.empty()) return source; // iconv seems to not support empty strings.
+
+	// Ask iconv to use replacement chars that look like the original ones for characters
+	// that are unavailable in target encoding.
+	iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
+	char cSource[source.size()];
+	memcpy(cSource, source.c_str(), source.size() + 1);
+	char *sourceStart = &cSource[0];
+	size_t sourceLength = source.size();
+	const size_t targetLength = source.size() * 5; // Should be pretty enough even in worst cases.
+	char targetChars[targetLength];
+	char *targetCharPointer = &targetChars[0];
+	size_t targetSizeLeft = targetLength;
+	size_t res = iconv(conversionDescriptor, &sourceStart, &sourceLength, &targetCharPointer, &targetSizeLeft);
+	if(res == static_cast<size_t>(-1))
+	{
+		logger_m.errorStream() << "Transcoding of " << source << " from " << sourceEncoding << " to " << targetEncoding << " failed." << endlog;
+		return source;
+	}
+
+	std::string transcodedString(targetChars, targetLength - targetSizeLeft);
+	return transcodedString;
+}
+
+
 Logger& StringObject::logger_m(Logger::getInstance("StringObject"));
 
 StringObject::StringObject()
@@ -2873,7 +2915,7 @@ void StringObject::setStringValue(const std::string& value)
 
 String14ObjectValue::String14ObjectValue(const std::string& value): StringObjectValue(value)
 {
-    if ( value.length() > 14)
+    if (transcode(value, getUTF8Encoding(), getLatin1Encoding()).length() > 14)
     {
         std::stringstream msg;
         msg << "String14ObjectValue: Bad value (too long): '" << value << "'" << std::endl;
@@ -2931,6 +2973,8 @@ void String14Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     std::string value;
     for(int j=2; j<len && buf[j]!=0; j++)
         value.push_back(buf[j]);
+
+	value = transcode(value, getLatin1Encoding(), getUTF8Encoding());
     String14ObjectValue val(value);
 
     if (set(&val) || forceUpdate())
@@ -2944,8 +2988,9 @@ void String14Object::doSend(bool isWrite)
     memset(buf,0,sizeof(buf));
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-    for(uint j=0;j<value_m.size();j++)
-        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+	std::string latin1Value = transcode(value_m, getUTF8Encoding(), getLatin1Encoding());
+    for(uint j=0;j<latin1Value.size();j++)
+        buf[j+2] = static_cast<uint8_t>(latin1Value[j]);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
 }
