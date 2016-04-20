@@ -51,6 +51,7 @@ public:
 
     void startConnection() { isRunning_m = true; Start(); };
     void stopConnection() { isRunning_m = false; Stop(); };
+	bool isVoid() { return url_m == "";}
 
     void addTelegramListener(TelegramListener *listener);
     bool removeTelegramListener(TelegramListener *listener);

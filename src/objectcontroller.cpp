@@ -421,6 +421,12 @@ void Object::exportXml(ticpp::Element* pConfig)
 void Object::read()
 {
     KnxConnection* con = Services::instance()->getKnxConnection();
+	if (con->isVoid())
+	{
+		init_m = true;
+		return;
+	}
+
     if (!readPending_m)
     {
         uint8_t buf[2] = { 0, 0 };
