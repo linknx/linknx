@@ -12,3 +12,4 @@ config.status
 .dirstamp
 Makefile.in
 *.m4
+.*.sw?
