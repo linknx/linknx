@@ -209,6 +209,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     std::string id = pRead->GetAttribute("id");
                     Object* obj = ObjectController::instance()->getObject(id);
                     std::stringstream msg;
+                    obj->reset_init_m_if_stateless();
                     msg << "<read status='success'>" << obj->getValue() << "</read>" << std::endl;
                     obj->decRefCount();
                     debugStream("ClientConnection") << "SENDING MESSAGE:" << endlog << msg.str() << endlog << "END OF MESSAGE" << endlog;
@@ -229,6 +230,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                             {
                                 std::string id = pObjects->GetAttribute("id");
                                 Object* obj = ObjectController::instance()->getObject(id);
+                                obj->reset_init_m_if_stateless();
                                 pObjects->SetAttribute("value", obj->getValue());
                                 obj->decRefCount();
                             }
