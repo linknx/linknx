@@ -22,6 +22,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <cmath>
+
 #include "suncalc.h"
 #include "services.h"
 
@@ -44,7 +46,6 @@ Released to the public domain by Paul Schlyter, December 1992
 
 
 #include <stdio.h>
-#include <math.h>
 #include <time.h>
 #include <stdlib.h>
 #include <getopt.h>
