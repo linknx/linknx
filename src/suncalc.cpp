@@ -24,6 +24,12 @@
 
 #include "suncalc.h"
 #include "services.h"
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <string.h>
 
 namespace suncalc
 {
@@ -41,14 +47,6 @@ Modified to SUNRISET.C, 1992-12-01
 Released to the public domain by Paul Schlyter, December 1992
 
 */
-
-
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <string.h>
 
 /* A macro to compute the number of days elapsed since 2000 Jan 0.0 */
 /* (which is equal to 1999 Dec 31, 0h UT)                           */
