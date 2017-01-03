@@ -13,3 +13,4 @@ config.status
 Makefile.in
 *.m4
 .*.sw?
+tags
