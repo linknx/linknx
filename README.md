@@ -24,9 +24,9 @@ should suffice. Then, run configure and make install as for other versions.
 # Downloads
 ## v0.0.1.33
 This is the latest version as of today. You can download a zip
-of it [here](https://github.com/linknx/linknx/archive/v0.0.1.33.zip).
+of it [here](https://github.com/linknx/linknx/archive/0.0.1.33.zip).
 
 ## v0.0.1.32
 This is the latest version accessible from the legacy repository on sourceforge. You can download a zip
-of it [here](https://github.com/linknx/linknx/archive/v0.0.1.32.zip).
+of it [here](https://github.com/linknx/linknx/archive/0.0.1.32.zip).
 
