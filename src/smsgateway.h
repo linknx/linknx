@@ -37,9 +37,13 @@ public:
     void sendSms(std::string &id, std::string &value);
 
 private:
+	void sendSmsThroughREST(const std::string &baseUrl, const std::map<std::string, std::string> &parameters);
+
+private:
     enum SmsGatewayType
     {
         Clickatell,
+		FreeMobile,
         Unknown
     };
 

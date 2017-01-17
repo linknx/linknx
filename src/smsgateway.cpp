@@ -48,6 +48,14 @@ void SmsGateway::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
 #endif
     }
+	else if(type == "freemobile")
+	{
+		type_m = FreeMobile;
+        pConfig->GetAttribute("user", &user_m);
+        pConfig->GetAttribute("pass", &pass_m);
+		data_m = "";
+		from_m = "";
+	}
     else if (type == "")
     {
         type_m = Unknown;
@@ -74,43 +82,84 @@ void SmsGateway::exportXml(ticpp::Element* pConfig)
         if (!from_m.empty())
             pConfig->SetAttribute("from", from_m);
     }
+	else if (type_m == FreeMobile)
+	{
+		pConfig->SetAttribute("type", "freemobile");
+		pConfig->SetAttribute("user", user_m);
+		pConfig->SetAttribute("pass", pass_m);
+	}
+}
+
+void SmsGateway::sendSmsThroughREST(const std::string &baseUrl, const std::map<std::string, std::string> &parameters)
+{
+#ifdef HAVE_LIBCURL
+	CURL *curl;
+	CURLcode res;
+
+	curl = curl_easy_init();
+	if(curl)
+	{
+		std::stringstream msg;
+		msg << baseUrl;
+		for(std::map<std::string, std::string>::const_iterator itParam = parameters.begin(); itParam != parameters.end(); ++itParam)
+		{
+			if(itParam == parameters.begin())
+			{
+				msg << "?";
+			}
+			else
+			{
+				msg << "&";
+			}
+
+			char *escapedParam = curl_escape(itParam->second.c_str(), itParam->second.length());
+			msg << itParam->first << "=" << escapedParam;
+			curl_free(escapedParam);
+		}
+
+		std::string url = msg.str();
+		//logger_m.errorStream() << "curl's url is " << url << endlog;
+
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+		res = curl_easy_perform(curl);
+
+		logger_m.infoStream() << "curl_easy_perform returned: " << res << endlog;
+		if (res != 0)
+			logger_m.infoStream() << "msg=" << curl_easy_strerror(res) << endlog;
+
+		curl_easy_cleanup(curl);
+	}
+	else
+		logger_m.errorStream() << "Unable to execute SendSmsAction. Curl not available" << endlog;
+#endif
 }
 
 void SmsGateway::sendSms(std::string &id, std::string &value)
 {
     if (type_m == Clickatell)
     {
-#ifdef HAVE_LIBCURL
-        CURL *curl;
-        CURLcode res;
+		std::map<std::string, std::string> parameters;
+		parameters["user"] = user_m;
+		parameters["password"] = pass_m;
+		parameters["api_id"] = data_m;
+		if (!from_m.empty())
+			parameters["from"] = from_m;
+		parameters["to"] = id;
+		parameters["text"] = value;
 
-        curl = curl_easy_init();
-        if(curl)
-        {
-            char *escaped_value = curl_escape(value.c_str(), value.length());
-            std::stringstream msg;
-            msg << "http://api.clickatell.com/http/sendmsg?user=" << user_m
-            << "&password=" << pass_m
-            << "&api_id=" << data_m;
-            if (!from_m.empty())
-                msg << "&from=" << from_m;
-            msg << "&to=" << id << "&text=" << escaped_value;
-            std::string url = msg.str();
-            curl_free(escaped_value);
-            //        curl_easy_setopt(curl, CURLOPT_VERBOSE, TRUE);
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            res = curl_easy_perform(curl);
-
-            logger_m.infoStream() << "curl_easy_perform returned: " << res << endlog;
-            if (res != 0)
-                logger_m.infoStream() << "msg=" << curl_easy_strerror(res) << endlog;
-
-            curl_easy_cleanup(curl);
-        }
-        else
-            logger_m.errorStream() << "Unable to execute SendSmsAction. Curl not available" << endlog;
-#endif
+		sendSmsThroughREST("http://api.clickatell.com/http/sendmsg", parameters);
     }
+	else if (type_m == FreeMobile)
+	{
+		std::map<std::string, std::string> parameters;
+		parameters["user"] = user_m;
+		parameters["pass"] = pass_m;
+		parameters["msg"] = value;
+
+		sendSmsThroughREST("https://smsapi.free-mobile.fr/sendmsg", parameters);
+	}
     else
         logger_m.errorStream() << "Unable to send SMS, gateway not set." << endlog;
 }
