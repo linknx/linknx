@@ -143,7 +143,12 @@ void die (const char *msg, ...)
 int
 main (int ac, char *ag[])
 {
-    int index;
+	// Deactivate the whitespace condensing done by TinyXml.
+	// The config is likely to contain formatted text (for emails, sms, etc)
+	// and changing the number of whitespace (and new lines) is not probably not
+	// a good idea.
+	TiXmlBase::SetCondenseWhiteSpace(false);
+	int index;
 
     memset (&arg, 0, sizeof (arg));
 
