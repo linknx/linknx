@@ -133,7 +133,7 @@ const char *MessageBody::getData(int *len)
     if (status_m == 0)
     {
         const char* hdr = "MIME-Version: 1.0\r\n"
-                          "Content-Type: text/plain; charset=ISO-8859-1; format=flowed\r\n"
+                          "Content-Type: text/plain; charset=UTF-8; format=flowed\r\n"
                           "Content-Transfer-Encoding: 8bit\r\n"
                           "\r\n";
         status_m++;
