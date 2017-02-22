@@ -214,6 +214,7 @@ AC_LANG_RESTORE
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  ticpp/Makefile
+                 b64/Makefile
                  include/Makefile
                  test/Makefile
                  conf/Makefile])

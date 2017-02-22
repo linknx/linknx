@@ -9,4 +9,4 @@ endif
 
 EXTRA_DIST=linknx.spec
 
-SUBDIRS= ticpp src conf include $(CPPUNIT_DIR)
+SUBDIRS= ticpp b64 src conf include $(CPPUNIT_DIR)
