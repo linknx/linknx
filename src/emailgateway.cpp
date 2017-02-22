@@ -197,13 +197,18 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
            to override any subject line in the message headers. */
         if (subject != "")
         {
+			std::istringstream rawSubjectStream(subject);
+			std::ostringstream encodedSubjectStream;
 			const int maxLength=2048;
 			base64::encoder encoder(maxLength);
-			char encodedSubject[maxLength];
-			int encodedSize=encoder.encode(subject.c_str(), subject.size(), encodedSubject);
+			encoder.encode(rawSubjectStream, encodedSubjectStream);
+			/*char encodedSubject[maxLength];
+			int encodedSize=encoder.encode(subject.c_str(), subject.size()+1, encodedSubject);
 			std::ostringstream subjectLine;
-			std::string encodedSubjectStr(encodedSubject, encodedSize);
-			subjectLine << "=?utf-8?B?" << encodedSubjectStr << "?=";
+			std::string encodedSubjectStr(encodedSubject, encodedSize+1);*/
+			std::ostringstream subjectLine;
+			std::string encodedSubject = encodedSubjectStream.str();
+			subjectLine << "=?utf-8?B?" << encodedSubject.substr(0, encodedSubject.size() - 1) << "?=";
             smtp_set_header (message, "Subject", subjectLine.str().c_str());
             smtp_set_header_option (message, "Subject", Hdr_OVERRIDE, 1);
         }
