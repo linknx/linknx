@@ -19,9 +19,11 @@
 
 #include "emailgateway.h"
 #include <iostream>
+#include <sstream>
 #ifdef HAVE_LIBESMTP
 #include <libesmtp.h>
 #include <signal.h>
+#include "b64/encode.h"
 #endif
 
 Logger& EmailGateway::logger_m(Logger::getInstance("EmailGateway"));
@@ -195,7 +197,14 @@ void EmailGateway::sendEmail(std::string &to, std::string &subject, std::string 
            to override any subject line in the message headers. */
         if (subject != "")
         {
-            smtp_set_header (message, "Subject", subject.c_str());
+			const int maxLength=2048;
+			base64::encoder encoder(maxLength);
+			char encodedSubject[maxLength];
+			int encodedSize=encoder.encode(subject.c_str(), subject.size(), encodedSubject);
+			std::ostringstream subjectLine;
+			std::string encodedSubjectStr(encodedSubject, encodedSize);
+			subjectLine << "=?utf-8?B?" << encodedSubjectStr << "?=";
+            smtp_set_header (message, "Subject", subjectLine.str().c_str());
             smtp_set_header_option (message, "Subject", Hdr_OVERRIDE, 1);
         }
 
