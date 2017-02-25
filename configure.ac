@@ -113,6 +113,8 @@ if test x"$enable_smtp" != xno ; then
 else
 	AC_MSG_RESULT([no])
 fi
+AM_CONDITIONAL([USE_B64], [test x"$enable_smtp" != xno])
+
 
 dnl #########################################################################
 dnl Check if using log4cpp

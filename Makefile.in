@@ -307,8 +307,10 @@ AUTOMAKE_OPTIONS = 1.9 foreign
 ACLOCAL_AMFLAGS = -I m4
 @CPPUNIT_FALSE@CPPUNIT_DIR = 
 @CPPUNIT_TRUE@CPPUNIT_DIR = test
+@USE_B64_FALSE@B64_DIR = 
+@USE_B64_TRUE@B64_DIR = b64
 EXTRA_DIST = linknx.spec
-SUBDIRS = ticpp b64 src conf include $(CPPUNIT_DIR)
+SUBDIRS = ticpp $(B64_DIR) src conf include $(CPPUNIT_DIR)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

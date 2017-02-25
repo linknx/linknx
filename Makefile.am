@@ -7,6 +7,12 @@ else
 CPPUNIT_DIR =
 endif
 
+if USE_B64
+B64_DIR = b64
+else
+B64_DIR =
+endif
+
 EXTRA_DIST=linknx.spec
 
-SUBDIRS= ticpp b64 src conf include $(CPPUNIT_DIR)
+SUBDIRS= ticpp $(B64_DIR) src conf include $(CPPUNIT_DIR)
