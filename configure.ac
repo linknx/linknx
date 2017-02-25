@@ -217,6 +217,7 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  ticpp/Makefile
                  b64/Makefile
+                 b64/src/Makefile
                  include/Makefile
                  test/Makefile
                  conf/Makefile])
