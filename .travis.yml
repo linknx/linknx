@@ -10,5 +10,5 @@ install:
 
 script:
     - autoreconf --install
-    - ./configure
+    - ./configure --without-pth-test
     - make && make check && sudo make install
