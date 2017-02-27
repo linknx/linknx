@@ -1,4 +1,5 @@
 language: cpp
+sudo: required
 
 install:
     - wget https://www.auto.tuwien.ac.at/~mkoegler/debian/pool/main/p/pthsem/pthsem_2.0.8.tar.gz
