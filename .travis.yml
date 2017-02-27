@@ -1,6 +1,11 @@
 language: cpp
 sudo: required
 
+addons:
+    apt:
+        packages:
+            - libcppunit-dev
+
 install:
     - wget https://www.auto.tuwien.ac.at/~mkoegler/debian/pool/main/p/pthsem/pthsem_2.0.8.tar.gz
     - tar -zxf pthsem_2.0.8.tar.gz
