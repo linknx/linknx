@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/linknx/linknx.svg?branch=master)](https://travis-ci.org/linknx/linknx)
 This repository is a migration of the legacy one hosted on Sourceforge
 (:pserver:anonymous@linknx.cvs.sourceforge.net:/cvsroot/linknx)
 
@@ -5,7 +6,7 @@ The migration is aimed at simplifying the collaboration and maintenance of
 Linknx's source code in the future.
 
 # Documentation
-Read the [wiki pages](https://sourceforge.net/p/linknx/wiki/Main_Page/) on sourceforge.
+Read the [wiki pages](https://sourceforge.net/p/linknx/wiki/Main_Page/) on sourceforge before the full wiki is migrated here. Thanks for your patience!
 
 # How to build linknx
 The best option is to download a tarball corresponding to a specific version (see links below). Then, run
