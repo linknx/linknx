@@ -14,6 +14,7 @@ install:
     - cd ..
 
 script:
+    - export TZ=CET
     - export LD_LIBRARY_PATH=/usr/local/lib
     - autoreconf --install
     - ./configure --without-pth-test
