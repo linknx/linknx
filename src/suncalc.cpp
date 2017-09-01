@@ -25,7 +25,7 @@
 #include "suncalc.h"
 #include "services.h"
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <stdlib.h>
 #include <getopt.h>
