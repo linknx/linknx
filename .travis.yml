@@ -6,6 +6,21 @@ addons:
         packages:
             - libcppunit-dev
 
+matrix:
+    include:
+        - os: linux
+          addons:
+              apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
+                  packages:
+                      - g++-6
+          env:
+            - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6" 
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
 install:
     - wget https://www.auto.tuwien.ac.at/~mkoegler/debian/pool/main/p/pthsem/pthsem_2.0.8.tar.gz
     - tar -zxf pthsem_2.0.8.tar.gz
