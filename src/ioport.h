@@ -109,7 +109,7 @@ public:
     virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
 
 private:
-    std::auto_ptr<RxThread> rxThread_m;
+    std::unique_ptr<RxThread> rxThread_m;
     std::string id_m;
     
     typedef std::list<ConnectCondition*> ConnectListenerList_t;

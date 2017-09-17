@@ -57,6 +57,45 @@ protected:
 
 class Object
 {
+protected:
+	class BufferBuilder
+	{
+		public:
+			BufferBuilder(int size, Logger &logger);
+			~BufferBuilder();
+
+		public:
+			template <class T> BufferBuilder &operator<<(const T &value)
+			{
+				setValue(index_m, value);
+				++index_m;
+				return *this;
+			}
+
+			uint8_t *getBuffer() {return buffer_m;}
+			template <class T> void setValue(int index, const T &value)
+			{
+				if (index >= size_m)
+				{
+					logger_m.errorStream() << "Buffer size is exceeded." << endlog;
+					return;
+				}
+
+				if (value & 0xFF != value)
+				{
+					logger_m.errorStream() << "Value must be one significant byte in length." << endlog;
+				}
+
+				buffer_m[index] = (uint8_t)value;
+			}
+
+		private:
+			uint8_t *buffer_m;
+			int index_m;
+			int size_m;
+			Logger &logger_m;
+	};
+
 public:
     Object();
     virtual ~Object();
@@ -272,8 +311,9 @@ public:
             onUpdate();
     };
     virtual void doSend(bool isWrite) {
-        uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (TObjectValue::control_m ? 2 : 0) | (TObjectValue::value_m ? 1 : 0) };
-        getKnxConnection()->write(getGad(), buf, 2);
+		BufferBuilder builder(2, Object::logger_m);
+        builder << 0 << ((isWrite ? 0x80 : 0x40) | (TObjectValue::control_m ? 2 : 0) | (TObjectValue::value_m ? 1 : 0));
+        getKnxConnection()->write(getGad(), builder.getBuffer(), 2);
     };
     void setBoolValue(bool value) {
         TObjectValue val(value, true);
@@ -286,7 +326,7 @@ protected:
     virtual bool set(ObjectValue* value) { return TObjectValue::set(value); };
     virtual bool set(double value) { return TObjectValue::set(value); };
     virtual ObjectValue* getObjectValue() { return static_cast<TObjectValue*>(this); };
-    static Logger& logger_m;
+    // static Logger& logger_m;
 };
 
 class SwitchingControlObjectValue : public ObjectValue

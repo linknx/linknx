@@ -663,7 +663,7 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void SwitchingObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0) };
+    uint8_t buf[2] = { 0, (uint8_t)((isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0)) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
@@ -871,7 +871,7 @@ void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void StepDirObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, (isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07) };
+    uint8_t buf[2] = { 0, (uint8_t)((isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07)) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
@@ -1238,7 +1238,7 @@ void TimeObject::setTime(time_t time)
 
 void TimeObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), ((wday_m<<5) & 0xE0) | (hour_m & 0x1F), min_m, sec_m };
+    uint8_t buf[5] = { 0, (uint8_t)(isWrite ? 0x80 : 0x40), (uint8_t)(((wday_m<<5) & 0xE0) | (hour_m & 0x1F)), (uint8_t)min_m, (uint8_t)sec_m };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
 }
 
@@ -1451,11 +1451,11 @@ void DateObject::setDate(time_t time)
 
 void DateObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0,
-                       (isWrite ? 0x80 : 0x40),
-                       day_m, month_m,
-                       (year_m >= 100 && year_m < 190) ? year_m-100 : year_m };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+	BufferBuilder builder(5, DateObject::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40) << day_m << month_m;
+	builder << ((year_m >= 100 && year_m < 190) ? year_m-100 : year_m);
+
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 5);
 }
 
 void DateObject::setDate(int day, int month, int year)
@@ -1661,7 +1661,8 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void ValueObject::doSend(bool isWrite)
 {
-    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), 0, 0 };
+	BufferBuilder builder(4, ValueObject::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0;
     int ex = 0;
     int m = (int)rint(getFloatValue() * 100);
     if (m < 0)
@@ -1673,7 +1674,7 @@ void ValueObject::doSend(bool isWrite)
             ex++;
         }
         m = -m;
-        buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7);
+		builder.setValue(2, ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7));
     }
     else
     {
@@ -1682,11 +1683,11 @@ void ValueObject::doSend(bool isWrite)
             m = m >> 1;
             ex++;
         }
-        buf[2] = ((m >> 8) & 0x07) | ((ex << 3) & 0x78);
+        builder.setValue(2, ((m >> 8) & 0x07) | ((ex << 3) & 0x78));
     }
-    buf[3] = (m & 0xff);
+    builder.setValue(3, m & 0xff);
 
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 4);
 }
 /*
 void ValueObjectImpl::setFloatValue(double value)
@@ -1751,15 +1752,16 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void ValueObject32::doSend(bool isWrite)
 {
-    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), 0, 0, 0, 0 };
+	BufferBuilder builder(6, ValueObject32::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0 << 0 << 0;
     convfloat tmp;
     tmp.fl = static_cast<float>(value_m);
-    buf[5] = static_cast<uint8_t>(tmp.u32 & 0x000000FF);
-    buf[4] = static_cast<uint8_t>((tmp.u32 & 0x0000FF00) >> 8);
-    buf[3] = static_cast<uint8_t>((tmp.u32 & 0x00FF0000) >> 16);
-    buf[2] = static_cast<uint8_t>((tmp.u32 & 0xFF000000) >> 24);
+    builder.setValue(5, (tmp.u32 & 0x000000FF));
+    builder.setValue(4, ((tmp.u32 & 0x0000FF00) >> 8));
+    builder.setValue(3, ((tmp.u32 & 0x00FF0000) >> 16));
+    builder.setValue(2, ((tmp.u32 & 0xFF000000) >> 24));
 
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
 UIntObjectValue::UIntObjectValue(const std::string& value)
@@ -1879,8 +1881,9 @@ void U8ImplObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U8ImplObject::doSend(bool isWrite)
 {
-    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (getInt() & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+	BufferBuilder builder(3, U8ImplObject::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40) << (getInt() & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 3);
 }
 
 U8ObjectValue::U8ObjectValue(const std::string& value)
@@ -2211,8 +2214,9 @@ void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U16Object::doSend(bool isWrite)
 {
-    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+	BufferBuilder builder(4, U16Object::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 4);
 }
 
 U32ObjectValue::U32ObjectValue(const std::string& value)
@@ -2268,8 +2272,9 @@ void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U32Object::doSend(bool isWrite)
 {
-    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+	BufferBuilder builder(6, U32Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000)>>24) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
 RGBObjectValue::RGBObjectValue(const std::string& value)
@@ -2328,8 +2333,9 @@ void RGBObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void RGBObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
+	BufferBuilder builder(5, RGBObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 5);
 }
 
 IntObjectValue::IntObjectValue(const std::string& value)
@@ -2488,8 +2494,9 @@ void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S8Object::doSend(bool isWrite)
 {
-    uint8_t buf[3] = { 0, (isWrite ? 0x80 : 0x40), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 3);
+	BufferBuilder builder(3, S8Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 3);
 }
 
 S16ObjectValue::S16ObjectValue(const std::string& value)
@@ -2549,8 +2556,9 @@ void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S16Object::doSend(bool isWrite)
 {
-    uint8_t buf[4] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00)>>8), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 4);
+	BufferBuilder builder(4, S16Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 4);
 }
 
 S32ObjectValue::S32ObjectValue(const std::string& value)
@@ -2606,8 +2614,9 @@ void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S32Object::doSend(bool isWrite)
 {
-    uint8_t buf[6] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff000000)>>24), ((value_m & 0xff0000)>>16), ((value_m & 0xff00)>>8), (value_m & 0xff) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 6);
+	BufferBuilder builder(6, S32Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000)>>24) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
 #ifdef STL_STREAM_SUPPORT_INT64
@@ -2732,9 +2741,10 @@ void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S64Object::doSend(bool isWrite)
 {
-    uint8_t buf[10] = { 0, (isWrite ? 0x80 : 0x40), ((value_m & 0xff00000000000000LL)>>56), ((value_m & 0xff000000000000LL)>>48), ((value_m & 0xff0000000000LL)>>40), ((value_m & 0xff00000000LL)>>32),
-                                                    ((value_m & 0xff000000LL)>>24), ((value_m & 0xff0000LL)>>16), ((value_m & 0xff00LL)>>8), (value_m & 0xffLL) };
-    Services::instance()->getKnxConnection()->write(getGad(), buf, 10);
+	BufferBuilder builder(10, S64Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00000000000000LL)>>56) << ((value_m & 0xff000000000000LL)>>48) << ((value_m & 0xff0000000000LL)>>40) << ((value_m & 0xff00000000LL)>>32)
+                                                    << ((value_m & 0xff000000LL)>>24) << ((value_m & 0xff0000LL)>>16) << ((value_m & 0xff00LL)>>8) << (value_m & 0xffLL);
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 10);
 }
 #endif
 
@@ -3267,4 +3277,15 @@ std::list<Object*> ObjectController::getObjects()
       objects.push_back((*it).second);
     }
     return objects;
+}
+
+Object::BufferBuilder::BufferBuilder(int size, Logger &logger)
+ : buffer_m(nullptr), index_m(0), size_m(size), logger_m(logger)
+{
+	buffer_m = new uint8_t[size];
+}
+
+Object::BufferBuilder::~BufferBuilder()
+{
+	delete[] buffer_m;
 }
