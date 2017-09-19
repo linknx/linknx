@@ -24,7 +24,6 @@
 #include "logger.h"
 #include "threads.h"
 #include <string>
-#include <memory>
 #include "ticpp.h"
 #include "ruleserver.h"
 #include <sys/socket.h>
@@ -88,7 +87,12 @@ public:
 
     IOPort();
     virtual ~IOPort();
+	
+private:
+	IOPort(const IOPort &original);
+	IOPort &operator=(const IOPort &original) const;
 
+public:
     static IOPort* create(ticpp::Element* pConfig);
     static IOPort* create(const std::string& type);
 
@@ -109,7 +113,7 @@ public:
     virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
 
 private:
-    std::unique_ptr<RxThread> rxThread_m;
+    RxThread *rxThread_m;
     std::string id_m;
     
     typedef std::list<ConnectCondition*> ConnectListenerList_t;

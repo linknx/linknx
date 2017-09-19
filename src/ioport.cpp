@@ -120,10 +120,12 @@ void IOPortManager::exportXml(ticpp::Element* pConfig)
 }
 
 IOPort::IOPort()
+	: rxThread_m(NULL)
 {}
 
 IOPort::~IOPort()
 {
+	delete rxThread_m;
 }
 
 IOPort* IOPort::create(const std::string& type)
@@ -156,7 +158,10 @@ void IOPort::importXml(ticpp::Element* pConfig)
 {
     id_m = pConfig->GetAttribute("id");
     if (isRxEnabled())
-        rxThread_m.reset(new RxThread(this));
+	{
+		delete rxThread_m;
+        rxThread_m = new RxThread(this);
+	}
 }
 
 void IOPort::exportXml(ticpp::Element* pConfig)
@@ -166,13 +171,13 @@ void IOPort::exportXml(ticpp::Element* pConfig)
 
 void IOPort::addListener(IOPortListener *l)
 {
-    if (rxThread_m.get())
+    if (rxThread_m)
         rxThread_m->addListener(l);
 }
 
 bool IOPort::removeListener(IOPortListener *l)
 {
-    if (rxThread_m.get())
+    if (rxThread_m)
         return (rxThread_m->removeListener(l));
     else
         return false;
