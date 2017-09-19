@@ -1,11 +1,6 @@
 language: cpp
 sudo: required
 
-addons:
-    apt:
-        packages:
-            - libcppunit-dev
-
 matrix:
     include:
         - os: linux
@@ -15,6 +10,7 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                       - g++-6
+                      - libcppunit-dev
           env:
             - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6" 
 
@@ -25,6 +21,7 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                       - g++-4.9
+                      - libcppunit-dev
           env:
             - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9" 
 
