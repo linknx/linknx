@@ -3280,7 +3280,7 @@ std::list<Object*> ObjectController::getObjects()
 }
 
 Object::BufferBuilder::BufferBuilder(int size, Logger &logger)
- : buffer_m(nullptr), index_m(0), size_m(size), logger_m(logger)
+ : buffer_m(NULL), index_m(0), size_m(size), logger_m(logger)
 {
 	buffer_m = new uint8_t[size];
 }
