@@ -43,4 +43,4 @@ script:
     - export LD_LIBRARY_PATH=/usr/local/lib
     - autoreconf --install
     - ./configure --without-pth-test
-    - make && make check && sudo make install
+    - make && cd test && make check && sudo make install
