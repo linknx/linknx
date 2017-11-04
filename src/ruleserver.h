@@ -517,6 +517,15 @@ private:
 class Rule : public ChangeListener
 {
 public:
+	enum ActionListTriggerType
+	{
+		IfTrue,
+		IfFalse,
+		OnTrue,
+		OnFalse
+	};
+
+public:
     Rule();
     virtual ~Rule();
 
@@ -534,6 +543,9 @@ public:
     void setActive(bool active);
     void cancel();
     void initialize();
+
+public:
+	void addAction(Action *action, ActionListTriggerType trigger);
 
 private:
     std::string id_m;

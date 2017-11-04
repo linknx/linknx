@@ -200,6 +200,23 @@ Rule::~Rule()
         delete (*it);
 }
 
+void Rule::addAction(Action *action, ActionListTriggerType trigger)
+{
+	switch (trigger)
+	{
+		case IfTrue:
+			flags_m |= StatelessIfTrue;
+		case OnTrue:
+			actionsList_m.push_back(action);
+			break;
+		case IfFalse:
+			flags_m |= StatelessIfFalse;
+		case OnFalse:
+			actionsListFalse_m.push_back(action);
+			break;
+	}
+}
+
 void Rule::importXml(ticpp::Element* pConfig)
 {
     pConfig->GetAttribute("id", &id_m, false);
