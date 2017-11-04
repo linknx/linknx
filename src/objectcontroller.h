@@ -81,7 +81,7 @@ protected:
 					return;
 				}
 
-				if (value & 0xFF != value)
+				if ((value & 0xFF) != value)
 				{
 					logger_m.errorStream() << "Value must be one significant byte in length." << endlog;
 				}
