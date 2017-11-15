@@ -3,15 +3,10 @@ Makefile
 *.cache
 *.log
 stamp-h1
-config.h
-config.h.in
-configure
-aclocal.m4
 .deps
 *.a
 config.status
 .dirstamp
-Makefile.in
 *.m4
 .*.sw?
 tags
