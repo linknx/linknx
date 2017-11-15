@@ -185,13 +185,12 @@ std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
 
 Logger& Rule::logger_m(Logger::getInstance("Rule"));
 
-Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(None)
+Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(Active)
 {}
 
 Rule::~Rule()
 {
-    if (condition_m != 0)
-        delete condition_m;
+	delete condition_m;
 
     ActionsList_t::iterator it;
     for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
@@ -216,6 +215,12 @@ void Rule::addAction(Action *action, ActionListTriggerType trigger)
 			break;
 	}
 }
+
+void Rule::setCondition(Condition* condition)
+{
+	delete condition_m;
+	condition_m = condition;
+}	
 
 void Rule::importXml(ticpp::Element* pConfig)
 {
@@ -243,7 +248,7 @@ void Rule::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
 
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
-    condition_m = Condition::create(pCondition, this);
+    setCondition(Condition::create(pCondition, this));
 
     ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
     for ( actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++ )
@@ -304,10 +309,8 @@ void Rule::updateXml(ticpp::Element* pConfig)
     ticpp::Element* pCondition = pConfig->FirstChildElement("condition", false);
     if (pCondition != NULL)
     {
-        if (condition_m != 0)
-            delete condition_m;
         logger_m.infoStream() << "Rule: Reconfiguring condition " << getID() << endlog;
-        condition_m = Condition::create(pCondition, this);
+        setCondition(Condition::create(pCondition, this));
     }
 
     ticpp::Element* pActionList = pConfig->FirstChildElement("actionlist", false);

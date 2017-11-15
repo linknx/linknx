@@ -544,6 +544,10 @@ public:
     void cancel();
     void initialize();
 
+protected:
+	Condition* getCondition() const;
+	void setCondition(Condition* condition);
+
 public:
 	void addAction(Action *action, ActionListTriggerType trigger);
 
