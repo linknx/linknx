@@ -545,7 +545,7 @@ public:
     void initialize();
 
 protected:
-	Condition* getCondition() const;
+	Condition* getCondition() const { return condition_m; }
 	void setCondition(Condition* condition);
 
 public:
