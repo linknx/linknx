@@ -36,12 +36,15 @@ public:
 	int getCounter() const {return counter_m;}
 	void waitForCompletion()
 	{
+		timespec spec;
+		spec.tv_nsec = 10000; // In nanoseconds.
+
 		// As the current thread has not been spawned by pth, looks like
 		// pthsem events do not work. We have to observe the action's finished
 		// state instead.
 		while (!isFinished())
 		{
-			pth_sleep(1);
+			pth_nanosleep(&spec, NULL);
 		}
 	}
 
@@ -83,16 +86,12 @@ private:
 public:
     void setUp()
     {
-		std::cout << "setUp" << std::endl;
 		pth_init();
         rule_m = new TestableRule();
     }
 
     void tearDown()
     {
-		// Make sure we exit all threads before we delete the rule.
-		//pth_exit(0);
-		std::cout << "tearDown" << std::endl;
         delete rule_m; rule_m = NULL;
     }
 
@@ -103,71 +102,38 @@ public:
 
     void testIfTrueActionList()
     {
-		CounterAction *action = new CounterAction();
-		rule_m->addAction(action, Rule::IfTrue); 
-		rule_m->getCondition()->setValue(true);
-
-		// Rule has not been evaluated yet.
-        CPPUNIT_ASSERT_EQUAL(0, action->getCounter());
-
-		// Evaluate rule to execute action.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
-
-		// If rule is evaluated again, action is executed once again.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(2, action->getCounter());
+		testActionList(true, Rule::IfTrue, 2);
     }
 
     void testOnTrueActionList()
     {
-		CounterAction *action = new CounterAction();
-		rule_m->addAction(action, Rule::OnTrue); 
-		rule_m->getCondition()->setValue(true);
-
-		// Rule has not been evaluated yet.
-        CPPUNIT_ASSERT_EQUAL(0, action->getCounter());
-
-		// Evaluate rule to execute action.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
-
-		// If rule is evaluated again, action is NOT executed a second time.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
+		testActionList(true, Rule::OnTrue, 1);
     }
 	
     void testIfFalseActionList()
     {
-		CounterAction *action = new CounterAction();
-		rule_m->addAction(action, Rule::IfFalse); 
-		rule_m->getCondition()->setValue(false);
-
-		// Rule has not been evaluated yet.
-        CPPUNIT_ASSERT_EQUAL(0, action->getCounter());
-
-		// Evaluate rule to execute action.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
-
-		// If rule is evaluated again, action is executed once again.
-		rule_m->evaluate();
-		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(2, action->getCounter());
+		testActionList(false, Rule::IfFalse, 2);
     }
 	
 	// TODO Does not pass because rule is initialized to false (this is the
 	// default). There is no value change, then!
     void testOnFalseActionList()
     {
+		// Initialize rule to true, as default value is false.
+		// Otherwise, the first evaluation below will not trigger
+		// the action.
+		rule_m->getCondition()->setValue(true);
+		rule_m->evaluate();
+
+		testActionList(false, Rule::OnFalse, 1);
+    }
+
+private:
+    void testActionList(bool condition, Rule::ActionListTriggerType type, int expectedFinalCount)
+    {
 		CounterAction *action = new CounterAction();
-		rule_m->addAction(action, Rule::OnFalse); 
-		rule_m->getCondition()->setValue(false);
+		rule_m->addAction(action, type); 
+		rule_m->getCondition()->setValue(condition);
 
 		// Rule has not been evaluated yet.
         CPPUNIT_ASSERT_EQUAL(0, action->getCounter());
@@ -180,7 +146,7 @@ public:
 		// If rule is evaluated again, action is NOT executed a second time.
 		rule_m->evaluate();
 		action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
+        CPPUNIT_ASSERT_EQUAL(expectedFinalCount, action->getCounter());
     }
 };
 
