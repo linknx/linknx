@@ -25,12 +25,12 @@ private:
 class CounterAction : public Action
 {
 public:
-	CounterAction() : counter_m(0) {}
+	CounterAction(int increment) : counter_m(0), increment_m(increment) {}
 	
     virtual void importXml(ticpp::Element* pConfig) {}
 	virtual void Run (pth_sem_t * stop)
 	{
-		++counter_m;
+		counter_m += increment_m;
 	}
 
 	int getCounter() const {return counter_m;}
@@ -50,6 +50,7 @@ public:
 
 private:
 	int counter_m;
+	int increment_m;
 };
 
 class TestableRule : public Rule
@@ -74,6 +75,7 @@ class RuleTest : public CppUnit::TestFixture/*, public ChangeListener*/
     CPPUNIT_TEST( testOnTrueActionList );
     CPPUNIT_TEST( testIfFalseActionList );
     CPPUNIT_TEST( testOnFalseActionList );
+    CPPUNIT_TEST( testIfTrueAndOnTrueActionLists );
     
     CPPUNIT_TEST_SUITE_END();
 
@@ -102,17 +104,17 @@ public:
 
     void testIfTrueActionList()
     {
-		testActionList(true, Rule::IfTrue, 2);
+		testOneActionList(true, Rule::IfTrue, 2);
     }
 
     void testOnTrueActionList()
     {
-		testActionList(true, Rule::OnTrue, 1);
+		testOneActionList(true, Rule::OnTrue, 1);
     }
 	
     void testIfFalseActionList()
     {
-		testActionList(false, Rule::IfFalse, 2);
+		testOneActionList(false, Rule::IfFalse, 2);
     }
 	
 	// TODO Does not pass because rule is initialized to false (this is the
@@ -125,13 +127,43 @@ public:
 		rule_m->getCondition()->setValue(true);
 		rule_m->evaluate();
 
-		testActionList(false, Rule::OnFalse, 1);
+		testOneActionList(false, Rule::OnFalse, 1);
     }
 
-private:
-    void testActionList(bool condition, Rule::ActionListTriggerType type, int expectedFinalCount)
+	/** This test is used to reproduce issue 33 */
+    void testIfTrueAndOnTrueActionLists()
     {
-		CounterAction *action = new CounterAction();
+		CounterAction *action1 = new CounterAction(1);
+		rule_m->addAction(action1, Rule::OnTrue); 
+		CounterAction *action2 = new CounterAction(10);
+		rule_m->addAction(action2, Rule::IfTrue); 
+
+		rule_m->getCondition()->setValue(true);
+
+		// Rule has not been evaluated yet.
+        CPPUNIT_ASSERT_EQUAL(0, action1->getCounter());
+        CPPUNIT_ASSERT_EQUAL(0, action2->getCounter());
+
+		// Evaluate rule to execute both actions.
+		rule_m->evaluate();
+		action1->waitForCompletion();
+		action2->waitForCompletion();
+        CPPUNIT_ASSERT_EQUAL(1, action1->getCounter());
+        CPPUNIT_ASSERT_EQUAL(10, action2->getCounter());
+
+		// If rule is evaluated again, only action2 is executed again.
+		rule_m->evaluate();
+		action1->waitForCompletion();
+		action2->waitForCompletion();
+        CPPUNIT_ASSERT_EQUAL(1, action1->getCounter());
+        CPPUNIT_ASSERT_EQUAL(20, action2->getCounter());
+    }
+	
+
+private:
+    void testOneActionList(bool condition, Rule::ActionListTriggerType type, int expectedFinalCount)
+    {
+		CounterAction *action = new CounterAction(1);
 		rule_m->addAction(action, type); 
 		rule_m->getCondition()->setValue(condition);
 
