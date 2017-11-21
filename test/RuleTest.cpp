@@ -37,11 +37,8 @@ public:
 	void waitForCompletion()
 	{
 		timespec spec;
-		spec.tv_nsec = 10000; // In nanoseconds.
+		spec.tv_nsec = 10000000; // In nanoseconds => 10ms.
 
-		// As the current thread has not been spawned by pth, looks like
-		// pthsem events do not work. We have to observe the action's finished
-		// state instead.
 		while (!isFinished())
 		{
 			pth_nanosleep(&spec, NULL);
