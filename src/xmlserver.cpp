@@ -480,9 +480,15 @@ void ClientConnection::Run (pth_sem_t * stop1)
                         if (rule == 0)
                             throw "Unknown rule id";
                         if (list == "true")
-                            rule->executeActionsTrue();
+						{
+							rule->executeActions(ActionList::OnTrue);
+							rule->executeActions(ActionList::IfTrue);
+						}
                         else if (list == "false")
-                            rule->executeActionsFalse();
+						{
+							rule->executeActions(ActionList::OnFalse);
+							rule->executeActions(ActionList::IfFalse);
+						}
                         else
                             throw "Invalid list attribute. (Must be 'true' or 'false')";
                     }

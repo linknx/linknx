@@ -101,17 +101,17 @@ public:
 
     void testIfTrueActionList()
     {
-		testOneActionList(true, Rule::IfTrue, 2);
+		testOneActionList(true, ActionList::IfTrue, 2);
     }
 
     void testOnTrueActionList()
     {
-		testOneActionList(true, Rule::OnTrue, 1);
+		testOneActionList(true, ActionList::OnTrue, 1);
     }
 	
     void testIfFalseActionList()
     {
-		testOneActionList(false, Rule::IfFalse, 2);
+		testOneActionList(false, ActionList::IfFalse, 2);
     }
 	
 	// TODO Does not pass because rule is initialized to false (this is the
@@ -124,16 +124,16 @@ public:
 		rule_m->getCondition()->setValue(true);
 		rule_m->evaluate();
 
-		testOneActionList(false, Rule::OnFalse, 1);
+		testOneActionList(false, ActionList::OnFalse, 1);
     }
 
 	/** This test is used to reproduce issue 33 */
     void testIfTrueAndOnTrueActionLists()
     {
 		CounterAction *action1 = new CounterAction(1);
-		rule_m->addAction(action1, Rule::OnTrue); 
+		rule_m->addAction(action1, ActionList::OnTrue); 
 		CounterAction *action2 = new CounterAction(10);
-		rule_m->addAction(action2, Rule::IfTrue); 
+		rule_m->addAction(action2, ActionList::IfTrue); 
 
 		rule_m->getCondition()->setValue(true);
 
@@ -158,7 +158,7 @@ public:
 	
 
 private:
-    void testOneActionList(bool condition, Rule::ActionListTriggerType type, int expectedFinalCount)
+    void testOneActionList(bool condition, ActionList::TriggerType type, int expectedFinalCount)
     {
 		CounterAction *action = new CounterAction(1);
 		rule_m->addAction(action, type); 

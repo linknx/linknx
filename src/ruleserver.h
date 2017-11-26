@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "objectcontroller.h"
 #include "timermanager.h"
+#include "collections.h"
 #include "ticpp.h"
 
 class Condition
@@ -514,10 +515,10 @@ private:
     bool active_m;
 };
 
-class Rule : public ChangeListener
+class ActionList : public List<Action*, true>
 {
 public:
-	enum ActionListTriggerType
+	enum TriggerType
 	{
 		IfTrue,
 		IfFalse,
@@ -525,6 +526,27 @@ public:
 		OnFalse
 	};
 
+public:
+	ActionList(TriggerType trigger) : triggerType_m(trigger) {}
+
+private:
+	ActionList(const ActionList &original);
+	ActionList *operator=(const ActionList &other);
+
+public:
+	void exportXml(ticpp::Element *pConfig);
+	std::string getTriggerTypeToString() {return getTriggerTypeToString(triggerType_m);}
+	void cancel();
+
+	static std::string getTriggerTypeToString(TriggerType trigger);
+	static TriggerType parseTriggerType(const std::string &trigger);
+
+private:
+	TriggerType triggerType_m;
+};
+
+class Rule : public ChangeListener
+{
 public:
     Rule();
     virtual ~Rule();
@@ -538,36 +560,42 @@ public:
     virtual void onChange(Object* object);
 
     void evaluate();
-    void executeActionsTrue();
-    void executeActionsFalse();
     void setActive(bool active);
     void cancel();
     void initialize();
+
+	void executeActions(ActionList::TriggerType type)
+	{
+		executeActions(getActions(type));
+	}
 
 protected:
 	Condition* getCondition() const { return condition_m; }
 	void setCondition(Condition* condition);
 
 public:
-	void addAction(Action *action, ActionListTriggerType trigger);
+	void addAction(Action *action, ActionList::TriggerType trigger);
+
+private:
+	void executeActions(ActionList &actions);
+	ActionList &getActions(ActionList::TriggerType trigger);
+	static void exportActions(ActionList &actions, ticpp::Element *pRuleConfig);
 
 private:
     std::string id_m;
     std::string descr_m;
     Condition* condition_m;
-    typedef std::list<Action*> ActionsList_t;
-    ActionsList_t actionsList_m;
-    ActionsList_t actionsListFalse_m;
+    ActionList actionsOnTrue_m;
+    ActionList actionsIfTrue_m;
+    ActionList actionsOnFalse_m;
+    ActionList actionsIfFalse_m;
     bool prevValue_m;
     enum Flags
     {
         None = 0x00,
         Active = 0x01,
-        StatelessIfTrue = 0x02,
-        StatelessIfFalse = 0x04,
         InitEval = 0x10,
         InitTrue = 0x20,
-        Stateless = StatelessIfFalse | StatelessIfTrue
     };
     int flags_m;
 protected:

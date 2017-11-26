@@ -185,35 +185,36 @@ std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
 
 Logger& Rule::logger_m(Logger::getInstance("Rule"));
 
-Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(Active)
+Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(Active),
+	actionsOnTrue_m(ActionList::OnTrue), actionsIfTrue_m(ActionList::IfTrue),
+	actionsOnFalse_m(ActionList::OnFalse), actionsIfFalse_m(ActionList::IfFalse)
 {}
 
 Rule::~Rule()
 {
 	delete condition_m;
-
-    ActionsList_t::iterator it;
-    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-        delete (*it);
-    for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-        delete (*it);
 }
 
-void Rule::addAction(Action *action, ActionListTriggerType trigger)
+ActionList &Rule::getActions(ActionList::TriggerType trigger)
 {
 	switch (trigger)
 	{
-		case IfTrue:
-			flags_m |= StatelessIfTrue;
-		case OnTrue:
-			actionsList_m.push_back(action);
-			break;
-		case IfFalse:
-			flags_m |= StatelessIfFalse;
-		case OnFalse:
-			actionsListFalse_m.push_back(action);
-			break;
+		case ActionList::OnTrue:
+			return actionsOnTrue_m;
+		case ActionList::IfTrue:
+			return actionsIfTrue_m;
+		case ActionList::OnFalse:
+			return actionsOnFalse_m;
+		case ActionList::IfFalse:
+			return actionsIfFalse_m;
+		default:
+			throw "Invalid trigger type.";
 	}
+}
+
+void Rule::addAction(Action *action, ActionList::TriggerType trigger)
+{
+	getActions(trigger).push_back(action);
 }
 
 void Rule::setCondition(Condition* condition)
@@ -253,25 +254,24 @@ void Rule::importXml(ticpp::Element* pConfig)
     ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
     for ( actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++ )
     {
-        std::string type = (*actionListIt).GetAttribute("type");
-        bool isFalse = ((type == "if-false") || (type == "on-false"));
-        if (type == "if-false")
-            flags_m |= StatelessIfFalse;
-        else if (type == "if-true")
-            flags_m |= StatelessIfTrue;
-        else if (!isFalse)
-            type = "on-true"; // this is just for log display below.
-        
-        logger_m.infoStream() << "ActionList: Configuring '" << type << "' action list" << endlog;
-        ticpp::Iterator<ticpp::Element> actionIt("action");
-        for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
-        {
-            Action* action = Action::create(&(*actionIt));
-            if (isFalse)
-                actionsListFalse_m.push_back(action);
-            else
-                actionsList_m.push_back(action);
-        }
+		std::string triggerTypeStr = actionListIt->GetAttribute("type");
+		ActionList::TriggerType type;
+		try
+		{
+			type = ActionList::parseTriggerType(triggerTypeStr);
+		}
+		catch(...)
+		{
+			continue;
+		}
+			
+		logger_m.infoStream() << "ActionList: Configuring '" << triggerTypeStr << "' action list" << endlog;
+		ticpp::Iterator<ticpp::Element> actionIt("action");
+		for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
+		{
+			Action* action = Action::create(&(*actionIt));
+			addAction(action, type);
+		}
     }
 
     // If init value is "eval", we better wait for a bus connection before we evaluate the condition
@@ -317,35 +317,31 @@ void Rule::updateXml(ticpp::Element* pConfig)
 
     if (pActionList != NULL)
     {
-        ActionsList_t::iterator it;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-            delete (*it);
-        actionsList_m.clear();
-        for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-            delete (*it);
-        actionsListFalse_m.clear();
+        actionsOnTrue_m.clear();
+        actionsIfTrue_m.clear();
+        actionsOnFalse_m.clear();
+        actionsIfFalse_m.clear();
 
         ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
         for ( actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++ )
         {
-            std::string type = (*actionListIt).GetAttribute("type");
-            bool isFalse = ((type == "if-false") || (type == "on-false"));
-            if (type == "if-false")
-                flags_m |= StatelessIfFalse;
-            else if (type == "if-true")
-                flags_m |= StatelessIfTrue;
-            else if (!isFalse)
-                type = "on-true"; // this is just for log display below.
+			std::string triggerTypeStr = actionListIt->GetAttribute("type");
+			ActionList::TriggerType type;
+			try
+			{
+				type = ActionList::parseTriggerType(triggerTypeStr);
+			}
+			catch(...)
+			{
+				continue;
+			}
             
-            logger_m.infoStream() << "ActionList: Reconfiguring '" << type << "' action list" << endlog;
+            logger_m.infoStream() << "ActionList: Reconfiguring '" << triggerTypeStr << "' action list" << endlog;
             ticpp::Iterator<ticpp::Element> actionIt("action");
             for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++ )
             {
                 Action* action = Action::create(&(*actionIt));
-                if (isFalse)
-                    actionsListFalse_m.push_back(action);
-                else
-                    actionsList_m.push_back(action);
+				addAction(action, type);
             }
         }
     }
@@ -383,38 +379,19 @@ void Rule::exportXml(ticpp::Element* pConfig)
         pConfig->LinkEndChild(&pCond);
     }
 
-    ActionsList_t::iterator it;
-    if (actionsList_m.begin() != actionsList_m.end())
+    exportActions(actionsOnTrue_m, pConfig);	
+    exportActions(actionsIfTrue_m, pConfig);	
+    exportActions(actionsOnFalse_m, pConfig);	
+    exportActions(actionsIfFalse_m, pConfig);	
+}
+
+void Rule::exportActions(ActionList &actions, ticpp::Element *pRuleConfig)
+{
+    if (!actions.empty())
     {
         ticpp::Element pList("actionlist");
-        if (flags_m & StatelessIfTrue)
-            pList.SetAttribute("type", "if-true");
-        
-        pConfig->LinkEndChild(&pList);
-
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-        {
-            ticpp::Element pElem("action");
-            (*it)->exportXml(&pElem);
-            pList.LinkEndChild(&pElem);
-        }
-    }
-    if (actionsListFalse_m.begin() != actionsListFalse_m.end())
-    {
-        ticpp::Element pList("actionlist");
-        if (flags_m & StatelessIfFalse)
-            pList.SetAttribute("type", "if-false");
-        else
-            pList.SetAttribute("type", "on-false");
-
-        pConfig->LinkEndChild(&pList);
-
-        for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-        {
-            ticpp::Element pElem("action");
-            (*it)->exportXml(&pElem);
-            pList.LinkEndChild(&pElem);
-        }
+		actions.exportXml(&pList);
+        pRuleConfig->LinkEndChild(&pList);
     }
 }
 
@@ -441,10 +418,10 @@ void Rule::initialize()
     logger_m.infoStream() << "Rule " << id_m << " initialized with value " << prevValue_m << endlog;
 
     // Execute actions if stateless.
-    if (prevValue_m && (flags_m & StatelessIfTrue) != 0)
-        executeActionsTrue();
-    else if (!prevValue_m && (flags_m & StatelessIfFalse) != 0)
-        executeActionsFalse();
+    if (prevValue_m)
+        executeActions(actionsIfTrue_m);
+    else if (!prevValue_m)
+        executeActions(actionsIfFalse_m);
 }
 
 void Rule::onChange(Object* object)
@@ -459,28 +436,19 @@ void Rule::evaluate()
         logger_m.infoStream() << "Evaluate rule " << id_m << endlog;
         bool curValue = condition_m->evaluate();
         logger_m.infoStream() << "Rule " << id_m << " evaluated as " << curValue << ", prev value was " << prevValue_m << endlog;
-        if (curValue && ((flags_m & StatelessIfTrue) || !prevValue_m))
-            executeActionsTrue();
-        else if (!curValue && ((flags_m & StatelessIfFalse) || prevValue_m))
-            executeActionsFalse();
+        if (curValue)
+		{
+			executeActions(actionsIfTrue_m);
+			if (!prevValue_m) executeActions(actionsOnTrue_m);
+		}
+        else
+		{
+			executeActions(actionsIfFalse_m);
+			if (prevValue_m) executeActions(actionsOnFalse_m);
+		}
+
         prevValue_m = curValue;
     }
-}
-
-void Rule::executeActionsTrue()
-{
-    ActionsList_t::iterator it;
-    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-        (*it)->execute();
-    logger_m.debugStream() << "Action list 'true' executed for rule " << id_m << endlog;
-}
-
-void Rule::executeActionsFalse()
-{
-    ActionsList_t::iterator it;
-    for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-        (*it)->execute();
-    logger_m.debugStream() << "Action list 'false' executed for rule " << id_m << endlog;
 }
 
 void Rule::setActive(bool active)
@@ -496,11 +464,10 @@ void Rule::cancel()
     if (flags_m & Active)
     {
         logger_m.infoStream() << "Cancel all actions for rule " << id_m << endlog;
-        ActionsList_t::iterator it;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
-            (*it)->cancel();
-        for(it=actionsListFalse_m.begin(); it != actionsListFalse_m.end(); ++it)
-            (*it)->cancel();
+		actionsOnTrue_m.cancel();
+		actionsIfTrue_m.cancel();
+		actionsOnFalse_m.cancel();
+		actionsIfFalse_m.cancel();
     }
 }
 
@@ -1508,9 +1475,15 @@ void StartActionlistAction::Run (pth_sem_t * stop)
     Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
     if (rule) {
         if (list_m)
-            rule->executeActionsTrue();
+		{
+            rule->executeActions(ActionList::OnTrue);
+            rule->executeActions(ActionList::IfTrue);
+		}
         else
-            rule->executeActionsFalse();
+		{
+            rule->executeActions(ActionList::OnFalse);
+            rule->executeActions(ActionList::IfFalse);
+		}
     }
     else
         logger_m.errorStream() << "CancelAction: Rule not found '" << ruleId_m << "'" << endlog;
@@ -2369,4 +2342,74 @@ void TimeCounterCondition::statusXml(ticpp::Element* pStatus)
 void RuleInitializer::Run (pth_sem_t * stop)
 {
     RuleServer::instance()->initialize();
+}
+
+void Rule::executeActions(ActionList &actions)
+{
+    for(ActionList::iterator it=actions.begin(); it != actions.end(); ++it)
+	{
+        (*it)->execute();
+	}
+
+    logger_m.debugStream() << "Action list '" << actions.getTriggerTypeToString()  << "' executed for rule " << id_m << endlog;
+}
+
+void ActionList::exportXml(ticpp::Element *pConfig)
+{
+	if (triggerType_m != OnTrue)
+	{
+		pConfig->SetAttribute("type", getTriggerTypeToString(triggerType_m));
+	}
+
+	for(iterator it=this->begin(); it != this->end(); ++it)
+	{
+		ticpp::Element pElem("action");
+		(*it)->exportXml(&pElem);
+		pConfig->LinkEndChild(&pElem);
+	}
+}
+
+void ActionList::cancel()
+{
+	for(iterator it = this->begin(); it != this->end(); ++it)
+		(*it)->cancel();
+}
+
+std::string ActionList::getTriggerTypeToString(TriggerType trigger)
+{
+	switch (trigger)
+	{
+		case ActionList::IfTrue:
+			return "if-true";
+		case ActionList::OnTrue:
+			return "on-true";
+		case ActionList::IfFalse:
+			return "if-false";
+		case ActionList::OnFalse:
+			return "on-false";
+	}
+}
+
+ActionList::TriggerType ActionList::parseTriggerType(const std::string &trigger)
+{
+	if (trigger == "if-true")
+	{
+		return ActionList::IfTrue;
+	}
+	else if (trigger == "on-true")
+	{
+		return ActionList::OnTrue;
+	}
+	else if (trigger == "if-false")
+	{
+		return ActionList::IfFalse;
+	}
+	else if (trigger == "on-false")
+	{
+		return ActionList::OnFalse;
+	}
+	else
+	{
+		throw "Invalid trigger type.";
+	}
 }
