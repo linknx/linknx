@@ -36,12 +36,11 @@ public:
 	int getCounter() const {return counter_m;}
 	void waitForCompletion()
 	{
-		timespec spec;
-		spec.tv_nsec = 10000000; // In nanoseconds => 10ms.
-
+		int i = 0;
 		while (!isFinished())
 		{
-			pth_nanosleep(&spec, NULL);
+			std::cout << "Wait #" << ++i << std::endl;
+			pth_usleep(10000);
 		}
 	}
 
