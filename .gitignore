@@ -10,3 +10,4 @@ config.status
 *.m4
 .*.sw?
 tags
+vimrc*
