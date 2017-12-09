@@ -107,7 +107,8 @@ am_testmain_OBJECTS = testmain-ObjectControllerTest.$(OBJEXT) \
 	testmain-TimerManagerTest.$(OBJEXT) \
 	testmain-PeriodicTaskTest.$(OBJEXT) \
 	testmain-XmlServerTest.$(OBJEXT) testmain-IOPortTest.$(OBJEXT) \
-	testmain-Issue7.$(OBJEXT) testmain-testmain.$(OBJEXT) \
+	testmain-Issue7.$(OBJEXT) testmain-RuleTest.$(OBJEXT) \
+	testmain-testmain.$(OBJEXT) \
 	../src/testmain-ruleserver.$(OBJEXT) \
 	../src/testmain-objectcontroller.$(OBJEXT) \
 	../src/eibclient.$(OBJEXT) ../src/testmain-threads.$(OBJEXT) \
@@ -531,7 +532,7 @@ top_srcdir = @top_srcdir@
 @USE_B64_FALSE@B64_LIBS = 
 @USE_B64_TRUE@B64_LIBS = $(top_srcdir)/b64/src/libb64.a
 AUTOMAKE_OPTIONS = subdir-objects
-testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp ObjectTest2.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp XmlServerTest.cpp IOPortTest.cpp Issue7.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
+testmain_SOURCES = ObjectControllerTest.cpp ObjectTest.cpp ObjectTest2.cpp TimeSpecTest.cpp ExceptionDaysTest.cpp TimerManagerTest.cpp PeriodicTaskTest.cpp XmlServerTest.cpp IOPortTest.cpp Issue7.cpp RuleTest.cpp testmain.cpp ../src/ruleserver.cpp ../src/objectcontroller.cpp ../src/eibclient.c ../src/threads.cpp ../src/timermanager.cpp  ../src/persistentstorage.cpp ../src/xmlserver.cpp ../src/smsgateway.cpp ../src/emailgateway.cpp ../src/knxconnection.cpp ../src/services.cpp ../src/suncalc.cpp ../src/luacondition.cpp ../src/ioport.cpp ../src/logger.cpp ../src/ruleserver.h ../src/objectcontroller.h ../src/threads.h ../src/timermanager.h ../src/persistentstorage.h ../src/xmlserver.h ../src/smsgateway.h ../src/emailgateway.h ../src/knxconnection.h ../src/services.h ../src/suncalc.h ../src/luacondition.h ../src/ioport.h ../src/logger.h
 testmain_CXXFLAGS = $(CPPUNIT_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(B64_CFLAGS) $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LUA_CFLAGS) $(MYSQL_CFLAGS) $(ESMTP_CFLAGS)
 testmain_LDADD = ../ticpp/libticpp.a $(B64_LIBS) $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LOG4CPP_LIBS) $(LUA_LIBS) $(MYSQL_LIBS) $(CPPUNIT_LIBS) $(ESMTP_LIBS) -ldl
@@ -641,6 +642,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ObjectTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-ObjectTest2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-PeriodicTaskTest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-RuleTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimeSpecTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-TimerManagerTest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testmain-XmlServerTest.Po@am__quote@
@@ -817,6 +819,20 @@ testmain-Issue7.obj: Issue7.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Issue7.cpp' object='testmain-Issue7.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-Issue7.obj `if test -f 'Issue7.cpp'; then $(CYGPATH_W) 'Issue7.cpp'; else $(CYGPATH_W) '$(srcdir)/Issue7.cpp'; fi`
+
+testmain-RuleTest.o: RuleTest.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-RuleTest.o -MD -MP -MF $(DEPDIR)/testmain-RuleTest.Tpo -c -o testmain-RuleTest.o `test -f 'RuleTest.cpp' || echo '$(srcdir)/'`RuleTest.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/testmain-RuleTest.Tpo $(DEPDIR)/testmain-RuleTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='RuleTest.cpp' object='testmain-RuleTest.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-RuleTest.o `test -f 'RuleTest.cpp' || echo '$(srcdir)/'`RuleTest.cpp
+
+testmain-RuleTest.obj: RuleTest.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-RuleTest.obj -MD -MP -MF $(DEPDIR)/testmain-RuleTest.Tpo -c -o testmain-RuleTest.obj `if test -f 'RuleTest.cpp'; then $(CYGPATH_W) 'RuleTest.cpp'; else $(CYGPATH_W) '$(srcdir)/RuleTest.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/testmain-RuleTest.Tpo $(DEPDIR)/testmain-RuleTest.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='RuleTest.cpp' object='testmain-RuleTest.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -c -o testmain-RuleTest.obj `if test -f 'RuleTest.cpp'; then $(CYGPATH_W) 'RuleTest.cpp'; else $(CYGPATH_W) '$(srcdir)/RuleTest.cpp'; fi`
 
 testmain-testmain.o: testmain.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testmain_CXXFLAGS) $(CXXFLAGS) -MT testmain-testmain.o -MD -MP -MF $(DEPDIR)/testmain-testmain.Tpo -c -o testmain-testmain.o `test -f 'testmain.cpp' || echo '$(srcdir)/'`testmain.cpp
