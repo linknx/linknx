@@ -39,7 +39,6 @@ public:
 		int i = 0;
 		while (!isFinished())
 		{
-			std::cout << "Wait #" << ++i << std::endl;
 			pth_usleep(10000);
 		}
 	}
@@ -154,7 +153,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(1, action1->getCounter());
         CPPUNIT_ASSERT_EQUAL(20, action2->getCounter());
     }
-	
 
 private:
     void testOneActionList(bool condition, ActionList::TriggerType type, int expectedFinalCount)
