@@ -33,10 +33,10 @@ public:
  */
 typedef void (Runable::*THREADENTRY) (pth_sem_t * stopcond);
 
-/** implements a Thread */
+/** Represents a wrapper object around a PTH thread. */
 class Thread
 {
-    /** delete at stop */
+    /** Whether to delete thread once stopped. */
     bool autodel;
     /** is thread joinable */
     bool joinable;
@@ -44,11 +44,13 @@ class Thread
     static void *ThreadWrapper (void *arg);
     /** thread id */
     pth_t tid;
-    /** object to run */
+    /** Object representing the job to execute. Can be null, in which case
+	 * the Run() method must be overriden to implement the job. */
     Runable *obj;
     /** entry point */
     THREADENTRY entry;
-    /** stop condition */
+	/** Semaphore passed to the Run method to notify the thread's job
+	 * that it should stop as soon possible. */
     pth_sem_t should_stop;
     /** priority */
     int prio;
