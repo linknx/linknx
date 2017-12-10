@@ -86,7 +86,7 @@ const char *EmailGateway::callback(void **buf, int *len, void *arg)
 {
     MessageBody* body = static_cast<MessageBody*>(arg);
     const char *tmp = body->getData(len);
-    logger_m.infoStream() << "EmailGateway: callback " << (tmp ? tmp : "") << " len=" << len << endlog;
+    logger_m.infoStream() << "EmailGateway: callback " << (tmp ? tmp : "") << " len=" << *len << endlog;
     return tmp;
 }
 
