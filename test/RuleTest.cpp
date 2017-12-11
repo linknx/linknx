@@ -1,6 +1,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "timermanager.h"
 #include "services.h"
+#include "linknx.h"
 #include <iostream>
 
 class ConstantCondition : public Condition
@@ -71,6 +72,10 @@ class RuleTest : public CppUnit::TestFixture/*, public ChangeListener*/
     CPPUNIT_TEST( testIfFalseActionList );
     CPPUNIT_TEST( testOnFalseActionList );
     CPPUNIT_TEST( testIfTrueAndOnTrueActionLists );
+
+    CPPUNIT_TEST(testXmlImportExport1);
+    CPPUNIT_TEST(testXmlImportExport2);
+    CPPUNIT_TEST(testXmlImportExport3);
     
     CPPUNIT_TEST_SUITE_END();
 
@@ -153,6 +158,117 @@ public:
         CPPUNIT_ASSERT_EQUAL(1, action1->getCounter());
         CPPUNIT_ASSERT_EQUAL(20, action2->getCounter());
     }
+
+	void testXmlImportExport1()
+	{
+		std::string docString = 
+			"<config>\
+				<objects>\
+					<object type=\"1.001\" id=\"object1\"/>\
+					<object type=\"5.xxx\" id=\"object2\" value=\"0\"/>\
+				</objects>\
+				<rules>\
+					<rule id=\"rule1\">\
+						<condition type=\"object\" id=\"object1\"/>\
+						<actionlist>\
+							<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\"/>\
+						</actionlist>\
+					</rule>\
+				</rules>\
+			</config>";
+
+		Linknx::ParseConfiguration(docString);
+
+		ticpp::Element ruleXml("rule");
+		RuleServer::instance()->getRule("rule1")->exportXml(&ruleXml);
+		ticpp::Document doc;
+		doc.LinkEndChild(&ruleXml);
+		std::string expectedRuleString =
+"<rule id=\"rule1\" init=\"false\">\n\
+	<condition type=\"object\" id=\"object1\" />\n\
+	<actionlist>\n\
+		<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\" />\n\
+	</actionlist>\n\
+</rule>\n";
+
+		CPPUNIT_ASSERT_EQUAL(expectedRuleString, doc.GetAsString());
+	}
+
+	void testXmlImportExport2()
+	{
+		std::string docString = 
+			"<config>\
+				<objects>\
+					<object type=\"1.001\" id=\"object1\"/>\
+					<object type=\"5.xxx\" id=\"object2\" value=\"0\"/>\
+				</objects>\
+				<rules>\
+					<rule id=\"rule1\">\
+						<condition type=\"object\" id=\"object1\"/>\
+						<actionlist type=\"on-true\">\
+							<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\"/>\
+						</actionlist>\
+					</rule>\
+				</rules>\
+			</config>";
+
+		Linknx::ParseConfiguration(docString);
+
+		ticpp::Element ruleXml("rule");
+		RuleServer::instance()->getRule("rule1")->exportXml(&ruleXml);
+		ticpp::Document doc;
+		doc.LinkEndChild(&ruleXml);
+		std::string expectedRuleString =
+"<rule id=\"rule1\" init=\"false\">\n\
+	<condition type=\"object\" id=\"object1\" />\n\
+	<actionlist>\n\
+		<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\" />\n\
+	</actionlist>\n\
+</rule>\n";
+
+		CPPUNIT_ASSERT_EQUAL(expectedRuleString, doc.GetAsString());
+	}
+
+	void testXmlImportExport3()
+	{
+		std::string docString = 
+			"<config>\
+				<objects>\
+					<object type=\"1.001\" id=\"object1\"/>\
+					<object type=\"5.xxx\" id=\"object2\" value=\"0\"/>\
+				</objects>\
+				<rules>\
+					<rule id=\"rule1\">\
+						<condition type=\"object\" id=\"object1\"/>\
+						<actionlist>\
+							<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\"/>\
+						</actionlist>\
+						<actionlist type=\"if-true\">\
+							<action type=\"set-value\" id=\"object2\" value=\"10\"/>\
+						</actionlist>\
+					</rule>\
+				</rules>\
+			</config>";
+
+		Linknx::ParseConfiguration(docString);
+
+		ticpp::Element ruleXml("rule");
+		RuleServer::instance()->getRule("rule1")->exportXml(&ruleXml);
+		ticpp::Document doc;
+		doc.LinkEndChild(&ruleXml);
+		std::string expectedRuleString =
+"<rule id=\"rule1\" init=\"false\">\n\
+	<condition type=\"object\" id=\"object1\" />\n\
+	<actionlist>\n\
+		<action type=\"formula\" id=\"object2\" x=\"object2\" c=\"1\" />\n\
+	</actionlist>\n\
+	<actionlist type=\"if-true\">\n\
+		<action type=\"set-value\" id=\"object2\" value=\"10\" />\n\
+	</actionlist>\n\
+</rule>\n";
+
+		CPPUNIT_ASSERT_EQUAL(expectedRuleString, doc.GetAsString());
+	}
 
 private:
     void testOneActionList(bool condition, ActionList::TriggerType type, int expectedFinalCount)

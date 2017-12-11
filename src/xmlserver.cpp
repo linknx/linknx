@@ -150,12 +150,16 @@ void XmlUnixServer::exportXml(ticpp::Element* pConfig)
 void XmlServer::Run (pth_sem_t *stop1)
 {
     pth_event_t stop = pth_event (PTH_EVENT_SEM, stop1);
+
+	// Loop until the "stop" event is raised. 
     while (pth_event_status (stop) != PTH_STATUS_OCCURRED)
     {
+		// Wait for an incoming request on the main socket.
         int cfd;
         cfd = pth_accept_ev (fd_m, 0, 0, stop);
         if (cfd != -1)
         {
+			// Run a new connection on cloned socket.
             ClientConnection *c = new ClientConnection (this, cfd);
             connections_m.push_back(c);
             c->Start ();

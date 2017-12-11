@@ -73,6 +73,8 @@ private:
     std::string path_m;
 };
 
+/** Class responsible for handling an incoming connection on the Xml server's
+ * main socket. It wraps a cloned socket and lives until it runs out of data. */ 
 class ClientConnection : public Thread, public ChangeListener
 {
 public:
