@@ -192,6 +192,8 @@ Object* Object::create(const std::string& type)
         return new StringObject();
     else if (type == "232.600")
         return new RGBObject();
+    else if (type == "251.600")
+        return new RGBWObject();
     else
         return 0;
 }
@@ -2337,6 +2339,74 @@ void RGBObject::doSend(bool isWrite)
     builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 5);
 }
+
+#ifdef STL_STREAM_SUPPORT_INT64
+RGBWObjectValue::RGBWObjectValue(const std::string& value)
+{
+    std::istringstream val(value);
+    val.setf(std::ios::hex, std::ios::basefield);
+    val >> RGBWObjectValue::value_m;
+
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    {
+        std::stringstream msg;
+        msg << "RGBWObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string RGBWObjectValue::toString()
+{
+    std::ostringstream out;
+    out.setf(std::ios::hex, std::ios::basefield);
+    out.fill('0');
+    out << std::setw(8) << RGBWObjectValue::value_m;
+    return out.str();
+}
+
+Logger& RGBWObject::logger_m(Logger::getInstance("RGBWObject"));
+
+RGBWObject::RGBWObject()
+{}
+
+RGBWObject::~RGBWObject()
+{}
+
+ObjectValue* RGBWObject::createObjectValue(const std::string& value)
+{
+    return new RGBWObjectValue(value);
+}
+
+void RGBWObject::setValue(const std::string& value)
+{
+    RGBWObjectValue val(value);
+    Object::setValue(&val);
+}
+
+void RGBWObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    unsigned int newValue;
+    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    if (forceUpdate() || newValue != RGBWObjectValue::value_m)
+    {
+        RGBWObjectValue::value_m = newValue;
+        onUpdate();
+    }
+}
+
+void RGBWObject::doSend(bool isWrite)
+{
+	BufferBuilder builder(8, RGBWObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40)
+    << ((RGBWObjectValue::value_m & 0xff000000)>>24)
+    << ((RGBWObjectValue::value_m & 0xff0000)>>16)
+    << ((RGBWObjectValue::value_m & 0xff00)>>8)
+    << (RGBWObjectValue::value_m & 0xff)
+    << 0x00 << 0x0f;
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 8);
+}
+#endif
 
 IntObjectValue::IntObjectValue(const std::string& value)
 {
