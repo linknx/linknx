@@ -74,7 +74,6 @@ AC_ARG_ENABLE([smtp],
 	AC_HELP_STRING([--enable-smtp], [build with libesmtp email support (default=auto)]),
 	,
 	enable_smtp=auto)
-
 if test x"$enable_smtp" != xno ; then
 	AC_CHECK_HEADER([libesmtp.h],
 		if test x"$enable_smtp" = xstatic ; then
@@ -100,7 +99,6 @@ if test x"$enable_smtp" != xno ; then
 	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	if test x"$enable_smtp" = xstatic ; then
-
 		LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
 	else
 		LIBS="$ESMTP_LIBS $LIBS"
@@ -111,7 +109,6 @@ else
 	AC_MSG_RESULT([no])
 fi
 AM_CONDITIONAL([USE_B64], [test x"$enable_smtp" != xno])
-
 
 dnl #########################################################################
 dnl Check if using cppunit
