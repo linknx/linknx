@@ -103,6 +103,8 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testStringObjectUpdate );
     CPPUNIT_TEST( testStringExportImport );
     CPPUNIT_TEST( testStringPersist );
+    CPPUNIT_TEST( testRGBWObject );
+    CPPUNIT_TEST( testRGBWObjectWrite );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
 
@@ -3418,6 +3420,53 @@ public:
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");
         delete res4;
+    }
+
+    void testRGBWObject()
+    {
+        ObjectValue* val;
+        RGBWObject r1, r2, r3;
+        r1.setValue("01234567");
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        r2.setValue("FEDCBA98");
+        CPPUNIT_ASSERT(r2.getValue() == "fedcba98");
+        r3.setValue("0x00000010");
+        CPPUNIT_ASSERT(r3.getValue() == "00000010");
+
+        r1.setValue("0");
+        CPPUNIT_ASSERT(r1.getValue() == "00000000");
+        r2.setValue("876543210");
+        CPPUNIT_ASSERT(r2.getValue() == "876543210");
+
+        CPPUNIT_ASSERT_THROW(r3.setValue("g"), ticpp::Exception);
+    }
+
+
+    void testRGBWObjectWrite()
+    {
+
+        RGBWObject r1;
+        r1.setValue("00000000");
+        r1.addChangeListener(this);
+
+        uint8_t buf[6] = {0x00, 0x80, 0x01, 0x23, 0x45, 0x67};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0x01;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0x00;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "00234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
 };
