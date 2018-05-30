@@ -4,7 +4,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
 AC_CONFIG_HEADER([config.h])
 
-PKG_CONFIG=`which pkg-config` 
+PKG_CONFIG=`which pkg-config`
 
 # Checks for programs.
 AC_PROG_CXX
@@ -13,10 +13,6 @@ AC_PROG_RANLIB
 AC_CHECK_PTHSEM(2.0.4,yes,yes,no)
 AC_CHECK_HEADER(argp.h,,[AC_MSG_ERROR([argp_parse not found])])
 AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
-
-dnl Check for CPPUnit 
-ifdef([AM_PATH_CPPUNIT], [AM_PATH_CPPUNIT(1.9.6, [AM_CONDITIONAL(CPPUNIT, true)], [AM_CONDITIONAL(CPPUNIT, false)])],  
-                         [AM_CONDITIONAL(CPPUNIT, false)]) 
 
 # Checks for libraries.
 LIBCURL_CHECK_CONFIG([yes], [7.14.0])
@@ -77,7 +73,7 @@ AC_ARG_ENABLE([smtp],
 	AC_HELP_STRING([--enable-smtp], [build with libesmtp email support (default=auto)]),
 	,
 	enable_smtp=auto)
- 
+
 if test x"$enable_smtp" != xno ; then
 	AC_CHECK_HEADER([libesmtp.h],
 		if test x"$enable_smtp" = xstatic ; then
@@ -103,7 +99,7 @@ if test x"$enable_smtp" != xno ; then
 	fi
 	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
 	if test x"$enable_smtp" = xstatic ; then
-		
+
 		LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
 	else
 		LIBS="$ESMTP_LIBS $LIBS"
@@ -115,6 +111,42 @@ else
 fi
 AM_CONDITIONAL([USE_B64], [test x"$enable_smtp" != xno])
 
+
+dnl #########################################################################
+dnl Check if using cppunit
+dnl #########################################################################
+
+AC_ARG_WITH(cppunit, AC_HELP_STRING([--with-cppunit],[Build CppUnit testbench for unit tests]),
+[WITH_CPPUNIT=$withval],[WITH_CPPUNIT=auto])
+
+if test x"$WITH_CPPUNIT" != xno; then
+  # try pkgconfig
+  if test x"$WITH_CPPUNIT" = xyes ; then
+    CPPUNITPC=cppunit
+  elif test x"$WITH_CPPUNIT" = xauto ; then
+    CPPUNITPC=cppunit
+  else
+    CPPUNITPC=$WITH_CPPUNIT
+  fi
+
+  if test x"$WITH_CPPUNIT" = xauto ; then
+    PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
+      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_SUBST(CPPUNIT_CFLAGS)
+      AC_SUBST(CPPUNIT_LIBS)
+      AM_CONDITIONAL(CPPUNIT, true)
+    ],[
+      AC_MSG_RESULT([no])
+      AM_CONDITIONAL(CPPUNIT, false)
+    ])
+  else
+    PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
+      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_SUBST(CPPUNIT_CFLAGS)
+      AC_SUBST(CPPUNIT_LIBS)
+    ])
+  fi
+fi
 
 dnl #########################################################################
 dnl Check if using log4cpp
@@ -140,7 +172,7 @@ if test x"$WITH_LOG4CPP" != xno; then
       AC_SUBST(LOG4CPP_CFLAGS)
       AC_SUBST(LOG4CPP_LIBS)
     ],[
-      AC_MSG_RESULT([no])    
+      AC_MSG_RESULT([no])
     ])
   else
     PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
