@@ -231,7 +231,7 @@ public:
         
         CPPUNIT_ASSERT_EQUAL(30, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(16, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(31, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(107, timeinfo->tm_year);
 
