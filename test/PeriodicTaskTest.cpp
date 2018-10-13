@@ -24,6 +24,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourNoMinute2 );
     CPPUNIT_TEST( testFindNextHourAndWeekdayNotException );
     CPPUNIT_TEST( testFindNextHourAndWeekdayOnlyException );
+    CPPUNIT_TEST( testFindNextDayOfMonthDst );
     CPPUNIT_TEST( testFindNextHourDst );
     CPPUNIT_TEST( testFindNextHourDst2 );
     CPPUNIT_TEST( testFindNextHourDst3 );
@@ -449,6 +450,33 @@ public:
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_wday);
     }
     
+    void testFindNextDayOfMonthDst()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 1;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 15;
+        curtimeinfo.tm_mon = 9;
+        curtimeinfo.tm_year = 112;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo);
+        TimeSpec ts1(56, 0, 15, -1, -1);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(56, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(10, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
+    }
+
     void testFindNextHourDst()
     {
         time_t next;
