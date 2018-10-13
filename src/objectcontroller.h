@@ -32,6 +32,27 @@
 
 class Object;
 
+class ObjectPtr
+{
+	public:
+		ObjectPtr(Object *object);
+		ObjectPtr(const ObjectPtr &original);
+		~ObjectPtr();
+
+	public:
+		ObjectPtr &operator=(const ObjectPtr &original);
+		Object *operator->() {return object_m;}
+		Object &operator*() {return *object_m;}
+		const Object &operator*() const {return *object_m;}
+
+	private:
+		Object* object_m;
+};
+
+class ObjectPtrList : public List<ObjectPtr>
+{
+};
+
 class ChangeListener
 {
 public:
@@ -179,6 +200,10 @@ private:
     ListenerList_t listenerList_m;
     typedef std::list<eibaddr_t> ListenerGadList_t;
     ListenerGadList_t listenerGadList_m;
+};
+
+template <bool owns> class ObjectList : public List<Object*, owns>
+{
 };
 
 class SwitchingObject : public Object

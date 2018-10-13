@@ -277,7 +277,7 @@ private:
     bool value_m;
     bool hex_m;
     regmatch_t* pmatch_m;
-    std::vector<Object*> objects_m;
+    ObjectPtrList objects_m;
     ChangeListener* cl_m;
 };
 
