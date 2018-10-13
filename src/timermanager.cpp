@@ -560,7 +560,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
                 if (hour == -1)
                     timeinfo->tm_hour = 0;
                 timeinfo->tm_mday = mday;
-                mktime(timeinfo);
+                mktimeNoDst(timeinfo);
                 timeinfo->tm_mday = mday;
             }
         }
