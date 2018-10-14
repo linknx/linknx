@@ -474,7 +474,7 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+		std::cout << "ANY MIN " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -502,7 +502,7 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+		std::cout << "ANY MIN2 " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -524,13 +524,13 @@ public:
         curtimeinfo.tm_year = 116;
         curtimeinfo.tm_isdst = -1;
         curtimeref = mktime(&curtimeinfo); // 25/02/2016.
-        TimeSpec ts1(-1, -1, 15, 4, 118);
+        TimeSpec ts1(-1, -1, 15, 4, 118); // Next should be 15/04/2018.
 
         next = task_m->callFindNext(curtimeref, &ts1);
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+		std::cout << "ANY MIN3 " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -551,8 +551,8 @@ public:
         curtimeinfo.tm_mon = 1;
         curtimeinfo.tm_year = 116;
         curtimeinfo.tm_isdst = -1;
-        curtimeref = mktime(&curtimeinfo); // 29/02/2016 which is a leap day.
-        TimeSpec ts1(0, 1, 29, 2, -1);
+        curtimeref = mktime(&curtimeinfo); // 29/02/2016 01:00 which is a leap day.
+        TimeSpec ts1(0, 1, 29, 2, -1); // Next should be 29/02/2020 01:00. This is the next leap year.
 
         next = task_m->callFindNext(curtimeref, &ts1);
 
