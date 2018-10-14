@@ -24,6 +24,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourNoMinute2 );
     CPPUNIT_TEST( testFindNextHourAndWeekdayNotException );
     CPPUNIT_TEST( testFindNextHourAndWeekdayOnlyException );
+    CPPUNIT_TEST( testLeapDay );
     CPPUNIT_TEST( testFindNextDayOfMonthDst );
     CPPUNIT_TEST( testFindNextHourDst );
     CPPUNIT_TEST( testFindNextHourDst2 );
@@ -450,6 +451,34 @@ public:
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_wday);
     }
     
+    void testLeapDay()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 1;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 29;
+        curtimeinfo.tm_mon = 1;
+        curtimeinfo.tm_year = 116;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo); // 29/02/2016 which is a leap day.
+        TimeSpec ts1(-1, -1, 29, 1, -1);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+		std::cout << "LEAP TEST " << timeinfo->tm_mon << " " << timeinfo->tm_year << std::endl;
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year); // 20/02/2020 which is next leap year.
+    }
+
     void testFindNextDayOfMonthDst()
     {
         time_t next;
