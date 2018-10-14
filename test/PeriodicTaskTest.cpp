@@ -24,6 +24,9 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourNoMinute2 );
     CPPUNIT_TEST( testFindNextHourAndWeekdayNotException );
     CPPUNIT_TEST( testFindNextHourAndWeekdayOnlyException );
+    CPPUNIT_TEST( testAnyMinutesSpecificDay );
+    CPPUNIT_TEST( testAnyMinutesSpecificDay2 );
+    CPPUNIT_TEST( testAnyMinutesSpecificDay3 );
     CPPUNIT_TEST( testLeapDay );
     CPPUNIT_TEST( testFindNextDayOfMonthDst );
     CPPUNIT_TEST( testFindNextHourDst );
@@ -451,6 +454,90 @@ public:
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_wday);
     }
     
+    void testAnyMinutesSpecificDay()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 1;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 25;
+        curtimeinfo.tm_mon = 1;
+        curtimeinfo.tm_year = 116;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo); // 25/02/2016.
+        TimeSpec ts1(-1, -1, 15, -1, -1);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(116, timeinfo->tm_year);
+    }
+
+    void testAnyMinutesSpecificDay2()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 1;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 25;
+        curtimeinfo.tm_mon = 1;
+        curtimeinfo.tm_year = 116;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo); // 25/02/2016.
+        TimeSpec ts1(-1, -1, 15, 4, -1);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(116, timeinfo->tm_year);
+    }
+
+    void testAnyMinutesSpecificDay3()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 1;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 25;
+        curtimeinfo.tm_mon = 1;
+        curtimeinfo.tm_year = 116;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo); // 25/02/2016.
+        TimeSpec ts1(-1, -1, 15, 4, 118);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+		std::cout << "ANY TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(118, timeinfo->tm_year);
+    }
+
     void testLeapDay()
     {
         time_t next;
@@ -465,15 +552,15 @@ public:
         curtimeinfo.tm_year = 116;
         curtimeinfo.tm_isdst = -1;
         curtimeref = mktime(&curtimeinfo); // 29/02/2016 which is a leap day.
-        TimeSpec ts1(-1, -1, 29, 1, -1);
+        TimeSpec ts1(0, 1, 29, 2, -1);
 
         next = task_m->callFindNext(curtimeref, &ts1);
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "LEAP TEST " << timeinfo->tm_mon << " " << timeinfo->tm_year << std::endl;
+		std::cout << "LEAP TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year); // 20/02/2020 which is next leap year.
