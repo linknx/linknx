@@ -474,7 +474,6 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY MIN " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -502,7 +501,6 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY MIN2 " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -530,7 +528,6 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "ANY MIN3 " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(15, timeinfo->tm_mday);
@@ -552,18 +549,17 @@ public:
         curtimeinfo.tm_year = 116;
         curtimeinfo.tm_isdst = -1;
         curtimeref = mktime(&curtimeinfo); // 29/02/2016 01:00 which is a leap day.
-        TimeSpec ts1(0, 1, 29, 2, -1); // Next should be 29/02/2020 01:00. This is the next leap year.
+        TimeSpec ts1(0, 1, 29, 2, -1); // Next should be 01/03/2017 01:00.
 
         next = task_m->callFindNext(curtimeref, &ts1);
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-		std::cout << "LEAP TEST " << timeinfo->tm_hour << ":" << timeinfo->tm_min << " " << timeinfo->tm_mday << "/" << timeinfo->tm_mon + 1 << "/" << timeinfo->tm_year + 1900 << std::endl;
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year); // 20/02/2020 which is next leap year.
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(117, timeinfo->tm_year);
     }
 
     void testFindNextDayOfMonthDst()

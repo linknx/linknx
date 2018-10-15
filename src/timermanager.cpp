@@ -591,6 +591,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
                 logger_m.infoStream() << "No more schedule available" << endlog;
                 return 0;
             }
+			timeinfo->tm_year = year;
         }
     }
     else
