@@ -517,7 +517,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         timeinfo->tm_min = 0;
     }
     
-    int min, hour, mday, mon, year, wdays;
+    int min, hour, mday, mon, year, wdays, montemp;
     TimeSpec::ExceptionDays exception;
     next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, timeinfo);
     
@@ -560,8 +560,18 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
                 if (hour == -1)
                     timeinfo->tm_hour = 0;
                 timeinfo->tm_mday = mday;
+                montemp = timeinfo->tm_mon;
                 mktimeNoDst(timeinfo);
-                timeinfo->tm_mday = mday;
+                if (mday > 31) {
+                    while (timeinfo->tm_mon > montemp) {
+                        timeinfo->tm_mon--;
+                        mday--;
+                        timeinfo->tm_mday = mday;
+                        mktimeNoDst(timeinfo);
+                    }
+                }
+                else timeinfo->tm_mday = mday;
+
             }
         }
         if (timeinfo->tm_mon > 11)
