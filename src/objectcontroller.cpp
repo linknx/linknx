@@ -232,6 +232,12 @@ ObjectValue* Object::get()
     return getObjectValue();
 }
 
+void Object::reset_init_m_if_stateless()
+{
+    if (flags_m & Stateless)
+        init_m = false;
+}
+
 void Object::importXml(ticpp::Element* pConfig)
 {
     std::string type = pConfig->GetAttribute("type");

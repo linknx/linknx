@@ -145,6 +145,7 @@ public:
     static eibaddr_t ReadAddr(const std::string& addr);
     static std::string WriteGroupAddr(eibaddr_t addr);
     static std::string WriteAddr(eibaddr_t addr);
+    void reset_init_m_if_stateless();
 protected:
     virtual bool set(ObjectValue* value) = 0;
     virtual bool set(double value) = 0;
