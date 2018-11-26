@@ -43,26 +43,25 @@ public:
     void testGetData()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         ticpp::Element pConfig;
         ts_1->exportXml(&pConfig);
         TimeSpec *ts = new TimeSpec();
         ts->importXml(&pConfig);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
         CPPUNIT_ASSERT_EQUAL(-1, mon);
         CPPUNIT_ASSERT_EQUAL(-1, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
     }
 
     void testImport()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         ticpp::Element pConfig;
         pConfig.SetAttribute("hour", "19");
         pConfig.SetAttribute("min", "3");
@@ -71,20 +70,20 @@ public:
         pConfig.SetAttribute("year", "2006");
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(3, min);
         CPPUNIT_ASSERT_EQUAL(19, hour);
         CPPUNIT_ASSERT_EQUAL(5, mday);
         CPPUNIT_ASSERT_EQUAL(11, mon);
         CPPUNIT_ASSERT_EQUAL(106, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
     }
 
     void testImport2()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         ticpp::Element pConfig;
         pConfig.SetAttribute("hour", "20");
         pConfig.SetAttribute("min", "59");
@@ -95,52 +94,53 @@ public:
         pConfig.SetAttribute("wdays", "67");
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(59, min);
         CPPUNIT_ASSERT_EQUAL(20, hour);
         CPPUNIT_ASSERT_EQUAL(6, mday);
         CPPUNIT_ASSERT_EQUAL(0, mon);
         CPPUNIT_ASSERT_EQUAL(95, year);
         CPPUNIT_ASSERT(TimeSpec::Sat || TimeSpec::Sun == wdays);
-        CPPUNIT_ASSERT(TimeSpec::Yes == exception);
+        CPPUNIT_ASSERT(TimeSpec::Yes == ts->getExceptions());
     }
 
     void testExport()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         ticpp::Element pConfig;
         ts_1->exportXml(&pConfig);
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
         CPPUNIT_ASSERT_EQUAL(-1, mon);
         CPPUNIT_ASSERT_EQUAL(-1, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
     }
 
     void testCreateVar()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         ticpp::Element pConfig;
         ts_3->exportXml(&pConfig);
         TimeSpec *ts = TimeSpec::create(&pConfig, 0);
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(-1, min);
         CPPUNIT_ASSERT_EQUAL(-1, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
         CPPUNIT_ASSERT_EQUAL(-1, mon);
         CPPUNIT_ASSERT_EQUAL(-1, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
     }
 
     void testCreateVarTime()
@@ -159,14 +159,15 @@ public:
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(50, min);
         CPPUNIT_ASSERT_EQUAL(23, hour);
         CPPUNIT_ASSERT_EQUAL(-1, mday);
         CPPUNIT_ASSERT_EQUAL(-1, mon);
         CPPUNIT_ASSERT_EQUAL(-1, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
 
         CPPUNIT_ASSERT(!isOnChangeCalled_m);
 
@@ -174,16 +175,18 @@ public:
 
         CPPUNIT_ASSERT(isOnChangeCalled_m);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(51, min);
         CPPUNIT_ASSERT_EQUAL(22, hour);
+        CPPUNIT_ASSERT_EQUAL(-1, mday);
+        CPPUNIT_ASSERT_EQUAL(-1, mon);
+        CPPUNIT_ASSERT_EQUAL(-1, year);
         delete ts;
     }
 
     void testCreateVarDate()
     {
         int min, hour, mday, mon, year, wdays;
-        TimeSpec::ExceptionDays exception;
         DateObject* date = new DateObject();
         date->setID("date_stub");
         date->setValue("2007-09-26");
@@ -198,14 +201,15 @@ public:
         VariableTimeSpec *vts = dynamic_cast<VariableTimeSpec*>(ts);
         CPPUNIT_ASSERT(vts != 0);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(26, mday);
         CPPUNIT_ASSERT_EQUAL(8, mon);
         CPPUNIT_ASSERT_EQUAL(107, year);
         CPPUNIT_ASSERT(TimeSpec::All == wdays);
-        CPPUNIT_ASSERT(TimeSpec::DontCare == exception);
+        CPPUNIT_ASSERT(TimeSpec::DontCare == ts->getExceptions());
 
         CPPUNIT_ASSERT(!isOnChangeCalled_m);
 
@@ -213,7 +217,8 @@ public:
 
         CPPUNIT_ASSERT(isOnChangeCalled_m);
 
-        ts->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, 0);
+        ts->getDay(mday, mon, year, wdays);
+        ts->getTime(mday, mon, year, hour, min);
         CPPUNIT_ASSERT_EQUAL(30, min);
         CPPUNIT_ASSERT_EQUAL(16, hour);
         CPPUNIT_ASSERT_EQUAL(31, mday);
@@ -221,7 +226,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(108, year);
         delete ts;
     }
-
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( TimeSpecTest );
