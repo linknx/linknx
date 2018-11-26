@@ -36,6 +36,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourDst5 );
     CPPUNIT_TEST( testFindNextHourDst6 );
     CPPUNIT_TEST( testFindNextHourDstSunrise );
+    CPPUNIT_TEST( testBug );
 //    CPPUNIT_TEST(  );
     
     CPPUNIT_TEST_SUITE_END();
@@ -805,6 +806,33 @@ public:
         CPPUNIT_ASSERT_EQUAL(6, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(28, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(9, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
+    }
+
+    void testBug()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 12;
+        curtimeinfo.tm_min = 10;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 20;
+        curtimeinfo.tm_mon = 7;
+        curtimeinfo.tm_year = 112;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo);
+        VariableTimeSpec ts1(NULL, 1, -1, -1, -1, -1, -120); // 1min - 120 seconds => Repeats every last minute of each hour.
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+	    std::cout << "TESTBUG " << timeinfo->tm_mday << "/" << timeinfo->tm_mon << "/" << timeinfo->tm_year << " " << timeinfo->tm_hour << ":" << timeinfo->tm_min << std::endl;
+        CPPUNIT_ASSERT_EQUAL(59, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(12, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
     }
 
