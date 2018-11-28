@@ -35,6 +35,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourDst4 );
     CPPUNIT_TEST( testFindNextHourDst5 );
     CPPUNIT_TEST( testFindNextHourDst6 );
+    CPPUNIT_TEST( testFindNextSunriseInFall );
     CPPUNIT_TEST( testFindNextHourDstSunrise );
     CPPUNIT_TEST( testBug );
 //    CPPUNIT_TEST(  );
@@ -770,6 +771,44 @@ public:
             CPPUNIT_ASSERT((next - curtimeref) <= (7*24+1)*3600 );
             curtimeref = next;
         }
+    }
+
+    void testFindNextSunriseInFall()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+		Services::instance()->getLocationInfo()->setCoord(4.84, 45.76); // Near Lyon, France.
+        curtimeinfo.tm_hour = 12;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 6;
+        curtimeinfo.tm_mon = 10;
+        curtimeinfo.tm_year = 118;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo);
+        SunriseTimeSpec ts1;
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(10, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(118, timeinfo->tm_year);
+
+        next = task_m->callFindNext(next, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(30, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(8, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(10, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(118, timeinfo->tm_year);
     }
 
     void testFindNextHourDstSunrise()
