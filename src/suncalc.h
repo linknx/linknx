@@ -106,6 +106,7 @@ public:
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
     long getGmtOffset();
     bool isEmpty() { return lon_m==0 && lat_m==0; };
+
 protected:
     double lon_m, lat_m;
     long gmtOffset_m;
