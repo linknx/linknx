@@ -532,6 +532,30 @@ double SolarNoonTimeSpec::computeTime(double rise, double set) const
     *exception = exception_m;
 }*/
 
+void SolarTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
+{
+	TimeSpec::getDay(current, mday, mon, year, wdays);
+
+	DateTime currentDate(&current);
+	currentDate.setYear(year);
+	currentDate.setMonth(mon);
+	currentDate.setDay(mday);
+	int min, hour;
+	getTime(currentDate.getDay(), currentDate.getMonth(), currentDate.getYear(), min, hour);
+	DateTime solarTime(currentDate);
+	solarTime.setHour(hour);
+	solarTime.setMinute(min);
+	if (solarTime < currentDate)
+	{
+		// Solar time has already been reached for the current day. Let's move
+		// to the next day that complies with constraints.
+		solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
+	}
+	mday = solarTime.getDay();
+	mon = solarTime.getMonth();
+	year = solarTime.getYear();
+}
+
 void SolarTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
 	TimeSpec::getTime(mday, mon, year, min, hour);

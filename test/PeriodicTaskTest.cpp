@@ -862,13 +862,13 @@ public:
         curtimeinfo.tm_year = 112;
         curtimeinfo.tm_isdst = -1;
         curtimeref = mktime(&curtimeinfo);
-        VariableTimeSpec ts1(NULL, 1, -1, -1, -1, -1, -120); // 1min - 120 seconds => Repeats every last minute of each hour.
+        VariableTimeSpec ts1(NULL, 1, -1, -1, -1, -1, -180); // 1min - 180 seconds => Repeats every second to last minute of each hour.
 
         next = task_m->callFindNext(curtimeref, &ts1);
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
 	    std::cout << "TESTBUG " << timeinfo->tm_mday << "/" << timeinfo->tm_mon << "/" << timeinfo->tm_year << " " << timeinfo->tm_hour << ":" << timeinfo->tm_min << std::endl;
-        CPPUNIT_ASSERT_EQUAL(59, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(58, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(12, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mon);

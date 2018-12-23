@@ -29,6 +29,70 @@
 #include "ticpp.h"
 #include "objectcontroller.h"
 
+class DateTime
+{
+public:
+	enum FieldType
+	{
+		Invalid = -1,
+		Year = 0,
+		Month = 1,
+		Day = 2,
+		Hour = 3,
+		Minute = 4,
+	};
+
+public:
+	DateTime(const tm *time);
+
+public:
+	int getYear() const { return getField(Year); }
+	void setYear(int year) { setField(Year, year); }
+	int getMonth() const { return getField(Month); }
+	void setMonth(int month) { setField(Month, month); }
+	int getDay() const { return getField(Day); }
+	void setDay(int day) { setField(Day, day); }
+	int getHour() const { return getField(Hour); }
+	void setHour(int hour) { setField(Hour, hour); }
+	int getMinute() const { return getField(Minute); }
+	void setMinute(int min) { setField(Minute, min); }
+	int getWeekdays() const { return weekdays_m; }
+	void setWeekdays(int wd) { weekdays_m = wd; }
+
+	int getField(FieldType field) const;
+
+	void setField(FieldType field, int value);
+
+	bool isFieldFixed(FieldType detail) const;
+
+	bool isFieldFree(FieldType detail) const;
+
+	bool tryIncreaseClosestGreaterFreeField(FieldType current);
+
+	int increaseField(FieldType fieldId);
+
+	time_t getTime(tm *outBrokenDownTime = NULL) const;
+
+	/** Attempts to ensure constraints are met and adjusts free fields if
+	 * required so that the date/time represented by this object satisfies
+	 * the various constraints and comes after current date/time. */
+	bool tryResolve(const DateTime &current, FieldType from, FieldType to);
+
+	bool operator>(const DateTime &other) const;
+
+	bool operator<(const DateTime &other) const;
+
+private:
+	bool tryResolveRaw(const DateTime &current, FieldType from, FieldType to);
+	void resetFieldIfFree(FieldType field, bool recurses);
+	bool isCompatibleWithWeekDays() const;
+
+private:
+   	int fields_m[5];
+	int freeFields_m;
+	int weekdays_m;
+};
+
 class TimerTask
 {
 public:
@@ -73,7 +137,7 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    virtual void getDay(int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
     virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
     ExceptionDays getExceptions() const { return exception_m; }
     //virtual bool adjustTime(struct tm * timeinfo) { return false; };
@@ -100,7 +164,7 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    virtual void getDay(int &mday, int &mon, int &year, int &weekdays) const;
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &weekdays) const;
     virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
