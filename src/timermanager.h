@@ -42,26 +42,42 @@ public:
 		Minute = 4,
 	};
 
+	enum ResolutionResult
+	{
+		Resolution_Resolved,
+		Resolution_Unresolved,
+		Resolution_Impossible
+	};
+
+private:
+	enum ProjectionResult
+	{
+		Projection_Succeeded,
+		Projection_Failed,
+		Projection_Changed,
+		Projection_Impossible
+	};
+
 public:
 	DateTime(const tm *time);
 
 public:
 	int getYear() const { return getField(Year); }
-	void setYear(int year) { setField(Year, year); }
+	void setYear(int year) { setField(Year, year, true); }
 	int getMonth() const { return getField(Month); }
-	void setMonth(int month) { setField(Month, month); }
+	void setMonth(int month) { setField(Month, month, true); }
 	int getDay() const { return getField(Day); }
-	void setDay(int day) { setField(Day, day); }
+	void setDay(int day) { setField(Day, day, true); }
 	int getHour() const { return getField(Hour); }
-	void setHour(int hour) { setField(Hour, hour); }
+	void setHour(int hour) { setField(Hour, hour, true); }
 	int getMinute() const { return getField(Minute); }
-	void setMinute(int min) { setField(Minute, min); }
+	void setMinute(int min) { setField(Minute, min, true); }
 	int getWeekdays() const { return weekdays_m; }
 	void setWeekdays(int wd) { weekdays_m = wd; }
 
 	int getField(FieldType field) const;
 
-	void setField(FieldType field, int value);
+	void setField(FieldType field, int value, bool fixesIfChanged);
 
 	bool isFieldFixed(FieldType detail) const;
 
@@ -69,21 +85,23 @@ public:
 
 	bool tryIncreaseClosestGreaterFreeField(FieldType current);
 
-	int increaseField(FieldType fieldId);
+	int increaseField(FieldType fieldId, bool fixes);
 
 	time_t getTime(tm *outBrokenDownTime = NULL) const;
 
 	/** Attempts to ensure constraints are met and adjusts free fields if
 	 * required so that the date/time represented by this object satisfies
 	 * the various constraints and comes after current date/time. */
-	bool tryResolve(const DateTime &current, FieldType from, FieldType to);
+	ResolutionResult tryResolve(const DateTime &current, FieldType from, FieldType to);
 
 	bool operator>(const DateTime &other) const;
 
 	bool operator<(const DateTime &other) const;
 
 private:
-	bool tryResolveRaw(const DateTime &current, FieldType from, FieldType to);
+	bool tryResolveUnprojected(const DateTime &current, FieldType from, FieldType to);
+	bool tryResolveWithoutWeekdays(const DateTime &current, FieldType from, FieldType to);
+	ProjectionResult projectOnActualCalendar();
 	void resetFieldIfFree(FieldType field, bool recurses);
 	bool isCompatibleWithWeekDays() const;
 
@@ -137,10 +155,18 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
     //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
-    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
+    void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    void getTime(int mday, int mon, int year, int &min, int &hour) const;
     ExceptionDays getExceptions() const { return exception_m; }
     //virtual bool adjustTime(struct tm * timeinfo) { return false; };
+
+protected:
+    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
+
+private:
+	static void remap(int &value, int rangeMin, int rangeMax);
+
 private:
     //		int sec_m;
     int min_m;
@@ -163,9 +189,9 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &weekdays) const;
-    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
+protected:
+    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
 	void getDataFromObject(int &min, int &hour, int &mday, int &mon, int &year, int &wdays) const;
@@ -202,6 +228,9 @@ protected:
     time_t findNext(time_t start, TimeSpec* next);
     time_t mktimeNoDst(struct tm * timeinfo);
     static Logger& logger_m;
+
+private:
+	time_t goToNextDayAndFindNext(const DateTime &curent, TimeSpec *next);
 };
 
 class FixedTimeTask : public TimerTask

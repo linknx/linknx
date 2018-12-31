@@ -42,7 +42,7 @@ int DateTime::getField(FieldType field) const
 	return fields_m[field];	
 }
 
-void DateTime::setField(FieldType field, int value)
+void DateTime::setField(FieldType field, int value, bool fixesIfChanged)
 {
 	if (value == -1)
 	{
@@ -51,7 +51,7 @@ void DateTime::setField(FieldType field, int value)
 	else
 	{
 		// Year, month and day cannot be fixed if weekdays are constrained.
-		bool fixes = field > Day || weekdays_m == 0;
+		bool fixes = fixesIfChanged && (field > Day || weekdays_m == 0);
 		if (fixes) freeFields_m &= ~(1 << field);
 		bool changed = fields_m[field] != value;
 		fields_m[field] = value;
@@ -83,7 +83,7 @@ bool DateTime::tryIncreaseClosestGreaterFreeField(FieldType current)
 
 	if (current != Invalid)
 	{
-		increaseField(current);
+		increaseField(current, false);
 		return true;
 	}
 	else
@@ -92,10 +92,10 @@ bool DateTime::tryIncreaseClosestGreaterFreeField(FieldType current)
 	}
 }
 
-int DateTime::increaseField(FieldType fieldId)
+int DateTime::increaseField(FieldType fieldId, bool fixes)
 {
 	int newValue = fields_m[fieldId] + 1;
-	setField(fieldId, newValue);
+	setField(fieldId, newValue, fixes);
 
 	return newValue;
 }
@@ -122,9 +122,67 @@ time_t DateTime::getTime(tm *outBrokenDownTime) const
 	return time;
 }
 
-bool DateTime::tryResolve(const DateTime &current, FieldType from, FieldType to)
+DateTime::ProjectionResult DateTime::projectOnActualCalendar()
 {
-	while(tryResolveRaw(current, from, to))
+	tm time;
+	getTime(&time);
+	
+	DateTime projected(&time);
+	bool isChanged = false;
+	bool hasFreeField = false;
+	for (FieldType fieldId = Year; fieldId <= Minute; fieldId = (FieldType)(fieldId + 1))
+	{
+		if (getField(fieldId) != projected.getField(fieldId))
+		{
+			if (isFieldFree(fieldId))
+			{
+				fields_m[fieldId] = projected.getField(fieldId);
+				isChanged = true;
+			}
+			else
+			{
+				if (isChanged)
+				{
+					return Projection_Changed;
+				}
+				else
+				{
+					return hasFreeField ? Projection_Failed : Projection_Impossible;
+				}
+			}
+		}
+		hasFreeField |= isFieldFree(fieldId);
+	}
+
+	return isChanged ? Projection_Changed : Projection_Succeeded;
+}
+
+DateTime::ResolutionResult DateTime::tryResolve(const DateTime &current, FieldType from, FieldType to)
+{
+	if (!tryResolveUnprojected(current, from, to)) return Resolution_Impossible;
+
+	switch (projectOnActualCalendar())
+	{
+		case Projection_Changed:
+			return tryResolve(current, from, to);
+
+		case Projection_Succeeded:
+			return Resolution_Resolved;
+
+		case Projection_Failed:
+			return Resolution_Unresolved;
+
+		case Projection_Impossible:
+			return Resolution_Impossible;
+
+		default:
+			throw ticpp::Exception("Unsupported projection result.");
+	}	
+}
+
+bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, FieldType to)
+{
+	while (tryResolveWithoutWeekdays(current, from, to))
 	{
 		if (isCompatibleWithWeekDays())
 		{
@@ -135,13 +193,14 @@ bool DateTime::tryResolve(const DateTime &current, FieldType from, FieldType to)
 			if (!this->tryIncreaseClosestGreaterFreeField(Day)) return false;
 		}
 	}
+
 	return false;
 }
 
 /** Attempts to ensure constraints are met and adjusts free fields if
  * required so that the date/time represented by this object satisfies
  * the various constraints and comes after current date/time. */
-bool DateTime::tryResolveRaw(const DateTime &current, FieldType from, FieldType to)
+bool DateTime::tryResolveWithoutWeekdays(const DateTime &current, FieldType from, FieldType to)
 {
 	// Nothing to do if target is already after current.
 	for (FieldType fieldId = Year; fieldId < from; fieldId = (FieldType)(fieldId + 1))
@@ -164,7 +223,7 @@ bool DateTime::tryResolveRaw(const DateTime &current, FieldType from, FieldType 
 			if (this->isFieldFree(fieldId))
 			{
 				// Increase current field.
-				this->setField(fieldId, currentField);
+				this->setField(fieldId, currentField, false);
 			}
 			else
 			{
@@ -211,7 +270,7 @@ void DateTime::resetFieldIfFree(FieldType field, bool recurses)
 	if (isFieldFree(field))
 	{
 		int value = field == Day ? 1 : 0;
-		setField(field, value);
+		setField(field, value, false);
 	}
 	if (recurses && field != Minute)
 	{
@@ -439,13 +498,42 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
 
 void TimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-    mday = mday_m;
-    mon = mon_m;
-    year = year_m;
-    wdays = wdays_m;
+	getDayRaw(current, mday, mon, year, wdays);
+	
+    remap(mday, 1, 31);
+    remap(mon, 0, 11);
 }
 
 void TimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
+{
+	getTimeRaw(mday, mon, year, min, hour);
+
+	remap(min, 0, 59);
+	remap(hour, 0, 23);
+}
+
+void TimeSpec::remap(int &value, int rangeMin, int rangeMax)
+{
+	if (value == -1) return;
+
+	value = value - rangeMin;
+	int span = rangeMax - rangeMin + 1;
+	if (value < 0)
+	{
+		value += (value / span + 1) * span;
+	}
+	value = value % span + rangeMin;
+}
+
+void TimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
+{
+    mday = mday_m;
+    mon = mon_m;
+    year = year_m;
+	wdays = wdays_m;
+}
+
+void TimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) const
 {
 	min = min_m;
 	hour = hour_m;
@@ -568,17 +656,17 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         *min += off_min % 60;
 }*/
 
-void VariableTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
+void VariableTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	TimeSpec::getDay(current, mday, mon, year, wdays);
+	TimeSpec::getDayRaw(current, mday, mon, year, wdays);
 
 	int min, hour = -1;
 	getDataFromObject(min, hour, mday, mon, year, wdays);
 }
 
-void VariableTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
+void VariableTimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) const
 {
-	TimeSpec::getTime(mday, mon, year, min, hour);
+	TimeSpec::getTimeRaw(mday, mon, year, min, hour);
 
 	int dummyMday = -1;
 	int dummyMon = -1;
@@ -795,44 +883,33 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 	target.setWeekdays(weekdays);
     
 	// Find day.
-	if (!target.tryResolve(current, DateTime::Year, DateTime::Day))
+	switch (target.tryResolve(current, DateTime::Year, DateTime::Day))
 	{	
-		// No schedule available.
-		logger_m.infoStream() << "No more schedule available" << endlog;
-		return 0;
+		case DateTime::Resolution_Resolved:
+			break;
+		case DateTime::Resolution_Unresolved:
+			return goToNextDayAndFindNext(target, next);
+		case DateTime::Resolution_Impossible:
+			// No schedule available.
+			logger_m.infoStream() << "No more schedule available" << endlog;
+			return 0;
 	}
-	// }
-    // else
-    // {
-		// if (target < current)
-		// {
-			// target.increaseField(DateTime::Day);
-		// }
-// 
-		// target.getTime(timeinfo);
-        // int wd = (timeinfo->tm_wday+6) % 7;
-// 
-        // while ((weekdays & (1 << wd)) == 0)
-        // {
-            // if (target.increaseField(DateTime::Day) > 40)
-            // {
-                // logger_m.infoStream() << "Wrong weekday specification" << endlog;
-                // return 0;
-            // }
-            // wd = (wd+1) % 7;
-        // }
-    // }
 
 	// Find time.
 	int min, hour = -1;
 	next->getTime(target.getDay(), target.getMonth(), target.getYear(), min, hour);
 	target.setHour(hour);
 	target.setMinute(min);
-	if (!target.tryResolve(current, DateTime::Hour, DateTime::Minute))
-	{
-		// No schedule available.
-		logger_m.infoStream() << "No more schedule available" << endlog;
-		return 0;
+	switch (target.tryResolve(current, DateTime::Hour, DateTime::Minute))
+	{	
+		case DateTime::Resolution_Resolved:
+			break;
+		case DateTime::Resolution_Unresolved:
+			return goToNextDayAndFindNext(target, next);
+		case DateTime::Resolution_Impossible:
+			// No schedule available.
+			logger_m.infoStream() << "No more schedule available" << endlog;
+			return 0;
 	}
 
     time_t nextExecTime = target.getTime(timeinfo);
@@ -850,17 +927,25 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         {
             logger_m.debugStream() << "Calling findNext recursively! (" << nextExecTime << ")" << endlog;
 
-			// Fast forward to 23:59 the same day, so that the next call
-			// switches to the next day.
-			timeinfo->tm_hour = 23;
-			timeinfo->tm_min = 59;
-			nextExecTime = mktime(timeinfo);
-
-            return findNext(nextExecTime, next);
+			return goToNextDayAndFindNext(target, next);
         }
     }
 
     return nextExecTime;
+}
+
+time_t PeriodicTask::goToNextDayAndFindNext(const DateTime &current, TimeSpec* next)
+{
+	tm timeinfo;
+    current.getTime(&timeinfo);
+
+	// Fast forward to 23:59 the same day, so that the next call
+	// switches to the next day.
+	timeinfo.tm_hour = 23;
+	timeinfo.tm_min = 59;
+	time_t nextExecTime = mktime(&timeinfo);
+
+	return findNext(nextExecTime, next);
 }
 
 void PeriodicTask::statusXml(ticpp::Element* pStatus)
