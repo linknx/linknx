@@ -36,13 +36,11 @@ public:
 
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
-
-    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &weekdays) const;
-    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
-    //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    //virtual bool adjustTime(struct tm * timeinfo);
 protected:
     virtual double computeTime(double rise, double set) const = 0;
+    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
+
 private:
     int offset_m;
     static Logger& logger_m;
