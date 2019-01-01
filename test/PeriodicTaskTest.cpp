@@ -720,16 +720,6 @@ public:
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(27, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(111, timeinfo->tm_year);
-
-        next = task_m->callFindNext(next, &ts1);
-
-        CPPUNIT_ASSERT(next != 0);
-        timeinfo = localtime(&next);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(28, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
