@@ -452,7 +452,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(16, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mon);
-        CPPUNIT_ASSERT(timeinfo->tm_year > 107);
+        CPPUNIT_ASSERT_EQUAL(109, timeinfo->tm_year);
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_wday);
     }
     
