@@ -559,9 +559,9 @@ public:
         timeinfo = localtime(&next);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(117, timeinfo->tm_year);
+        CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year);
     }
 
     void testFindNextDayOfMonthDst()
