@@ -161,23 +161,24 @@ DateTime::ResolutionResult DateTime::tryResolve(const DateTime &current, FieldTy
 {
 	if (!tryResolveUnprojected(current, from, to)) return Resolution_Impossible;
 
-	switch (projectOnActualCalendar())
-	{
-		case Projection_Changed:
-			return tryResolve(current, from, to);
-
-		case Projection_Succeeded:
-			return Resolution_Resolved;
-
-		case Projection_Failed:
-			return Resolution_Unresolved;
-
-		case Projection_Impossible:
-			return Resolution_Impossible;
-
-		default:
-			throw ticpp::Exception("Unsupported projection result.");
-	}	
+	return Resolution_Resolved;
+	// switch (projectOnActualCalendar())
+	// {
+		// case Projection_Changed:
+			// return tryResolve(current, from, to);
+// 
+		// case Projection_Succeeded:
+			// return Resolution_Resolved;
+// 
+		// case Projection_Failed:
+			// return Resolution_Unresolved;
+// 
+		// case Projection_Impossible:
+			// return Resolution_Impossible;
+// 
+		// default:
+			// throw ticpp::Exception("Unsupported projection result.");
+	// }	
 }
 
 bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, FieldType to)
@@ -500,16 +501,16 @@ void TimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wd
 {
 	getDayRaw(current, mday, mon, year, wdays);
 	
-    remap(mday, 1, 31);
-    remap(mon, 0, 11);
+    // remap(mday, 1, 31);
+    // remap(mon, 0, 11);
 }
 
 void TimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
 	getTimeRaw(mday, mon, year, min, hour);
 
-	remap(min, 0, 59);
-	remap(hour, 0, 23);
+	// remap(min, 0, 59);
+	// remap(hour, 0, 23);
 }
 
 void TimeSpec::remap(int &value, int rangeMin, int rangeMax)
