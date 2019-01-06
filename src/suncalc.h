@@ -103,6 +103,7 @@ public:
     void importXml(ticpp::Element* pConfig);
     void exportXml(ticpp::Element* pConfig);
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
+    void setCoord(double lon, double lat) { lon_m = lon; lat_m = lat; };
     long getGmtOffset();
     bool isEmpty() { return lon_m==0 && lat_m==0; };
 
