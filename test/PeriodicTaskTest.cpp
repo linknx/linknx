@@ -845,9 +845,17 @@ public:
         next = task_m->callFindNext(curtimeref, &ts1);
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-	    std::cout << "TESTBUG " << timeinfo->tm_mday << "/" << timeinfo->tm_mon << "/" << timeinfo->tm_year << " " << timeinfo->tm_hour << ":" << timeinfo->tm_min << std::endl;
         CPPUNIT_ASSERT_EQUAL(58, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(12, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
+
+        next = task_m->callFindNext(next, &ts1);
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(58, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(13, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);

@@ -162,9 +162,6 @@ public:
     ExceptionDays getExceptions() const { return exception_m; }
 
 private:
-	static void remap(int &value, int rangeMin, int rangeMax);
-
-private:
     int min_m;
     int hour_m;
     int mday_m;

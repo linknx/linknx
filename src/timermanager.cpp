@@ -821,6 +821,12 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         logger_m.infoStream() << "PeriodicTask: no more schedule available" << endlog;
         return 0;
     }
+	if (!next->isValid())
+	{
+        logger_m.infoStream() << "PeriodicTask: time spec for next occurrence is not valid" << endlog;
+        return 0;
+	}
+
     // make a copy of value returned by localtime to avoid interference
     // with other calls to localtime or gmtime
     memcpy(&timeinfostruct, localtime(&start), sizeof(struct tm));
@@ -901,8 +907,17 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         }
     }
 
-	// Apply offset.
-    return nextExecTime + next->getOffsetInSeconds();
+	// Apply offset. If offset is negative, that can move to a time in the past.
+	// In that case, recurse to find next occurrence.
+	time_t nextExecTimeWithOffset = nextExecTime + next->getOffsetInSeconds(); 
+	if (nextExecTimeWithOffset <= start)
+	{
+		return findNext(nextExecTime, next);
+	}
+	else
+	{
+		return nextExecTimeWithOffset;
+	}
 }
 
 time_t PeriodicTask::goToNextDayAndFindNext(const DateTime &current, TimeSpec* next)
