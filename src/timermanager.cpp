@@ -161,24 +161,23 @@ DateTime::ResolutionResult DateTime::tryResolve(const DateTime &current, FieldTy
 {
 	if (!tryResolveUnprojected(current, from, to)) return Resolution_Impossible;
 
-	return Resolution_Resolved;
-	// switch (projectOnActualCalendar())
-	// {
-		// case Projection_Changed:
-			// return tryResolve(current, from, to);
-// 
-		// case Projection_Succeeded:
-			// return Resolution_Resolved;
-// 
-		// case Projection_Failed:
-			// return Resolution_Unresolved;
-// 
-		// case Projection_Impossible:
-			// return Resolution_Impossible;
-// 
-		// default:
-			// throw ticpp::Exception("Unsupported projection result.");
-	// }	
+	switch (projectOnActualCalendar())
+	{
+		case Projection_Changed:
+			return tryResolve(current, from, to);
+
+		case Projection_Succeeded:
+			return Resolution_Resolved;
+
+		case Projection_Failed:
+			return Resolution_Unresolved;
+
+		case Projection_Impossible:
+			return Resolution_Impossible;
+
+		default:
+			throw ticpp::Exception("Unsupported projection result.");
+	}	
 }
 
 bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, FieldType to)
@@ -394,11 +393,11 @@ TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
 }
 
 TimeSpec::TimeSpec()
-    : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), exception_m(DontCare)
+    : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), offset_m(0), exception_m(DontCare)
 {}
 
-TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year)
-    : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare)
+TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year, int offset)
+    : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), offset_m(offset), exception_m(DontCare)
 {
     if (year_m >= 1900)
         year_m -= 1900;
@@ -407,8 +406,61 @@ TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year)
 }
 
 TimeSpec::TimeSpec(int min, int hour, int wdays, ExceptionDays exception)
-    : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception)
+    : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), offset_m(0), exception_m(exception)
 {}
+
+bool TimeSpec::isValid() const
+{
+	bool hasDay = mday_m != -1;
+	bool hasMonth = mon_m != -1;
+	bool hasYear = year_m != -1;
+
+	if (hasDay && hasMonth && hasYear)
+	{
+		tm timeinfo;
+		timeinfo.tm_year = year_m;
+		timeinfo.tm_mon = mon_m;
+		timeinfo.tm_mday = mday_m;
+		timeinfo.tm_hour = 0;
+		timeinfo.tm_min = 0;
+		timeinfo.tm_sec = 0;
+		timeinfo.tm_isdst = -1;
+
+		// Use C Library to resolve the time spec.
+		mktime(&timeinfo);
+
+		// Make sure that did not change the time spec or it is not deemed
+		// valid.
+		return timeinfo.tm_year == year_m && timeinfo.tm_mon == mon_m && timeinfo.tm_mday == mday_m;
+	}
+
+	if (hasMonth)
+	{
+		if (mon_m < 0 || mon_m > 11) return false;
+	}
+	if (hasDay)
+	{
+		if (mday_m < 1) return false;
+		int maxMonthDay = 31;
+		if (hasMonth) // But year cannot be defined here.
+		{
+			if (mon_m == 1)
+			{
+				maxMonthDay = 29;	
+			}
+			else if (mon_m == 3 || mon_m == 5 || mon_m == 8 || mon_m == 10)
+			{
+				maxMonthDay = 30;
+			}
+		}
+		if (mday_m > maxMonthDay) return false;
+	}
+
+	if (hour_m != -1 && (hour_m < 0 || hour_m > 23)) return false;
+	if (min_m != -1 && (min_m < 0 || min_m > 59)) return false;
+
+	return true;
+}
 
 void TimeSpec::importXml(ticpp::Element* pConfig)
 {
@@ -447,6 +499,8 @@ void TimeSpec::importXml(ticpp::Element* pConfig)
         exception_m = No;
     else
         exception_m = DontCare;
+
+    offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
 
     infoStream("TimeSpec")
     << year_m+1900 << "-"
@@ -495,6 +549,9 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
             wdays << '7';
         pConfig->SetAttribute("wdays", wdays.str());
     }
+
+    if (offset_m != 0)
+        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
 }
 
 void TimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
@@ -541,12 +598,12 @@ void TimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) cons
 }
 
 VariableTimeSpec::VariableTimeSpec(ChangeListener* cl)
-   	: time_m(0), date_m(0), cl_m(cl), offset_m(0)
+   	: time_m(0), date_m(0), cl_m(cl)
 {
 }
 
 VariableTimeSpec::VariableTimeSpec(ChangeListener* cl, int min, int hour, int mday, int mon, int year, int offset)
-   	: TimeSpec(min, hour, mday, mon, year), time_m(0), date_m(0), cl_m(cl), offset_m(offset)
+   	: TimeSpec(min, hour, mday, mon, year, offset), time_m(0), date_m(0), cl_m(cl)
 {
 }
 
@@ -578,7 +635,6 @@ void VariableTimeSpec::importXml(ticpp::Element* pConfig)
             msg << "Wrong Object type for time in VariableTimeSpec: '" << time << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
-        offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
         if (cl_m)
             time_m->addChangeListener(cl_m);
     }
@@ -608,54 +664,7 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("time", time_m->getID());
     if (date_m)
         pConfig->SetAttribute("date", date_m->getID());
-    if (offset_m != 0)
-        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
 }
-
-/*void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
-{
-    *min = min_m;
-    *hour = hour_m;
-    *mday = mday_m;
-    *mon = mon_m;
-    *year = year_m;
-    *wdays = wdays_m;
-    *exception = exception_m;
-
-    if (time_m)
-    {
-        int sec_l, min_l, hour_l, wday_l;
-        time_m->getTime(&wday_l, &hour_l, &min_l, &sec_l);
-        if (*min == -1)
-            *min = min_l;
-        if (*hour == -1)
-            *hour = hour_l;
-        if (*wdays == All && wday_l > 0)
-            *wdays = 1 << (wday_l - 1);
-    }
-    if (date_m)
-    {
-        int day_l, month_l, year_l;
-        date_m->getDate(&day_l, &month_l, &year_l);
-        if (*mday == -1)
-            *mday = day_l;    
-        if (*mon == -1)
-            *mon = month_l-1;    
-        if (*year == -1)
-            *year = year_l-1900;    
-    }
-
-    int off_min = offset_m / 60;
-    int off_hour = off_min / 60;
-    int off_day = off_hour / 24;
-
-    if (*mday != -1)
-        *mday += off_day;
-    if (*hour != -1)
-        *hour += off_hour % 24;
-    if (*min != -1)
-        *min += off_min % 60;
-}*/
 
 void VariableTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
@@ -700,17 +709,6 @@ void VariableTimeSpec::getDataFromObject(int &min, int &hour, int &mday, int &mo
         if (year == -1)
             year = year_l-1900;    
     }
-
-    int off_min = offset_m / 60;
-    int off_hour = off_min / 60;
-    int off_day = off_hour / 24;
-
-    if (mday != -1)
-        mday += off_day;
-    if (hour != -1)
-        hour += off_hour % 24;
-    if (min != -1)
-        min += off_min % 60;
 }
 
 Logger& PeriodicTask::logger_m(Logger::getInstance("PeriodicTask"));
@@ -932,7 +930,8 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         }
     }
 
-    return nextExecTime;
+	// Apply offset.
+    return nextExecTime + next->getOffsetInSeconds();
 }
 
 time_t PeriodicTask::goToNextDayAndFindNext(const DateTime &current, TimeSpec* next)

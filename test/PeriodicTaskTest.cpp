@@ -38,9 +38,6 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextSunriseInFall );
     CPPUNIT_TEST( testFindNextHourDstSunrise );
     CPPUNIT_TEST( testNegativeMinutes );
-    CPPUNIT_TEST( testFebruaryOverflow );
-    CPPUNIT_TEST( testAprilOverflow );
-    CPPUNIT_TEST( testAnyMonthOverflow );
 //    CPPUNIT_TEST(  );
     
     CPPUNIT_TEST_SUITE_END();
@@ -562,9 +559,9 @@ public:
         timeinfo = localtime(&next);
         CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(117, timeinfo->tm_year);
+        CPPUNIT_ASSERT_EQUAL(29, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year);
     }
 
     void testFindNextDayOfMonthDst()
@@ -853,84 +850,6 @@ public:
         CPPUNIT_ASSERT_EQUAL(12, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
-    }
-
-    void testFebruaryOverflow()
-    {
-        time_t next;
-        struct tm * timeinfo;
-        struct tm curtimeinfo;
-        time_t curtimeref;
-        curtimeinfo.tm_hour = 12;
-        curtimeinfo.tm_min = 10;
-        curtimeinfo.tm_sec = 0;
-        curtimeinfo.tm_mday = 20;
-        curtimeinfo.tm_mon = 1;
-        curtimeinfo.tm_year = 113;
-        curtimeinfo.tm_isdst = -1;
-        curtimeref = mktime(&curtimeinfo);
-        TimeSpec ts1(0, 0, 30, 2, -1);
-
-        next = task_m->callFindNext(curtimeref, &ts1);
-        CPPUNIT_ASSERT(next != 0);
-        timeinfo = localtime(&next);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(113, timeinfo->tm_year);
-    }
-
-    void testAprilOverflow()
-    {
-        time_t next;
-        struct tm * timeinfo;
-        struct tm curtimeinfo;
-        time_t curtimeref;
-        curtimeinfo.tm_hour = 12;
-        curtimeinfo.tm_min = 10;
-        curtimeinfo.tm_sec = 0;
-        curtimeinfo.tm_mday = 20;
-        curtimeinfo.tm_mon = 3;
-        curtimeinfo.tm_year = 112;
-        curtimeinfo.tm_isdst = -1;
-        curtimeref = mktime(&curtimeinfo);
-        TimeSpec ts1(0, 0, 31, 4, -1); // April 31st should be mapped to May 1st.
-
-        next = task_m->callFindNext(curtimeref, &ts1);
-        CPPUNIT_ASSERT(next != 0);
-        timeinfo = localtime(&next);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(4, timeinfo->tm_mon);
-        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
-    }
-
-    void testAnyMonthOverflow()
-    {
-        time_t next;
-        struct tm * timeinfo;
-        struct tm curtimeinfo;
-        time_t curtimeref;
-        curtimeinfo.tm_hour = 12;
-        curtimeinfo.tm_min = 10;
-        curtimeinfo.tm_sec = 0;
-        curtimeinfo.tm_mday = 20;
-        curtimeinfo.tm_mon = 4;
-        curtimeinfo.tm_year = 112;
-        curtimeinfo.tm_isdst = -1;
-        curtimeref = mktime(&curtimeinfo);
-        TimeSpec ts1(0, 0, 33, -1, -1);
-
-        next = task_m->callFindNext(curtimeref, &ts1);
-        CPPUNIT_ASSERT(next != 0);
-        timeinfo = localtime(&next);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(0, timeinfo->tm_hour);
-        CPPUNIT_ASSERT_EQUAL(2, timeinfo->tm_mday);
-        CPPUNIT_ASSERT_EQUAL(5, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
     }
 };

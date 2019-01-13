@@ -144,7 +144,7 @@ public:
     };
 
     TimeSpec();
-    TimeSpec(int min, int hour, int mday, int mon, int year);
+    TimeSpec(int min, int hour, int mday, int mon, int year, int offset=0);
     TimeSpec(int min, int hour, int wdays=All, ExceptionDays exception=DontCare);
     virtual ~TimeSpec() {};
 
@@ -154,11 +154,12 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-    //virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
+	bool isValid() const;
+
     void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
     void getTime(int mday, int mon, int year, int &min, int &hour) const;
+	int getOffsetInSeconds() const { return offset_m; }
     ExceptionDays getExceptions() const { return exception_m; }
-    //virtual bool adjustTime(struct tm * timeinfo) { return false; };
 
 protected:
     virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
@@ -168,13 +169,14 @@ private:
 	static void remap(int &value, int rangeMin, int rangeMax);
 
 private:
-    //		int sec_m;
     int min_m;
     int hour_m;
     int mday_m;
     int mon_m;
     int year_m;
     int wdays_m;
+	/** Offset in seconds. */
+    int offset_m;
     ExceptionDays exception_m;
 
 };
@@ -199,7 +201,6 @@ protected:
     TimeObject* time_m;
     DateObject* date_m;
     ChangeListener* cl_m;
-    int offset_m;
 };
 
 class PeriodicTask : public TimerTask, public ChangeListener
