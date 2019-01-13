@@ -12,6 +12,7 @@ class TimeSpecTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testCreateVar );
     CPPUNIT_TEST( testCreateVarTime );
     CPPUNIT_TEST( testCreateVarDate );
+    CPPUNIT_TEST( testIsValid );
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -234,6 +235,49 @@ public:
         CPPUNIT_ASSERT_EQUAL(108, year);
         delete ts;
     }
+
+#define checkTimeSpec(min, hour, mday, mon, year, expectIsValid) CPPUNIT_ASSERT_EQUAL(expectIsValid, TimeSpec(min, hour, mday, mon, year, 0).isValid())
+	void testIsValid()
+	{
+		checkTimeSpec(0, 0, 1, 1, 2010, true);
+        checkTimeSpec(0, 0, 30, 2, -1, false);
+        checkTimeSpec(0, 0, 31, 4, -1, false);
+        checkTimeSpec(0, 0, 33, -1, -1, false);
+        checkTimeSpec(-1, -1, -1, -1, -1, true);
+        checkTimeSpec(60, -1, -1, -1, -1, false);
+        checkTimeSpec(-1, 24, 1 -1, -1, -1, false);
+        checkTimeSpec(-1, -1, 0, -1, -1, false);
+        checkTimeSpec(-1, -1, 31, -1, -1, true);
+        checkTimeSpec(-1, -1, 32, -1, -1, false);
+        //checkTimeSpec(-1, -1, -1, 0, -1, false); Looks sensible but
+		//TimeSpec::TimeSpec converts mon=0 to January without decrementing the
+		//value. THIS IS CRAP!
+        checkTimeSpec(-1, -1, -1, 13, -1, false);
+
+		// Check most cases.
+		for (int min = -2; min < 60; ++min)
+		{
+			bool isMinValid = min >= -1;
+			for (int hour = -2; hour < 24; ++hour)
+			{
+				bool isHourValid = hour >= -1;
+				for (int mday = -2; mday <= 28; ++mday)
+				{
+					bool isDayValid = mday >= -1 && mday != 0;
+					for (int mon = -2; mon <= 12; ++mon)
+					{
+						bool isMonthValid = mon >= -1; // This test should exclude month==0 from the valid values. But TimeSpec's ctor does is so weird that it makes it acceptable.
+						checkTimeSpec(min, hour, mday, mon, -1, isMinValid && isHourValid && isDayValid && isMonthValid);
+					}
+				}
+			}
+		}
+
+
+        checkTimeSpec(-1, -1, 29, 2, 2016, true); // 2016 was a leap year
+        checkTimeSpec(-1, -1, 29, 2, 2017, false); // and 2017 was obviously not.
+        checkTimeSpec(-1, -1, 29, 2, -1, true);
+	}
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( TimeSpecTest );

@@ -31,18 +31,15 @@
 class SolarTimeSpec : public TimeSpec
 {
 public:
-    SolarTimeSpec() : offset_m(0) {};
+    SolarTimeSpec() {};
     virtual ~SolarTimeSpec();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
 protected:
     virtual double computeTime(double rise, double set) const = 0;
     virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
     virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
-    int offset_m;
     static Logger& logger_m;
 };
 

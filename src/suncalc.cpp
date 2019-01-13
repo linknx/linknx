@@ -440,19 +440,6 @@ SunriseTimeSpec::~SunriseTimeSpec() {};
 SunsetTimeSpec::~SunsetTimeSpec() {};
 SolarNoonTimeSpec::~SolarNoonTimeSpec() {};
 
-void SolarTimeSpec::importXml(ticpp::Element* pConfig)
-{
-    TimeSpec::importXml(pConfig);
-    offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
-}
-
-void SolarTimeSpec::exportXml(ticpp::Element* pConfig)
-{
-    if (offset_m != 0)
-        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
-    TimeSpec::exportXml(pConfig);
-}
-
 void SunriseTimeSpec::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "sunrise");
@@ -485,52 +472,6 @@ double SolarNoonTimeSpec::computeTime(double rise, double set) const
 {
     return (rise+set)/2.0;
 }
-
-/*void SolarTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
-{
-    LocationInfo* params = Services::instance()->getLocationInfo();
-    double lon, lat;
-    params->getCoord(&lon, &lat);
-	
-	struct tm currentTime;
-	memcpy(&currentTime, timeinfo, sizeof(struct tm));
-	if (year_m != -1) currentTime.tm_year = year_m;
-	if (mon_m != -1) currentTime.tm_mon = mon_m;
-	if (mday_m != -1) currentTime.tm_mday = mday_m;
-    long tzOffset = params->getGmtOffset(timeinfo);
-    
-    double rise, set;
-    
-    int    rs;
-    logger_m.infoStream() << "sun_rise_set date " << timeinfo->tm_year+1900<< "-" << timeinfo->tm_mon+1 << "-" << timeinfo->tm_mday << endlog;
-    rs   = suncalc::sun_rise_set( timeinfo->tm_year+1900, timeinfo->tm_mon+1, timeinfo->tm_mday, lon, lat, &rise, &set );
-
-    if (rs == 0)
-    {
-        double res = computeTime(rise, set);
-        res += (((double)offset_m)/3600);
-        *min = minutes(res + minutes((double)tzOffset/3600));
-        *hour = hours(res + (double)tzOffset/3600);
-        if (*min < 0 || *hour < 0)
-        {
-            *min = 0;
-            *hour = 0;
-        }
-        logger_m.infoStream() << "sun_rise_set returned " << *hour<< ":" <<*min << endlog;
-    }
-    else
-    {
-        *min = 0;
-        *hour = 0;
-        logger_m.errorStream() << "sun_rise_set returned error." << endlog;
-    }
-
-    *mday = mday_m;
-    *mon = mon_m;
-    *year = year_m;
-    *wdays = wdays_m;
-    *exception = exception_m;
-}*/
 
 void SolarTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
@@ -573,7 +514,6 @@ void SolarTimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour)
     {
 		long tzOffset = params->getGmtOffset();
         double res = computeTime(rise, set);
-        res += (((double)offset_m)/3600);
         min = minutes(res + minutes((double)tzOffset/3600));
         hour = hours(res + (double)tzOffset/3600);
 
