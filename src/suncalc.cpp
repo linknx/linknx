@@ -473,9 +473,9 @@ double SolarNoonTimeSpec::computeTime(double rise, double set) const
     return (rise+set)/2.0;
 }
 
-void SolarTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
+void SolarTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	TimeSpec::getDayRaw(current, mday, mon, year, wdays);
+	TimeSpec::getDay(current, mday, mon, year, wdays);
 
 	DateTime currentDate(&current);
 	currentDate.setYear(year);
@@ -497,9 +497,9 @@ void SolarTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year,
 	year = solarTime.getYear();
 }
 
-void SolarTimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) const
+void SolarTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
-	TimeSpec::getTimeRaw(mday, mon, year, min, hour);
+	TimeSpec::getTime(mday, mon, year, min, hour);
 
     LocationInfo* params = Services::instance()->getLocationInfo();
     double lon, lat;

@@ -34,10 +34,12 @@ public:
     SolarTimeSpec() {};
     virtual ~SolarTimeSpec();
 
+public:
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
+
 protected:
     virtual double computeTime(double rise, double set) const = 0;
-    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
-    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
     static Logger& logger_m;

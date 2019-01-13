@@ -556,42 +556,13 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
 
 void TimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	getDayRaw(current, mday, mon, year, wdays);
-	
-    // remap(mday, 1, 31);
-    // remap(mon, 0, 11);
-}
-
-void TimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
-{
-	getTimeRaw(mday, mon, year, min, hour);
-
-	// remap(min, 0, 59);
-	// remap(hour, 0, 23);
-}
-
-void TimeSpec::remap(int &value, int rangeMin, int rangeMax)
-{
-	if (value == -1) return;
-
-	value = value - rangeMin;
-	int span = rangeMax - rangeMin + 1;
-	if (value < 0)
-	{
-		value += (value / span + 1) * span;
-	}
-	value = value % span + rangeMin;
-}
-
-void TimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
-{
     mday = mday_m;
     mon = mon_m;
     year = year_m;
 	wdays = wdays_m;
 }
 
-void TimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) const
+void TimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
 	min = min_m;
 	hour = hour_m;
@@ -666,17 +637,17 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("date", date_m->getID());
 }
 
-void VariableTimeSpec::getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const
+void VariableTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	TimeSpec::getDayRaw(current, mday, mon, year, wdays);
+	TimeSpec::getDay(current, mday, mon, year, wdays);
 
 	int min, hour = -1;
 	getDataFromObject(min, hour, mday, mon, year, wdays);
 }
 
-void VariableTimeSpec::getTimeRaw(int mday, int mon, int year, int &min, int &hour) const
+void VariableTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
-	TimeSpec::getTimeRaw(mday, mon, year, min, hour);
+	TimeSpec::getTime(mday, mon, year, min, hour);
 
 	int dummyMday = -1;
 	int dummyMon = -1;

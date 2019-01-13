@@ -156,14 +156,10 @@ public:
 
 	bool isValid() const;
 
-    void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
-    void getTime(int mday, int mon, int year, int &min, int &hour) const;
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
 	int getOffsetInSeconds() const { return offset_m; }
     ExceptionDays getExceptions() const { return exception_m; }
-
-protected:
-    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
-    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
 	static void remap(int &value, int rangeMin, int rangeMax);
@@ -191,9 +187,8 @@ public:
     virtual void importXml(ticpp::Element* pConfig);
     virtual void exportXml(ticpp::Element* pConfig);
 
-protected:
-    virtual void getDayRaw(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
-    virtual void getTimeRaw(int mday, int mon, int year, int &min, int &hour) const;
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
 
 private:
 	void getDataFromObject(int &min, int &hour, int &mday, int &mon, int &year, int &wdays) const;
