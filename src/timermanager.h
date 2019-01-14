@@ -155,6 +155,16 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
 
 	bool isValid() const;
+	int getDayOfMonth() const {return mday_m;}
+	void setDayOfMonth(int value) {mday_m = value;}
+	int getMonth() const {return mon_m + 1;}
+	void setMonth(int value) {mon_m = value - 1;}
+	int getYear() const {return year_m + 1900;}
+	void setYear(int value) {year_m = value - 1900;}
+	int getHour() const {return hour_m;}
+	void setHour(int value) {hour_m = value;}
+	int getMinute() const {return min_m;}
+	void setMinute(int value) {min_m = value;}
 
     virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
     virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
