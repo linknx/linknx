@@ -38,6 +38,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextSunriseInFall );
     CPPUNIT_TEST( testFindNextHourDstSunrise );
     CPPUNIT_TEST( testNegativeMinutes );
+    CPPUNIT_TEST( testSunriseSpecificDay );
 //    CPPUNIT_TEST(  );
     
     CPPUNIT_TEST_SUITE_END();
@@ -824,6 +825,40 @@ public:
         CPPUNIT_ASSERT_EQUAL(28, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(9, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
+    }
+
+    void testSunriseSpecificDay()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+        curtimeinfo.tm_hour = 12;
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 24;
+        curtimeinfo.tm_mon = 9;
+        curtimeinfo.tm_year = 112;
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo);
+        SunriseTimeSpec ts1;
+		ts1.setDayOfMonth(27);
+		ts1.setMonth(10);
+		ts1.setYear(2012);
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(27, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(9, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(112, timeinfo->tm_year);
+        CPPUNIT_ASSERT_EQUAL(40, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(7, timeinfo->tm_hour);
+
+        next = task_m->callFindNext(next, &ts1);
+
+        CPPUNIT_ASSERT_EQUAL(NULL, next);
     }
 
     void testNegativeMinutes()
