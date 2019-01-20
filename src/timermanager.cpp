@@ -385,7 +385,7 @@ TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
     if (timeSpec == 0)
     {
         std::stringstream msg;
-        msg << "TimeSpec type not supported: '" << type << "'" << std::endl;
+        msg << "timespec type not supported: '" << type << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
     timeSpec->importXml(pConfig);
@@ -408,6 +408,16 @@ TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year, int offset)
 TimeSpec::TimeSpec(int min, int hour, int wdays, ExceptionDays exception)
     : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), offset_m(0), exception_m(exception)
 {}
+
+void TimeSpec::checkIsValid() const
+{
+	if (!isValid())
+	{
+        std::stringstream msg;
+        msg << "Time spec is not valid: day=" << mday_m << " month=" << mon_m << " year=" << year_m << " hour=" << hour_m << " min=" << min_m   << std::endl;
+        throw ticpp::Exception(msg.str());
+	}
+}
 
 bool TimeSpec::isValid() const
 {
@@ -501,6 +511,8 @@ void TimeSpec::importXml(ticpp::Element* pConfig)
         exception_m = DontCare;
 
     offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
+
+	checkIsValid();
 
     infoStream("TimeSpec")
     << year_m+1900 << "-"

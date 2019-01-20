@@ -170,6 +170,7 @@ public:
     virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
 	int getOffsetInSeconds() const { return offset_m; }
     ExceptionDays getExceptions() const { return exception_m; }
+	void checkIsValid() const;
 
 private:
     int min_m;
