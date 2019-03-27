@@ -325,7 +325,7 @@ void Rule::updateXml(ticpp::Element* pConfig)
         ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
         for ( actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++ )
         {
-			std::string triggerTypeStr = actionListIt->GetAttribute("type");
+			std::string triggerTypeStr = actionListIt->GetAttributeOrDefault("type", "on-true");
 			ActionList::TriggerType type;
 			try
 			{

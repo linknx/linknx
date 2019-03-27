@@ -31,18 +31,17 @@
 class SolarTimeSpec : public TimeSpec
 {
 public:
-    SolarTimeSpec() : offset_m(0) {};
+    SolarTimeSpec() {};
     virtual ~SolarTimeSpec();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+public:
+    virtual void getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const;
+    virtual void getTime(int mday, int mon, int year, int &min, int &hour) const;
 
-    virtual void getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo);
-    virtual bool adjustTime(struct tm * timeinfo);
 protected:
-    virtual double computeTime(double rise, double set) = 0;
+    virtual double computeTime(double rise, double set) const = 0;
+
 private:
-    int offset_m;
     static Logger& logger_m;
 };
 
@@ -52,7 +51,7 @@ public:
     virtual ~SunriseTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
-    virtual double computeTime(double rise, double set);
+    virtual double computeTime(double rise, double set) const;
 
 };
 
@@ -62,7 +61,7 @@ public:
     virtual ~SunsetTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
-    virtual double computeTime(double rise, double set);
+    virtual double computeTime(double rise, double set) const;
 
 };
 
@@ -72,7 +71,7 @@ public:
     virtual ~SolarNoonTimeSpec();
     virtual void exportXml(ticpp::Element* pConfig);
 protected:
-    virtual double computeTime(double rise, double set);
+    virtual double computeTime(double rise, double set) const;
 
 };
 
@@ -89,6 +88,9 @@ private:
     bool get(double res, int *min, int *hour);
     double rise_m, set_m;
     int    rs_m;
+	int year_m;
+	int mon_m;
+	int mday_m;
     long tz_offset_m;
     static Logger& logger_m;
 };
@@ -100,8 +102,10 @@ public:
     void importXml(ticpp::Element* pConfig);
     void exportXml(ticpp::Element* pConfig);
     void getCoord(double *lon, double *lat) { *lon = lon_m; *lat = lat_m; };
-    long getGmtOffset(const struct tm* timeinfo);
+    void setCoord(double lon, double lat) { lon_m = lon; lat_m = lat; };
+    long getGmtOffset();
     bool isEmpty() { return lon_m==0 && lat_m==0; };
+
 protected:
     double lon_m, lat_m;
     long gmtOffset_m;

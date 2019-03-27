@@ -1216,6 +1216,37 @@ protected:
     virtual int64_t getInt() { return value_m; };
     static Logger& logger_m;
 };
+
+class RGBWObjectValue : public S64ObjectValue
+{
+public:
+    RGBWObjectValue(const std::string& value);
+    virtual ~RGBWObjectValue() {};
+    virtual std::string toString();
+protected:
+    RGBWObjectValue(int64_t value) : S64ObjectValue(value) {};
+    RGBWObjectValue() {};
+};
+
+class RGBWObject : public S64Object, public RGBWObjectValue
+{
+public:
+    RGBWObject();
+    virtual ~RGBWObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "251.600"; };
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    virtual std::string toString() { return RGBWObjectValue::toString(); };
+protected:
+    virtual bool set(ObjectValue* value) { return RGBWObjectValue::set(value); };
+    virtual bool setInt(int64_t value) { if (RGBWObjectValue::value_m != value) { RGBWObjectValue::value_m = value; return true; } return false; };
+    virtual ObjectValue* getObjectValue() { return static_cast<RGBWObjectValue*>(this); };
+    virtual int64_t getInt() { return RGBWObjectValue::value_m; };
+    static Logger& logger_m;
+};
 #endif
 
 class StringObjectValue : public ObjectValue

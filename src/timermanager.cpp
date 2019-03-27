@@ -26,6 +26,258 @@
 
 Logger& TimerManager::logger_m(Logger::getInstance("TimerManager"));
 
+DateTime::DateTime(const tm *time)
+{
+	fields_m[0] = time->tm_year;	
+	fields_m[1] = time->tm_mon;	
+	fields_m[2] = time->tm_mday;	
+	fields_m[3] = time->tm_hour;	
+	fields_m[4] = time->tm_min;	
+	freeFields_m = 0x1F;
+	weekdays_m = 0;
+}
+
+int DateTime::getField(FieldType field) const
+{
+	return fields_m[field];	
+}
+
+void DateTime::setField(FieldType field, int value, bool fixesIfChanged)
+{
+	if (value == -1)
+	{
+		freeFields_m |= 1 << field;
+	}
+	else
+	{
+		// Year, month and day cannot be fixed if weekdays are constrained.
+		bool fixes = fixesIfChanged && (field > Day || weekdays_m == 0);
+		if (fixes) freeFields_m &= ~(1 << field);
+		bool changed = fields_m[field] != value;
+		fields_m[field] = value;
+		if (field != Minute)
+		{
+			resetFieldIfFree((FieldType)(field + 1), true);
+		}
+	}
+}
+
+bool DateTime::isFieldFixed(FieldType detail) const
+{
+	return !isFieldFree(detail);
+}
+
+bool DateTime::isFieldFree(FieldType detail) const
+{
+	return (freeFields_m & (1 << detail)) != 0;
+}
+
+bool DateTime::tryIncreaseClosestGreaterFreeField(FieldType current)
+{
+	// Search the closest field that is not constrained going towards the
+	// year.
+	while (!isFieldFree(current) && current > Invalid)
+	{
+		current = (FieldType)(current - 1);
+	}
+
+	if (current != Invalid)
+	{
+		increaseField(current, false);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+int DateTime::increaseField(FieldType fieldId, bool fixes)
+{
+	int newValue = fields_m[fieldId] + 1;
+	setField(fieldId, newValue, fixes);
+
+	return newValue;
+}
+
+time_t DateTime::getTime(tm *outBrokenDownTime) const
+{
+	tm *t = outBrokenDownTime;
+	if (t == NULL) t = new tm();
+
+	t->tm_year = fields_m[Year];
+	t->tm_mon = fields_m[Month];
+	t->tm_mday = fields_m[Day];
+	t->tm_hour = fields_m[Hour];
+	t->tm_min = fields_m[Minute];
+	t->tm_sec = 0;
+	t->tm_isdst = -1;
+
+	time_t time = mktime(t);
+	if (outBrokenDownTime == NULL)
+	{
+		delete t;
+		t = NULL;
+	}
+	return time;
+}
+
+DateTime::ProjectionResult DateTime::projectOnActualCalendar()
+{
+	tm time;
+	getTime(&time);
+	
+	DateTime projected(&time);
+	bool isChanged = false;
+	bool hasFreeField = false;
+	for (FieldType fieldId = Year; fieldId <= Minute; fieldId = (FieldType)(fieldId + 1))
+	{
+		if (getField(fieldId) != projected.getField(fieldId))
+		{
+			if (isFieldFree(fieldId))
+			{
+				fields_m[fieldId] = projected.getField(fieldId);
+				isChanged = true;
+			}
+			else
+			{
+				if (isChanged)
+				{
+					return Projection_Changed;
+				}
+				else
+				{
+					return hasFreeField ? Projection_Failed : Projection_Impossible;
+				}
+			}
+		}
+		hasFreeField |= isFieldFree(fieldId);
+	}
+
+	return isChanged ? Projection_Changed : Projection_Succeeded;
+}
+
+DateTime::ResolutionResult DateTime::tryResolve(const DateTime &current, FieldType from, FieldType to)
+{
+	if (!tryResolveUnprojected(current, from, to)) return Resolution_Impossible;
+
+	switch (projectOnActualCalendar())
+	{
+		case Projection_Changed:
+			return tryResolve(current, from, to);
+
+		case Projection_Succeeded:
+			return Resolution_Resolved;
+
+		case Projection_Failed:
+			return Resolution_Unresolved;
+
+		case Projection_Impossible:
+			return Resolution_Impossible;
+
+		default:
+			throw ticpp::Exception("Unsupported projection result.");
+	}	
+}
+
+bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, FieldType to)
+{
+	while (tryResolveWithoutWeekdays(current, from, to))
+	{
+		if (isCompatibleWithWeekDays())
+		{
+			return true;
+		}
+		else
+		{
+			if (!this->tryIncreaseClosestGreaterFreeField(Day)) return false;
+		}
+	}
+
+	return false;
+}
+
+/** Attempts to ensure constraints are met and adjusts free fields if
+ * required so that the date/time represented by this object satisfies
+ * the various constraints and comes after current date/time. */
+bool DateTime::tryResolveWithoutWeekdays(const DateTime &current, FieldType from, FieldType to)
+{
+	// Nothing to do if target is already after current.
+	for (FieldType fieldId = Year; fieldId < from; fieldId = (FieldType)(fieldId + 1))
+	{
+		int targetField = this->getField(fieldId);
+		int currentField = current.getField(fieldId);
+		if (targetField > currentField) return true;
+		if (targetField < currentField) return false; // Target is after current and those fields are not adjustable.
+	}
+
+	// So far, target's fields are equal to current. Let's see how it goes
+	// with the remaining fields.
+	for (FieldType fieldId = from; fieldId <= to; fieldId = (FieldType)(fieldId + 1))
+	{
+		int currentField = current.getField(fieldId);
+		int targetField = this->getField(fieldId);
+
+		if (targetField < currentField)
+		{
+			if (this->isFieldFree(fieldId))
+			{
+				// Increase current field.
+				this->setField(fieldId, currentField, false);
+			}
+			else
+			{
+				return this->tryIncreaseClosestGreaterFreeField(fieldId);
+			}
+		}
+		else if (targetField > currentField)
+		{
+			// No need to inspect remaining fields: target is already after
+			// current.
+			return true;
+		}
+	}
+	return true;
+}
+
+bool DateTime::isCompatibleWithWeekDays() const
+{
+	if (weekdays_m != 0)
+	{
+		struct tm time;
+		this->getTime(&time);
+		int wd = (time.tm_wday + 6) % 7;
+		return (weekdays_m & (1 << wd)) != 0;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+bool DateTime::operator>(const DateTime &other) const
+{
+	return getTime() > other.getTime();
+}
+
+bool DateTime::operator<(const DateTime &other) const
+{
+	return getTime() < other.getTime();
+}
+
+void DateTime::resetFieldIfFree(FieldType field, bool recurses)
+{
+	if (isFieldFree(field))
+	{
+		int value = field == Day ? 1 : 0;
+		setField(field, value, false);
+	}
+	if (recurses && field != Minute)
+	{
+		resetFieldIfFree((FieldType)(field + 1), true);
+	}
+}
+
 TimerManager::TimerManager()
 {}
 
@@ -133,7 +385,7 @@ TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
     if (timeSpec == 0)
     {
         std::stringstream msg;
-        msg << "TimeSpec type not supported: '" << type << "'" << std::endl;
+        msg << "timespec type not supported: '" << type << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
     timeSpec->importXml(pConfig);
@@ -141,11 +393,11 @@ TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
 }
 
 TimeSpec::TimeSpec()
-    : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), exception_m(DontCare)
+    : min_m(-1), hour_m(-1), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(All), offset_m(0), exception_m(DontCare)
 {}
 
-TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year)
-    : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), exception_m(DontCare)
+TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year, int offset)
+    : min_m(min), hour_m(hour), mday_m(mday), mon_m(mon), year_m(year), wdays_m(All), offset_m(offset), exception_m(DontCare)
 {
     if (year_m >= 1900)
         year_m -= 1900;
@@ -154,8 +406,71 @@ TimeSpec::TimeSpec(int min, int hour, int mday, int mon, int year)
 }
 
 TimeSpec::TimeSpec(int min, int hour, int wdays, ExceptionDays exception)
-    : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), exception_m(exception)
+    : min_m(min), hour_m(hour), mday_m(-1), mon_m(-1), year_m(-1), wdays_m(wdays), offset_m(0), exception_m(exception)
 {}
+
+void TimeSpec::checkIsValid() const
+{
+	if (!isValid())
+	{
+        std::stringstream msg;
+        msg << "Time spec is not valid: day=" << mday_m << " month=" << mon_m << " year=" << year_m << " hour=" << hour_m << " min=" << min_m   << std::endl;
+        throw ticpp::Exception(msg.str());
+	}
+}
+
+bool TimeSpec::isValid() const
+{
+	bool hasDay = mday_m != -1;
+	bool hasMonth = mon_m != -1;
+	bool hasYear = year_m != -1;
+
+	if (hasDay && hasMonth && hasYear)
+	{
+		tm timeinfo;
+		timeinfo.tm_year = year_m;
+		timeinfo.tm_mon = mon_m;
+		timeinfo.tm_mday = mday_m;
+		timeinfo.tm_hour = 0;
+		timeinfo.tm_min = 0;
+		timeinfo.tm_sec = 0;
+		timeinfo.tm_isdst = -1;
+
+		// Use C Library to resolve the time spec.
+		mktime(&timeinfo);
+
+		// Make sure that did not change the time spec or it is not deemed
+		// valid.
+		return timeinfo.tm_year == year_m && timeinfo.tm_mon == mon_m && timeinfo.tm_mday == mday_m;
+	}
+
+	if (hasMonth)
+	{
+		if (mon_m < 0 || mon_m > 11) return false;
+	}
+	if (hasDay)
+	{
+		if (mday_m < 1) return false;
+		int maxMonthDay = 31;
+		if (hasMonth) // But year cannot be defined here.
+		{
+			if (mon_m == 1)
+			{
+				maxMonthDay = 29;	
+			}
+			else if (mon_m == 3 || mon_m == 5 || mon_m == 8 || mon_m == 10)
+			{
+				maxMonthDay = 30;
+			}
+		}
+		if (mday_m > maxMonthDay) return false;
+	}
+
+	if (hour_m != -1 && (hour_m < 0 || hour_m > 23)) return false;
+	if (min_m != -1 && (min_m < 0 || min_m > 59)) return false;
+
+	return true;
+}
 
 void TimeSpec::importXml(ticpp::Element* pConfig)
 {
@@ -194,6 +509,10 @@ void TimeSpec::importXml(ticpp::Element* pConfig)
         exception_m = No;
     else
         exception_m = DontCare;
+
+    offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
+
+	checkIsValid();
 
     infoStream("TimeSpec")
     << year_m+1900 << "-"
@@ -242,20 +561,32 @@ void TimeSpec::exportXml(ticpp::Element* pConfig)
             wdays << '7';
         pConfig->SetAttribute("wdays", wdays.str());
     }
+
+    if (offset_m != 0)
+        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
 }
 
-void TimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
+void TimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-    *min = min_m;
-    *hour = hour_m;
-    *mday = mday_m;
-    *mon = mon_m;
-    *year = year_m;
-    *wdays = wdays_m;
-    *exception = exception_m;
+    mday = mday_m;
+    mon = mon_m;
+    year = year_m;
+	wdays = wdays_m;
 }
 
-VariableTimeSpec::VariableTimeSpec(ChangeListener* cl) : time_m(0), date_m(0), cl_m(cl), offset_m(0)
+void TimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
+{
+	min = min_m;
+	hour = hour_m;
+}
+
+VariableTimeSpec::VariableTimeSpec(ChangeListener* cl)
+   	: time_m(0), date_m(0), cl_m(cl)
+{
+}
+
+VariableTimeSpec::VariableTimeSpec(ChangeListener* cl, int min, int hour, int mday, int mon, int year, int offset)
+   	: TimeSpec(min, hour, mday, mon, year, offset), time_m(0), date_m(0), cl_m(cl)
 {
 }
 
@@ -287,7 +618,6 @@ void VariableTimeSpec::importXml(ticpp::Element* pConfig)
             msg << "Wrong Object type for time in VariableTimeSpec: '" << time << "'" << std::endl;
             throw ticpp::Exception(msg.str());
         }
-        offset_m = RuleServer::parseDuration(pConfig->GetAttribute("offset"), true);
         if (cl_m)
             time_m->addChangeListener(cl_m);
     }
@@ -317,53 +647,51 @@ void VariableTimeSpec::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("time", time_m->getID());
     if (date_m)
         pConfig->SetAttribute("date", date_m->getID());
-    if (offset_m != 0)
-        pConfig->SetAttribute("offset", RuleServer::formatDuration(offset_m));
 }
 
-void VariableTimeSpec::getData(int *min, int *hour, int *mday, int *mon, int *year, int *wdays, ExceptionDays *exception, const struct tm * timeinfo)
+void VariableTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-    *min = min_m;
-    *hour = hour_m;
-    *mday = mday_m;
-    *mon = mon_m;
-    *year = year_m;
-    *wdays = wdays_m;
-    *exception = exception_m;
+	TimeSpec::getDay(current, mday, mon, year, wdays);
 
+	int min, hour = -1;
+	getDataFromObject(min, hour, mday, mon, year, wdays);
+}
+
+void VariableTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
+{
+	TimeSpec::getTime(mday, mon, year, min, hour);
+
+	int dummyMday = -1;
+	int dummyMon = -1;
+	int dummyYear = -1;
+	int dummyWdays = -1;
+	getDataFromObject(min, hour, dummyMday, dummyMon, dummyYear, dummyWdays);
+}
+
+void VariableTimeSpec::getDataFromObject(int &min, int &hour, int &mday, int &mon, int &year, int &wdays) const
+{
     if (time_m)
     {
         int sec_l, min_l, hour_l, wday_l;
         time_m->getTime(&wday_l, &hour_l, &min_l, &sec_l);
-        if (*min == -1)
-            *min = min_l;
-        if (*hour == -1)
-            *hour = hour_l;
-        if (*wdays == All && wday_l > 0)
-            *wdays = 1 << (wday_l - 1);
+        if (min == -1)
+            min = min_l;
+        if (hour == -1)
+            hour = hour_l;
+        if (wdays == All && wday_l > 0)
+            wdays = 1 << (wday_l - 1);
     }
     if (date_m)
     {
         int day_l, month_l, year_l;
         date_m->getDate(&day_l, &month_l, &year_l);
-        if (*mday == -1)
-            *mday = day_l;    
-        if (*mon == -1)
-            *mon = month_l-1;    
-        if (*year == -1)
-            *year = year_l-1900;    
+        if (mday == -1)
+            mday = day_l;    
+        if (mon == -1)
+            mon = month_l-1;    
+        if (year == -1)
+            year = year_l-1900;    
     }
-
-    int off_min = offset_m / 60;
-    int off_hour = off_min / 60;
-    int off_day = off_hour / 24;
-
-    if (*mday != -1)
-        *mday += off_day;
-    if (*hour != -1)
-        *hour += off_hour % 24;
-    if (*min != -1)
-        *min += off_min % 60;
 }
 
 Logger& PeriodicTask::logger_m(Logger::getInstance("PeriodicTask"));
@@ -505,136 +833,117 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
         logger_m.infoStream() << "PeriodicTask: no more schedule available" << endlog;
         return 0;
     }
+	if (!next->isValid())
+	{
+        logger_m.infoStream() << "PeriodicTask: time spec for next occurrence is not valid" << endlog;
+        return 0;
+	}
+
     // make a copy of value returned by localtime to avoid interference
     // with other calls to localtime or gmtime
     memcpy(&timeinfostruct, localtime(&start), sizeof(struct tm));
     timeinfo = &timeinfostruct;
-    
-    timeinfo->tm_min++;
-    if (timeinfo->tm_min > 59)
-    {
-        timeinfo->tm_hour++;
-        timeinfo->tm_min = 0;
-    }
-    
-    int min, hour, mday, mon, year, wdays;
-    TimeSpec::ExceptionDays exception;
-    next->getData(&min, &hour, &mday, &mon, &year, &wdays, &exception, timeinfo);
-    
-    if (min != -1)
-    {
-        if  (timeinfo->tm_min > min)
-            timeinfo->tm_hour++;
-        timeinfo->tm_min = min;
-    }
-    if (timeinfo->tm_hour > 23)
-    {
-        timeinfo->tm_mday++;
-        timeinfo->tm_hour = 0;
-    }
-        
-    if (hour != -1)
-    {
-        if (timeinfo->tm_hour > hour)
-            timeinfo->tm_mday++;
-        if (timeinfo->tm_hour != hour)
-        {
-            if (min == -1)
-                timeinfo->tm_min = 0;
-            timeinfo->tm_hour = hour;
-        }
-    }
 
-    mktimeNoDst(timeinfo);
-
-    if (wdays == 0)
-    {
-        if (mday != -1)
-        {
-            if (timeinfo->tm_mday > mday)
-                timeinfo->tm_mon++;
-            if (timeinfo->tm_mday != mday)
-            {
-                if (min == -1)
-                    timeinfo->tm_min = 0;
-                if (hour == -1)
-                    timeinfo->tm_hour = 0;
-                timeinfo->tm_mday = mday;
-                mktime(timeinfo);
-                timeinfo->tm_mday = mday;
-            }
-        }
-        if (timeinfo->tm_mon > 11)
-        {
-            timeinfo->tm_year++;
-            timeinfo->tm_mon = 0;
-        }
-        if (mon != -1)
-        {
-            if (timeinfo->tm_mon > mon)
-                timeinfo->tm_year++;
-            if (timeinfo->tm_mon != mon)
-            {
-                if (min == -1)
-                    timeinfo->tm_min = 0;
-                if (hour == -1)
-                    timeinfo->tm_hour = 0;
-                if (mday == -1)
-                    timeinfo->tm_mday = 1;
-            }
-            timeinfo->tm_mon = mon;
-        }
-        if (year != -1)
-        {
-            if (timeinfo->tm_year > year)
-            {
-                logger_m.infoStream() << "No more schedule available" << endlog;
-                return 0;
-            }
-        }
-    }
-    else
-    {
-        int wd = (timeinfo->tm_wday+6) % 7;
-
-        while ((wdays & (1 << wd)) == 0)
-        {
-            timeinfo->tm_mday++;
-            if (timeinfo->tm_mday > 40)
-            {
-                logger_m.infoStream() << "Wrong weekday specification" << endlog;
-                return 0;
-            }
-            wd = (wd+1) % 7;
-        }
-    }
-
-    timeinfo->tm_sec = 0;
-    time_t nextExecTime = mktimeNoDst(timeinfo);
+	// Move forward 1 minute.
+	timeinfo->tm_min++;
+	mktime(timeinfo);
     
-    if (nextExecTime < 0)
-    {
-        logger_m.infoStream() << "No more schedule available" << endlog;
-        return 0;
-    }
+    int dayOfMonth, month, year, weekdays;
+    next->getDay(*timeinfo, dayOfMonth, month, year, weekdays);
+
+	// Weekdays and {day, month, year} are mutually exclusive. Give priority
+	// to weekdays.
+	if (weekdays != 0)
+	{
+		year = -1;
+		month = -1;
+		dayOfMonth = -1;
+	}
+
+	// Start at current time.
+	DateTime current(timeinfo);
+	DateTime target(timeinfo);
+
+	// Fix all constrained fields.
+	target.setYear(year);
+	target.setMonth(month);
+	target.setDay(dayOfMonth);
+	target.setWeekdays(weekdays);
+    
+	// Find day.
+	switch (target.tryResolve(current, DateTime::Year, DateTime::Day))
+	{	
+		case DateTime::Resolution_Resolved:
+			break;
+		case DateTime::Resolution_Unresolved:
+			return goToNextDayAndFindNext(target, next);
+		case DateTime::Resolution_Impossible:
+			// No schedule available.
+			logger_m.infoStream() << "No more schedule available" << endlog;
+			return 0;
+	}
+
+	// Find time.
+	int min, hour = -1;
+	next->getTime(target.getDay(), target.getMonth(), target.getYear(), min, hour);
+	target.setHour(hour);
+	target.setMinute(min);
+	switch (target.tryResolve(current, DateTime::Hour, DateTime::Minute))
+	{	
+		case DateTime::Resolution_Resolved:
+			break;
+		case DateTime::Resolution_Unresolved:
+			return goToNextDayAndFindNext(target, next);
+		case DateTime::Resolution_Impossible:
+			// No schedule available.
+			logger_m.infoStream() << "No more schedule available" << endlog;
+			return 0;
+	}
+
+    time_t nextExecTime = target.getTime(timeinfo);
     if (nextExecTime <= start)
     {
         logger_m.errorStream() << "Timer error, nextExecTime(" << nextExecTime << ") is before startTime(" << start << ")" << endlog;
         return 0;
     }
+
+    TimeSpec::ExceptionDays exception = next->getExceptions();
     if (exception != TimeSpec::DontCare)
     {
         bool isException = Services::instance()->getExceptionDays()->isException(nextExecTime);
         if (isException && exception == TimeSpec::No || !isException && exception == TimeSpec::Yes)
         {
             logger_m.debugStream() << "Calling findNext recursively! (" << nextExecTime << ")" << endlog;
-            return findNext(nextExecTime, next);
+
+			return goToNextDayAndFindNext(target, next);
         }
     }
-    // now that we selected a day, make time adjustments for that day if needed (e.g. for sunrise or sunset)
-    if (next->adjustTime(timeinfo))
-        nextExecTime = mktime(timeinfo);
-    return nextExecTime;
+
+	// Apply offset. If offset is negative, that can move to a time in the past.
+	// In that case, recurse to find next occurrence.
+	time_t nextExecTimeWithOffset = nextExecTime + next->getOffsetInSeconds(); 
+	if (nextExecTimeWithOffset <= start)
+	{
+		return findNext(nextExecTime, next);
+	}
+	else
+	{
+		return nextExecTimeWithOffset;
+	}
+}
+
+time_t PeriodicTask::goToNextDayAndFindNext(const DateTime &current, TimeSpec* next)
+{
+	tm timeinfo;
+    current.getTime(&timeinfo);
+
+	// Fast forward to 23:59 the same day, so that the next call
+	// switches to the next day.
+	timeinfo.tm_hour = 23;
+	timeinfo.tm_min = 59;
+	time_t nextExecTime = mktime(&timeinfo);
+
+	return findNext(nextExecTime, next);
 }
 
 void PeriodicTask::statusXml(ticpp::Element* pStatus)

@@ -103,14 +103,16 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testStringObjectUpdate );
     CPPUNIT_TEST( testStringExportImport );
     CPPUNIT_TEST( testStringPersist );
+    CPPUNIT_TEST( testRGBWObject );
+    CPPUNIT_TEST( testRGBWObjectWrite );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
-    
+
     CPPUNIT_TEST_SUITE_END();
 
 private:
     bool isOnChangeCalled_m;
-    
+
     void cleanTestDir()
     {
         CPPUNIT_ASSERT(system("rm -rf /tmp/linknx_unittest") != -1);
@@ -160,7 +162,7 @@ public:
         val = sw.createObjectValue(one);
         CPPUNIT_ASSERT(sw.equals(val));
         CPPUNIT_ASSERT(!sw2.equals(val));
-        delete val;      
+        delete val;
 
         SwitchingObjectValue swval2(zero);
         CPPUNIT_ASSERT(!sw.equals(&swval2));
@@ -169,7 +171,7 @@ public:
         val = sw.createObjectValue(off);
         CPPUNIT_ASSERT(!sw.equals(val));
         CPPUNIT_ASSERT(sw2.equals(val));
-        delete val;      
+        delete val;
 
         sw.setBoolValue(false);
         CPPUNIT_ASSERT(sw.getValue() == "off");
@@ -191,27 +193,27 @@ public:
         uint8_t buf[3] = {0, 0x81, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 2, src);        
+        sw.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x80;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 2, src);       
+        sw.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 0x00;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 3, src);        
+        sw.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x01;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 3, src);        
+        sw.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvaltrue));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
@@ -254,7 +256,7 @@ public:
         CPPUNIT_ASSERT(dynamic_cast<SwitchingObject*>(res));
         delete res;
     }
-    
+
     void testSwitchingPersist()
     {
         cleanTestDir();
@@ -264,7 +266,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_sw");
         pConfig.SetAttribute("init", "persist");
@@ -282,7 +284,7 @@ public:
         CPPUNIT_ASSERT(res2->getValue() == "off");
         delete res2;
     }
-    
+
 
     void testSwitchCtrlObject()
     {
@@ -325,7 +327,7 @@ public:
         CPPUNIT_ASSERT(sw.equals(val));
         CPPUNIT_ASSERT(!sw2.equals(val));
         CPPUNIT_ASSERT(!sw3.equals(val));
-        delete val;      
+        delete val;
 
         SwitchingControlImplObjectValue<1> swval2(zero);
         CPPUNIT_ASSERT(!sw.equals(&swval2));
@@ -336,7 +338,7 @@ public:
         CPPUNIT_ASSERT(!sw.equals(val));
         CPPUNIT_ASSERT(sw2.equals(val));
         CPPUNIT_ASSERT(!sw3.equals(val));
-        delete val;      
+        delete val;
 
         SwitchingControlImplObjectValue<1> swval3(neg);
         CPPUNIT_ASSERT(!sw.equals(&swval3));
@@ -347,7 +349,7 @@ public:
         CPPUNIT_ASSERT(!sw.equals(val));
         CPPUNIT_ASSERT(!sw2.equals(val));
         CPPUNIT_ASSERT(sw3.equals(val));
-        delete val;      
+        delete val;
 
         sw.setBoolValue(false);
         CPPUNIT_ASSERT(sw.getValue() == "off");
@@ -369,27 +371,27 @@ public:
         uint8_t buf[3] = {0, 0x81, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 2, src);        
+        sw.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[1] = 0x80;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 2, src);       
+        sw.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[2] = 0x00;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 3, src);        
+        sw.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == false);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvalfalse));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x01;
         isOnChangeCalled_m = false;
-        sw.onWrite(buf, 3, src);        
+        sw.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(sw.getBoolValue() == true);
         CPPUNIT_ASSERT_EQUAL(0, sw.compare(&swvaltrue));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
@@ -432,7 +434,7 @@ public:
         CPPUNIT_ASSERT(dynamic_cast<SwitchingControlObject<SwitchingControlImplObjectValue<0> > *>(res));
         delete res;
     }
-    
+
     void testSwitchCtrlPersist()
     {
         cleanTestDir();
@@ -442,7 +444,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_sw");
         pConfig.SetAttribute("type", "2.001");
@@ -461,7 +463,7 @@ public:
         CPPUNIT_ASSERT(res2->getValue() == "off");
         delete res2;
     }
-    
+
     void testDimmingObject()
     {
         const std::string up = "up";
@@ -520,12 +522,12 @@ public:
         val = dim.createObjectValue("down:5");
         CPPUNIT_ASSERT(!dim.equals(val));
         CPPUNIT_ASSERT(dim2.equals(val));
-        delete val;      
+        delete val;
 
         val = dim.createObjectValue("stop");
         CPPUNIT_ASSERT(dim.equals(val));
         CPPUNIT_ASSERT(!dim2.equals(val));
-        delete val;      
+        delete val;
     }
 
     void testDimmingObjectWrite()
@@ -537,7 +539,7 @@ public:
         uint8_t buf[3] = {0, 0x8b, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);        
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "up:3");
         DimmingObjectValue dimval1("up:3");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval1));
@@ -545,7 +547,7 @@ public:
 
         buf[1] = 0x80;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "stop");
         DimmingObjectValue dimval2("stop");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
@@ -553,14 +555,14 @@ public:
 
         buf[2] = 0x08;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 3, src);        
+        dim.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(dim.getValue() == "stop");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x04;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 3, src);        
+        dim.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(dim.getValue() == "down:4");
         DimmingObjectValue dimval3("down:4");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval3));
@@ -568,7 +570,7 @@ public:
 
         buf[1] = 0x8f;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "up:7");
         DimmingObjectValue dimval4("up:7");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval4));
@@ -576,7 +578,7 @@ public:
 
         buf[1] = 0x81;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "down");
         DimmingObjectValue dimval5("down");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval5));
@@ -584,7 +586,7 @@ public:
 
         buf[1] = 0x89;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "up");
         DimmingObjectValue dimval6("up");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval6));
@@ -636,7 +638,7 @@ public:
         CPPUNIT_ASSERT(dynamic_cast<DimmingObject*>(res));
         delete res;
     }
-    
+
     void testDimmingPersist()
     {
         cleanTestDir();
@@ -646,7 +648,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_dim");
         pConfig.SetAttribute("type", "EIS2");
@@ -670,7 +672,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() == "down:3");
         delete res3;
     }
-    
+
     void testBlindsObject()
     {
         const std::string close = "close";
@@ -729,12 +731,12 @@ public:
         val = dim.createObjectValue("open:5");
         CPPUNIT_ASSERT(!dim.equals(val));
         CPPUNIT_ASSERT(dim2.equals(val));
-        delete val;      
+        delete val;
 
         val = dim.createObjectValue("stop");
         CPPUNIT_ASSERT(dim.equals(val));
         CPPUNIT_ASSERT(!dim2.equals(val));
-        delete val;      
+        delete val;
     }
 
     void testBlindsObjectWrite()
@@ -746,7 +748,7 @@ public:
         uint8_t buf[3] = {0, 0x8b, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);        
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "close:3");
         BlindsObjectValue dimval1("close:3");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval1));
@@ -754,7 +756,7 @@ public:
 
         buf[1] = 0x80;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "stop");
         BlindsObjectValue dimval2("stop");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
@@ -762,14 +764,14 @@ public:
 
         buf[2] = 0x08;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 3, src);        
+        dim.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(dim.getValue() == "stop");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0x04;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 3, src);        
+        dim.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(dim.getValue() == "open:4");
         BlindsObjectValue dimval3("open:4");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval3));
@@ -777,7 +779,7 @@ public:
 
         buf[1] = 0x8f;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "close:7");
         BlindsObjectValue dimval4("close:7");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval4));
@@ -785,7 +787,7 @@ public:
 
         buf[1] = 0x81;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "open");
         BlindsObjectValue dimval5("open");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval5));
@@ -793,7 +795,7 @@ public:
 
         buf[1] = 0x89;
         isOnChangeCalled_m = false;
-        dim.onWrite(buf, 2, src);       
+        dim.onWrite(buf, 2, src);
         CPPUNIT_ASSERT(dim.getValue() == "close");
         BlindsObjectValue dimval6("close");
         CPPUNIT_ASSERT_EQUAL(0, dim.compare(&dimval6));
@@ -845,7 +847,7 @@ public:
         CPPUNIT_ASSERT(dynamic_cast<BlindsObject*>(res));
         delete res;
     }
-    
+
     void testBlindsPersist()
     {
         cleanTestDir();
@@ -855,7 +857,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_dim");
         pConfig.SetAttribute("type", "3.008");
@@ -879,7 +881,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() == "open:3");
         delete res3;
     }
-    
+
     void testTimeObject()
     {
         ObjectValue* val;
@@ -921,7 +923,7 @@ public:
         val = t.createObjectValue("17:30:05");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         TimeObjectValue tval2("18:30:29");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -930,7 +932,7 @@ public:
         val = t.createObjectValue("18:30:29");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setTime(1, 20, 45, 0);
         CPPUNIT_ASSERT(t.getValue() == "20:45:00");
@@ -958,7 +960,7 @@ public:
         uint8_t buf[5] = {0, 0x80, 0, 0, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);        
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "00:00:00");
         TimeObjectValue tval1("00:00:00");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -968,14 +970,14 @@ public:
         buf[3] = 10;
         buf[4] = 4;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);       
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "23:10:04");
         TimeObjectValue tval2("23:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);        
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "23:10:04");
         TimeObjectValue tval3("23:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -985,7 +987,7 @@ public:
         buf[3] = 10;
         buf[4] = 4;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);       
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "20:10:04");
         TimeObjectValue tval4("20:10:04");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
@@ -995,7 +997,7 @@ public:
         buf[3] = 10;
         buf[4] = 4;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);       
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "20:10:04");
 //      TODO: implement weekday support in TimeObjectValue
 //        TimeObjectValue tval5("20:10:4");
@@ -1057,7 +1059,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_time");
         pConfig.SetAttribute("type", "EIS3");
@@ -1081,7 +1083,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() != "now");
         delete res3;
     }
-    
+
     void testDateObject()
     {
         ObjectValue* val;
@@ -1121,7 +1123,7 @@ public:
         val = t.createObjectValue("2007-10-31");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         DateObjectValue tval2("2006-10-5");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -1130,7 +1132,7 @@ public:
         val = t.createObjectValue("2006-10-5");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setDate(15, 8, 2007);
         CPPUNIT_ASSERT(t.getValue() == "2007-8-15");
@@ -1156,7 +1158,7 @@ public:
         uint8_t buf[6] = {0, 0x80, 1, 1, 0};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);        
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "2000-1-1");
         DateObjectValue tval1("2000-1-1");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -1166,14 +1168,14 @@ public:
         buf[3] = 10;
         buf[4] = 99;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);       
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
         DateObjectValue tval2("1999-10-23");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);        
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "1999-10-23");
         DateObjectValue tval3("1999-10-23");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -1183,7 +1185,7 @@ public:
         buf[3] = 10;
         buf[4] = 7;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 5, src);       
+        t.onWrite(buf, 5, src);
         CPPUNIT_ASSERT(t.getValue() == "2007-10-20");
         DateObjectValue tval4("2007-10-20");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
@@ -1243,7 +1245,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_date");
         pConfig.SetAttribute("type", "EIS4");
@@ -1267,7 +1269,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() != "now");
         delete res3;
     }
-    
+
     void testValueObject()
     {
         ObjectValue* val;
@@ -1328,7 +1330,7 @@ public:
         val = v.createObjectValue("-671088.64");
         CPPUNIT_ASSERT(!v.equals(val));
         CPPUNIT_ASSERT(v2.equals(val));
-        delete val;      
+        delete val;
 
         v.setFloatValue(-35.24);
         CPPUNIT_ASSERT(v.getValue() == "-35.24");
@@ -1344,7 +1346,7 @@ public:
         uint8_t buf[6] = {0, 0x80, (1<<3) | ((1360 & 0x700)>>8) , (1360 & 0xff)};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 4, src);        
+        v.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(v.getValue() == "27.2");
         ValueObjectValue0 fval1("27.2");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval1));
@@ -1353,14 +1355,14 @@ public:
         buf[2] = (1<<7) | (4<<3) | ((-2000 & 0x700)>>8);
         buf[3] = (-2000 & 0xff);
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 4, src);       
+        v.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(v.getValue() == "-320");
         ValueObjectValue0 fval2("-320");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 4, src);        
+        v.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(v.getValue() == "-320");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -1368,7 +1370,7 @@ public:
         buf[2] = (1<<7) | (5<<3) | ((-1000 & 0x700)>>8);
         buf[3] = (-1000 & 0xff);
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 4, src);       
+        v.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(v.getValue() == "-320");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -1376,7 +1378,7 @@ public:
         buf[2] = (1<<3) | ((1 & 0x700)>>8);
         buf[3] = (1 & 0xff);
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 4, src);       
+        v.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(v.getValue() == "0.02");
         ValueObjectValue0 fval3("0.02");
         CPPUNIT_ASSERT_EQUAL(0, v.compare(&fval3));
@@ -1432,7 +1434,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_value");
         pConfig.SetAttribute("type", "EIS5");
@@ -1467,7 +1469,7 @@ public:
         uint8_t buf[6] = {0, 0x80, 0x40, 0x49, 0x0e, 0x56};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        v.onWrite(buf, 6, src);        
+        v.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(v.getValue() == "3.1415");
         ValueObjectValue0 fval1("3.1414");
         ValueObjectValue0 fval2("3.1416");
@@ -1507,7 +1509,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         U8ObjectValue tval2("240");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -1516,7 +1518,7 @@ public:
         val = t.createObjectValue("240");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(100);
         CPPUNIT_ASSERT(t.getValue() == "100");
@@ -1532,7 +1534,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 66};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "66");
         U8ObjectValue tval1("66");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -1540,21 +1542,21 @@ public:
 
         buf[2] = 74;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "74");
         U8ObjectValue tval2("74");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "74");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         U8ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -1610,7 +1612,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "EIS6");
@@ -1665,7 +1667,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         ScalingObjectValue tval2("99.6");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -1674,7 +1676,7 @@ public:
         val = t.createObjectValue("99.6");
         CPPUNIT_ASSERT(!t.equals(val));
 //        CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(255);
         CPPUNIT_ASSERT(t.getValue() == "100");
@@ -1690,7 +1692,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 128};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "50.2");
         ScalingObjectValue tval1("50.2");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -1698,19 +1700,19 @@ public:
 
         buf[2] = 10;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "3.92");
         ScalingObjectValue tval2("3.92");
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "3.92");
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         ScalingObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -1766,7 +1768,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "5.001");
@@ -1825,7 +1827,7 @@ public:
         val = t.createObjectValue("standby");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         HeatingModeObjectValue tval2("night");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -1834,7 +1836,7 @@ public:
         val = t.createObjectValue("night");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(1);
         CPPUNIT_ASSERT(t.getValue() == "comfort");
@@ -1850,7 +1852,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 1};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "comfort");
         HeatingModeObjectValue tval1("comfort");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -1858,21 +1860,21 @@ public:
 
         buf[2] = 2;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "standby");
         HeatingModeObjectValue tval2("standby");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "standby");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 3;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "night");
         HeatingModeObjectValue tval3("night");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -1880,7 +1882,7 @@ public:
 
         buf[2] = 4;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "frost");
         HeatingModeObjectValue tval4("frost");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
@@ -1936,7 +1938,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_heat");
         pConfig.SetAttribute("type", "heat-mode");
@@ -1997,7 +1999,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         U16ObjectValue tval2("65530");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2006,7 +2008,7 @@ public:
         val = t.createObjectValue("65530");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(100);
         CPPUNIT_ASSERT(t.getValue() == "100");
@@ -2022,7 +2024,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 39, 16};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);        
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "10000");
         U16ObjectValue tval1("10000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2031,14 +2033,14 @@ public:
         buf[2] = 255;
         buf[3] = 254;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);       
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "65534");
         U16ObjectValue tval2("65534");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);        
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "65534");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -2046,7 +2048,7 @@ public:
         buf[2] = 0;
         buf[3] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);       
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         U16ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2102,7 +2104,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "7.xxx");
@@ -2158,7 +2160,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         U32ObjectValue tval2("4000000000");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2167,7 +2169,7 @@ public:
         val = t.createObjectValue("4000000000");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(3000000000UL);
         CPPUNIT_ASSERT(t.getValue() == "3000000000");
@@ -2183,7 +2185,7 @@ public:
         uint8_t buf[6] = {0, 0x80, 0xB2, 0xD0, 0x5E, 0x00};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);        
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "3000000000");
         U32ObjectValue tval1("3000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2194,14 +2196,14 @@ public:
         buf[4] = 3;
         buf[5] = 232;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);       
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "1000");
         U32ObjectValue tval2("1000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);        
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "1000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -2211,7 +2213,7 @@ public:
         buf[4] = 0;
         buf[5] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);       
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         U32ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2267,7 +2269,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "12.xxx");
@@ -2323,7 +2325,7 @@ public:
         val = t.createObjectValue("-10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         S8ObjectValue tval2("120");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2332,7 +2334,7 @@ public:
         val = t.createObjectValue("120");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(0);
         CPPUNIT_ASSERT(t.getValue() == "0");
@@ -2348,7 +2350,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 128};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "-128");
         S8ObjectValue tval1("-128");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2356,21 +2358,21 @@ public:
 
         buf[2] = 127;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "127");
         S8ObjectValue tval2("127");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);        
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "127");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[2] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 3, src);       
+        t.onWrite(buf, 3, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         S8ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2426,7 +2428,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "6.xxx");
@@ -2482,7 +2484,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         S16ObjectValue tval2("-32768");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2491,7 +2493,7 @@ public:
         val = t.createObjectValue("-32768");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(100);
         CPPUNIT_ASSERT(t.getValue() == "100");
@@ -2507,7 +2509,7 @@ public:
         uint8_t buf[4] = {0, 0x80, 39, 16};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);        
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "10000");
         S16ObjectValue tval1("10000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2516,14 +2518,14 @@ public:
         buf[2] = 255;
         buf[3] = 254;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);       
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "-2");
         S16ObjectValue tval2("-2");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);        
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "-2");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -2531,7 +2533,7 @@ public:
         buf[2] = 0;
         buf[3] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 4, src);       
+        t.onWrite(buf, 4, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         S16ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2587,7 +2589,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "8.xxx");
@@ -2643,7 +2645,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         S32ObjectValue tval2("-2147483648");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2652,7 +2654,7 @@ public:
         val = t.createObjectValue("-2147483648");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(-2000000000L);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
@@ -2668,7 +2670,7 @@ public:
         uint8_t buf[6] = {0, 0x80, 0x77, 0x35, 0x94, 0x00};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);        
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "2000000000");
         S32ObjectValue tval1("2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2679,14 +2681,14 @@ public:
         buf[4] = 0x6C;
         buf[5] = 0x00;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);       
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
         S32ObjectValue tval2("-2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);        
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -2696,7 +2698,7 @@ public:
         buf[4] = 0;
         buf[5] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 6, src);       
+        t.onWrite(buf, 6, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         S32ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2752,7 +2754,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "13.xxx");
@@ -2808,7 +2810,7 @@ public:
         val = t.createObjectValue("10");
         CPPUNIT_ASSERT(t.equals(val));
         CPPUNIT_ASSERT(!t2.equals(val));
-        delete val;      
+        delete val;
 
         S64ObjectValue tval2("-4147483648");
         CPPUNIT_ASSERT(!t.equals(&tval2));
@@ -2817,7 +2819,7 @@ public:
         val = t.createObjectValue("-4147483648");
         CPPUNIT_ASSERT(!t.equals(val));
         CPPUNIT_ASSERT(t2.equals(val));
-        delete val;      
+        delete val;
 
         t.setIntValue(-2000000000LL);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
@@ -2833,7 +2835,7 @@ public:
         uint8_t buf[10] = {0, 0x80, 0, 0, 0, 0, 0x77, 0x35, 0x94, 0x00};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 10, src);        
+        t.onWrite(buf, 10, src);
         CPPUNIT_ASSERT(t.getValue() == "2000000000");
         S64ObjectValue tval1("2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
@@ -2848,14 +2850,14 @@ public:
         buf[8] = 0x6C;
         buf[9] = 0x00;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 10, src);       
+        t.onWrite(buf, 10, src);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
         S64ObjectValue tval2("-2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 10, src);        
+        t.onWrite(buf, 10, src);
         CPPUNIT_ASSERT(t.getValue() == "-2000000000");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
@@ -2869,7 +2871,7 @@ public:
         buf[8] = 0;
         buf[9] = 0;
         isOnChangeCalled_m = false;
-        t.onWrite(buf, 10, src);       
+        t.onWrite(buf, 10, src);
         CPPUNIT_ASSERT(t.getValue() == "0");
         S64ObjectValue tval3("0");
         CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
@@ -2925,7 +2927,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_scale");
         pConfig.SetAttribute("type", "29.xxx");
@@ -2978,7 +2980,7 @@ public:
         val = s.createObjectValue("Some text !?=+");
         CPPUNIT_ASSERT(s.equals(val));
         CPPUNIT_ASSERT(!s2.equals(val));
-        delete val;      
+        delete val;
 
         String14ObjectValue sval2("AnotherMessage");
         CPPUNIT_ASSERT(!s.equals(&sval2));
@@ -2987,7 +2989,7 @@ public:
         val = s.createObjectValue("AnotherMessage");
         CPPUNIT_ASSERT(!s.equals(val));
         CPPUNIT_ASSERT(s2.equals(val));
-        delete val;      
+        delete val;
 
         s.setStringValue("A test \n value");
         CPPUNIT_ASSERT(s.getValue() == "A test \n value");
@@ -3002,28 +3004,28 @@ public:
         uint8_t buf[16] = {0, 0x80, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 16, src);        
+        s.onWrite(buf, 16, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB is OK");
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[6] = 0x49;
         buf[7] = 0x53;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 16, src);       
+        s.onWrite(buf, 16, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
         String14ObjectValue sval1("EIB IS OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 16, src);        
+        s.onWrite(buf, 16, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[8] = 0x0a;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 16, src);       
+        s.onWrite(buf, 16, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK");
         String14ObjectValue sval2("EIB IS\nOK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
@@ -3077,7 +3079,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_string");
         pConfig.SetAttribute("type", "16.001");
@@ -3291,7 +3293,7 @@ public:
         val = s.createObjectValue("Some text !?=+");
         CPPUNIT_ASSERT(s.equals(val));
         CPPUNIT_ASSERT(!s2.equals(val));
-        delete val;      
+        delete val;
 
         StringObjectValue sval2("AnotherMessage with special chars 'éµë' ");
         CPPUNIT_ASSERT(!s.equals(&sval2));
@@ -3300,7 +3302,7 @@ public:
         val = s.createObjectValue("AnotherMessage with special chars 'éµë' ");
         CPPUNIT_ASSERT(!s.equals(val));
         CPPUNIT_ASSERT(s2.equals(val));
-        delete val;      
+        delete val;
 
         s.setStringValue("A test \n value");
         CPPUNIT_ASSERT(s.getValue() == "A test \n value");
@@ -3315,28 +3317,28 @@ public:
         uint8_t buf[32] = {0, 0x80, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x20, 0x45, 0x49, 0x42, 0x20, 0x69, 0x73, 0x20, 0x4F, 0x4B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         eibaddr_t src;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 32, src);        
+        s.onWrite(buf, 32, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB is OK EIB is OK");
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         buf[6] = 0x49;
         buf[7] = 0x53;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 32, src);       
+        s.onWrite(buf, 32, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK EIB is OK");
         StringObjectValue sval1("EIB IS OK EIB is OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
 
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 32, src);        
+        s.onWrite(buf, 32, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS OK EIB is OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval1));
         CPPUNIT_ASSERT(isOnChangeCalled_m == false);
 
         buf[8] = 0x0a;
         isOnChangeCalled_m = false;
-        s.onWrite(buf, 32, src);       
+        s.onWrite(buf, 32, src);
         CPPUNIT_ASSERT(s.getValue() == "EIB IS\nOK EIB is OK");
         StringObjectValue sval2("EIB IS\nOK EIB is OK");
         CPPUNIT_ASSERT_EQUAL(0, s.compare(&sval2));
@@ -3390,7 +3392,7 @@ public:
         pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
         pSvcConfig.LinkEndChild(&pPersistenceConfig);
         Services::instance()->importXml(&pSvcConfig);
-        
+
         ticpp::Element pConfig;
         pConfig.SetAttribute("id", "test_string");
         pConfig.SetAttribute("type", "28.001");
@@ -3418,6 +3420,53 @@ public:
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");
         delete res4;
+    }
+
+    void testRGBWObject()
+    {
+        ObjectValue* val;
+        RGBWObject r1, r2, r3;
+        r1.setValue("01234567");
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        r2.setValue("FEDCBA98");
+        CPPUNIT_ASSERT(r2.getValue() == "fedcba98");
+        r3.setValue("0x00000010");
+        CPPUNIT_ASSERT(r3.getValue() == "00000010");
+
+        r1.setValue("0");
+        CPPUNIT_ASSERT(r1.getValue() == "00000000");
+        r2.setValue("876543210");
+        CPPUNIT_ASSERT(r2.getValue() == "876543210");
+
+        CPPUNIT_ASSERT_THROW(r3.setValue("g"), ticpp::Exception);
+    }
+
+
+    void testRGBWObjectWrite()
+    {
+
+        RGBWObject r1;
+        r1.setValue("00000000");
+        r1.addChangeListener(this);
+
+        uint8_t buf[6] = {0x00, 0x80, 0x01, 0x23, 0x45, 0x67};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 0x01;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "01234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[2] = 0x00;
+        isOnChangeCalled_m = false;
+        r1.onWrite(buf, 6, src);
+        CPPUNIT_ASSERT(r1.getValue() == "00234567");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
 };
