@@ -26,7 +26,7 @@ should suffice. Then, run configure and make install as for other versions.
 ### Latest stable release (0.0.1.37)
 This is the latest version as of today. Unless you know what you are doing, you should use this version. Download a zip
 of it [here](https://github.com/linknx/linknx/archive/0.0.1.37.zip).
-Implements a redesigned computation of next occurrences for periodic tasks. This redesign was initiated by a problem reported and worked around in issue #37. The rework itself was implemented with issue #39. 
+Implements a redesigned computation of next occurrences for periodic tasks. This redesign was initiated by a problem reported and worked around in Pull Request 37. The rework itself was implemented with Pull Request 39. 
 
 ### Old stable release (0.0.1.36)
 This is the previous version known as being stable for production. Download a zip
