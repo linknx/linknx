@@ -15,6 +15,7 @@ AC_CHECK_HEADER(argp.h,,[AC_MSG_ERROR([argp_parse not found])])
 AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
 
 # Checks for libraries.
+AC_SEARCH_LIBS(libiconv_open,iconv)
 LIBCURL_CHECK_CONFIG([yes], [7.14.0])
 
 # Checks for header files.
