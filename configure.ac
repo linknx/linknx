@@ -145,8 +145,11 @@ if test x"$WITH_CPPUNIT" != xno; then
       AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-    ])
+      AM_CONDITIONAL([CPPUNIT], true)
+    ],[AM_CONDITIONAL([CPPUNIT], false)])
   fi
+else
+  AM_CONDITIONAL([CPPUNIT], false)
 fi
 
 dnl #########################################################################
