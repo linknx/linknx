@@ -135,22 +135,20 @@ if test x"$WITH_CPPUNIT" != xno; then
       AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-      AM_CONDITIONAL(CPPUNIT, true)
+      found_cppunit=yes
     ],[
       AC_MSG_RESULT([no])
-      AM_CONDITIONAL(CPPUNIT, false)
     ])
   else
     PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
       AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-      AM_CONDITIONAL([CPPUNIT], true)
-    ],[AM_CONDITIONAL([CPPUNIT], false)])
+      found_cppunit=yes
+    ])
   fi
-else
-  AM_CONDITIONAL([CPPUNIT], false)
 fi
+AM_CONDITIONAL([CPPUNIT], [test x"$found_cppunit" = xyes])
 
 dnl #########################################################################
 dnl Check if using log4cpp
