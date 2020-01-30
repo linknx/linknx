@@ -1,33 +1,34 @@
 /*
     LinKNX KNX home automation platform
     Copyright (C) 2007 Jean-François Meessen <linknx@ouaye.net>
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "ruleserver.h"
+#include "ioport.h"
+#include "luacondition.h"
 #include "services.h"
 #include "smsgateway.h"
-#include "luacondition.h"
-#include "ioport.h"
 #include <cmath>
 
-RuleServer* RuleServer::instance_m;
+RuleServer *RuleServer::instance_m;
 
 RuleServer::RuleServer()
-{}
+{
+}
 
 RuleServer::~RuleServer()
 {
@@ -36,17 +37,17 @@ RuleServer::~RuleServer()
         delete (*it).second;
 }
 
-RuleServer* RuleServer::instance()
+RuleServer *RuleServer::instance()
 {
     if (instance_m == 0)
         instance_m = new RuleServer();
     return instance_m;
 }
 
-void RuleServer::importXml(ticpp::Element* pConfig)
+void RuleServer::importXml(ticpp::Element *pConfig)
 {
-    ticpp::Iterator< ticpp::Element > child("rule");
-    for ( child = pConfig->FirstChildElement("rule", false); child != child.end(); child++ )
+    ticpp::Iterator<ticpp::Element> child("rule");
+    for (child = pConfig->FirstChildElement("rule", false); child != child.end(); child++)
     {
         std::string id = child->GetAttribute("id");
         bool del = child->GetAttribute("delete") == "true";
@@ -55,7 +56,7 @@ void RuleServer::importXml(ticpp::Element* pConfig)
         {
             if (del)
                 throw ticpp::Exception("Rule not found");
-            Rule* rule = new Rule();
+            Rule *rule = new Rule();
             rule->importXml(&(*child));
             rulesMap_m.insert(RuleIdPair_t(id, rule));
         }
@@ -69,7 +70,7 @@ void RuleServer::importXml(ticpp::Element* pConfig)
     }
 }
 
-void RuleServer::exportXml(ticpp::Element* pConfig)
+void RuleServer::exportXml(ticpp::Element *pConfig)
 {
     RuleIdMap_t::iterator it;
     for (it = rulesMap_m.begin(); it != rulesMap_m.end(); it++)
@@ -80,7 +81,7 @@ void RuleServer::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void RuleServer::statusXml(ticpp::Element* pStatus)
+void RuleServer::statusXml(ticpp::Element *pStatus)
 {
     RuleIdMap_t::iterator it;
     for (it = rulesMap_m.begin(); it != rulesMap_m.end(); it++)
@@ -95,7 +96,7 @@ void RuleServer::initialize()
 {
     // Wait for knxconnection to be ready.
     KnxConnection *conn = Services::instance()->getKnxConnection();
-    while(!conn->isReady())
+    while (!conn->isReady())
     {
         pth_sleep(1);
     }
@@ -104,7 +105,7 @@ void RuleServer::initialize()
     {
         Rule *rule = it->second;
         rule->initialize();
-    }  
+    }
 }
 
 Rule *RuleServer::getRule(const char *id)
@@ -115,7 +116,7 @@ Rule *RuleServer::getRule(const char *id)
     return it->second;
 }
 
-int RuleServer::parseDuration(const std::string& duration, bool allowNegative, bool useMilliseconds)
+int RuleServer::parseDuration(const std::string &duration, bool allowNegative, bool useMilliseconds)
 {
     if (duration == "")
         return 0;
@@ -172,8 +173,8 @@ std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
         }
         duration = (duration / 1000);
     }
-    if (duration % (3600*24) == 0)
-        output << (duration / (3600*24)) << 'd';
+    if (duration % (3600 * 24) == 0)
+        output << (duration / (3600 * 24)) << 'd';
     else if (duration % 3600 == 0)
         output << (duration / 3600) << 'h';
     else if (duration % 60 == 0)
@@ -183,47 +184,48 @@ std::string RuleServer::formatDuration(int duration, bool useMilliseconds)
     return output.str();
 }
 
-Logger& Rule::logger_m(Logger::getInstance("Rule"));
+Logger &Rule::logger_m(Logger::getInstance("Rule"));
 
-Rule::Rule() : condition_m(0), prevValue_m(false), flags_m(Active),
-	actionsOnTrue_m(ActionList::OnTrue), actionsIfTrue_m(ActionList::IfTrue),
-	actionsOnFalse_m(ActionList::OnFalse), actionsIfFalse_m(ActionList::IfFalse)
-{}
+Rule::Rule()
+    : condition_m(0), prevValue_m(false), flags_m(Active), actionsOnTrue_m(ActionList::OnTrue),
+      actionsIfTrue_m(ActionList::IfTrue), actionsOnFalse_m(ActionList::OnFalse), actionsIfFalse_m(ActionList::IfFalse)
+{
+}
 
 Rule::~Rule()
 {
-	delete condition_m;
+    delete condition_m;
 }
 
 ActionList &Rule::getActions(ActionList::TriggerType trigger)
 {
-	switch (trigger)
-	{
-		case ActionList::OnTrue:
-			return actionsOnTrue_m;
-		case ActionList::IfTrue:
-			return actionsIfTrue_m;
-		case ActionList::OnFalse:
-			return actionsOnFalse_m;
-		case ActionList::IfFalse:
-			return actionsIfFalse_m;
-		default:
-			throw "Invalid trigger type.";
-	}
+    switch (trigger)
+    {
+    case ActionList::OnTrue:
+        return actionsOnTrue_m;
+    case ActionList::IfTrue:
+        return actionsIfTrue_m;
+    case ActionList::OnFalse:
+        return actionsOnFalse_m;
+    case ActionList::IfFalse:
+        return actionsIfFalse_m;
+    default:
+        throw "Invalid trigger type.";
+    }
 }
 
 void Rule::addAction(Action *action, ActionList::TriggerType trigger)
 {
-	getActions(trigger).push_back(action);
+    getActions(trigger).push_back(action);
 }
 
-void Rule::setCondition(Condition* condition)
+void Rule::setCondition(Condition *condition)
 {
-	delete condition_m;
-	condition_m = condition;
-}	
+    delete condition_m;
+    condition_m = condition;
+}
 
-void Rule::importXml(ticpp::Element* pConfig)
+void Rule::importXml(ticpp::Element *pConfig)
 {
     pConfig->GetAttribute("id", &id_m, false);
 
@@ -233,45 +235,48 @@ void Rule::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("description", &descr_m, false);
 
     std::string init = pConfig->GetAttributeOrDefault("init", "");
-    flags_m &= ~(InitEval|InitTrue);
+    flags_m &= ~(InitEval | InitTrue);
     if (init != "")
     {
         if (init == "eval")
             flags_m |= InitEval;
         else if (init == "true")
             flags_m |= InitTrue;
-        else if(init != "false")
+        else if (init != "false")
             logger_m.warnStream() << "Unknown init value \"" << init << "\", assuming \"false\" instead." << endlog;
     }
     else
-        logger_m.infoStream() << "Initial value is not set, assuming \"false\". Please add init=\"false|true|eval\" to rule config." << endlog;
+        logger_m.infoStream()
+            << "Initial value is not set, assuming \"false\". Please add init=\"false|true|eval\" to rule config."
+            << endlog;
 
-    logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
+    logger_m.infoStream() << "Rule: Configuring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")"
+                          << endlog;
 
-    ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
+    ticpp::Element *pCondition = pConfig->FirstChildElement("condition");
     setCondition(Condition::create(pCondition, this));
 
     ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
-    for ( actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++ )
+    for (actionListIt = pConfig->FirstChildElement("actionlist"); actionListIt != actionListIt.end(); actionListIt++)
     {
-		std::string triggerTypeStr = actionListIt->GetAttributeOrDefault("type", "on-true");
-		ActionList::TriggerType type;
-		try
-		{
-			type = ActionList::parseTriggerType(triggerTypeStr);
-		}
-		catch(...)
-		{
-			continue;
-		}
-			
-		logger_m.infoStream() << "ActionList: Configuring '" << triggerTypeStr << "' action list" << endlog;
-		ticpp::Iterator<ticpp::Element> actionIt("action");
-		for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
-		{
-			Action* action = Action::create(&(*actionIt));
-			addAction(action, type);
-		}
+        std::string triggerTypeStr = actionListIt->GetAttributeOrDefault("type", "on-true");
+        ActionList::TriggerType type;
+        try
+        {
+            type = ActionList::parseTriggerType(triggerTypeStr);
+        }
+        catch (...)
+        {
+            continue;
+        }
+
+        logger_m.infoStream() << "ActionList: Configuring '" << triggerTypeStr << "' action list" << endlog;
+        ticpp::Iterator<ticpp::Element> actionIt("action");
+        for (actionIt = (*actionListIt).FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++)
+        {
+            Action *action = Action::create(&(*actionIt));
+            addAction(action, type);
+        }
     }
 
     // If init value is "eval", we better wait for a bus connection before we evaluate the condition
@@ -284,7 +289,7 @@ void Rule::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "Rule: Configuration done" << endlog;
 }
 
-void Rule::updateXml(ticpp::Element* pConfig)
+void Rule::updateXml(ticpp::Element *pConfig)
 {
     std::string value = pConfig->GetAttribute("active");
     if (value != "")
@@ -295,25 +300,26 @@ void Rule::updateXml(ticpp::Element* pConfig)
     std::string init = pConfig->GetAttributeOrDefault("init", "");
     if (init != "")
     {
-        flags_m &= ~(InitEval|InitTrue);
+        flags_m &= ~(InitEval | InitTrue);
         if (init == "eval")
             flags_m |= InitEval;
         else if (init == "true")
             flags_m |= InitTrue;
-        else if(init != "false")
+        else if (init != "false")
             logger_m.warnStream() << "Unknown init value \"" << init << "\", assuming \"false\" instead." << endlog;
     }
 
-    logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")" << endlog;
+    logger_m.infoStream() << "Rule: Reconfiguring " << getID() << " (active=" << ((flags_m & Active) != 0) << ")"
+                          << endlog;
 
-    ticpp::Element* pCondition = pConfig->FirstChildElement("condition", false);
+    ticpp::Element *pCondition = pConfig->FirstChildElement("condition", false);
     if (pCondition != NULL)
     {
         logger_m.infoStream() << "Rule: Reconfiguring condition " << getID() << endlog;
         setCondition(Condition::create(pCondition, this));
     }
 
-    ticpp::Element* pActionList = pConfig->FirstChildElement("actionlist", false);
+    ticpp::Element *pActionList = pConfig->FirstChildElement("actionlist", false);
 
     if (pActionList != NULL)
     {
@@ -323,25 +329,25 @@ void Rule::updateXml(ticpp::Element* pConfig)
         actionsIfFalse_m.clear();
 
         ticpp::Iterator<ticpp::Element> actionListIt("actionlist");
-        for ( actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++ )
+        for (actionListIt = pActionList; actionListIt != actionListIt.end(); actionListIt++)
         {
-			std::string triggerTypeStr = actionListIt->GetAttributeOrDefault("type", "on-true");
-			ActionList::TriggerType type;
-			try
-			{
-				type = ActionList::parseTriggerType(triggerTypeStr);
-			}
-			catch(...)
-			{
-				continue;
-			}
-            
+            std::string triggerTypeStr = actionListIt->GetAttributeOrDefault("type", "on-true");
+            ActionList::TriggerType type;
+            try
+            {
+                type = ActionList::parseTriggerType(triggerTypeStr);
+            }
+            catch (...)
+            {
+                continue;
+            }
+
             logger_m.infoStream() << "ActionList: Reconfiguring '" << triggerTypeStr << "' action list" << endlog;
             ticpp::Iterator<ticpp::Element> actionIt("action");
-            for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++ )
+            for (actionIt = (*actionListIt).FirstChildElement("action"); actionIt != actionIt.end(); actionIt++)
             {
-                Action* action = Action::create(&(*actionIt));
-				addAction(action, type);
+                Action *action = Action::create(&(*actionIt));
+                addAction(action, type);
             }
         }
     }
@@ -358,7 +364,7 @@ void Rule::updateXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "Rule: Reconfiguration done" << endlog;
 }
 
-void Rule::exportXml(ticpp::Element* pConfig)
+void Rule::exportXml(ticpp::Element *pConfig)
 {
     if (id_m != "")
         pConfig->SetAttribute("id", id_m);
@@ -379,10 +385,10 @@ void Rule::exportXml(ticpp::Element* pConfig)
         pConfig->LinkEndChild(&pCond);
     }
 
-    exportActions(actionsOnTrue_m, pConfig);	
-    exportActions(actionsIfTrue_m, pConfig);	
-    exportActions(actionsOnFalse_m, pConfig);	
-    exportActions(actionsIfFalse_m, pConfig);	
+    exportActions(actionsOnTrue_m, pConfig);
+    exportActions(actionsIfTrue_m, pConfig);
+    exportActions(actionsOnFalse_m, pConfig);
+    exportActions(actionsIfFalse_m, pConfig);
 }
 
 void Rule::exportActions(ActionList &actions, ticpp::Element *pRuleConfig)
@@ -390,12 +396,12 @@ void Rule::exportActions(ActionList &actions, ticpp::Element *pRuleConfig)
     if (!actions.empty())
     {
         ticpp::Element pList("actionlist");
-		actions.exportXml(&pList);
+        actions.exportXml(&pList);
         pRuleConfig->LinkEndChild(&pList);
     }
 }
 
-void Rule::statusXml(ticpp::Element* pStatus)
+void Rule::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("id", id_m);
     pStatus->SetAttribute("active", (flags_m & Active ? "true" : "false"));
@@ -410,7 +416,7 @@ void Rule::statusXml(ticpp::Element* pStatus)
 
 void Rule::initialize()
 {
-    if(flags_m & InitEval)
+    if (flags_m & InitEval)
         prevValue_m = condition_m->evaluate();
     else
         prevValue_m = (flags_m & InitTrue);
@@ -424,7 +430,7 @@ void Rule::initialize()
         executeActions(actionsIfFalse_m);
 }
 
-void Rule::onChange(Object* object)
+void Rule::onChange(Object *object)
 {
     evaluate();
 }
@@ -435,17 +441,20 @@ void Rule::evaluate()
     {
         logger_m.infoStream() << "Evaluate rule " << id_m << endlog;
         bool curValue = condition_m->evaluate();
-        logger_m.infoStream() << "Rule " << id_m << " evaluated as " << curValue << ", prev value was " << prevValue_m << endlog;
+        logger_m.infoStream() << "Rule " << id_m << " evaluated as " << curValue << ", prev value was " << prevValue_m
+                              << endlog;
         if (curValue)
-		{
-			executeActions(actionsIfTrue_m);
-			if (!prevValue_m) executeActions(actionsOnTrue_m);
-		}
+        {
+            executeActions(actionsIfTrue_m);
+            if (!prevValue_m)
+                executeActions(actionsOnTrue_m);
+        }
         else
-		{
-			executeActions(actionsIfFalse_m);
-			if (prevValue_m) executeActions(actionsOnFalse_m);
-		}
+        {
+            executeActions(actionsIfFalse_m);
+            if (prevValue_m)
+                executeActions(actionsOnFalse_m);
+        }
 
         prevValue_m = curValue;
     }
@@ -464,16 +473,16 @@ void Rule::cancel()
     if (flags_m & Active)
     {
         logger_m.infoStream() << "Cancel all actions for rule " << id_m << endlog;
-		actionsOnTrue_m.cancel();
-		actionsIfTrue_m.cancel();
-		actionsOnFalse_m.cancel();
-		actionsIfFalse_m.cancel();
+        actionsOnTrue_m.cancel();
+        actionsIfTrue_m.cancel();
+        actionsOnFalse_m.cancel();
+        actionsIfFalse_m.cancel();
     }
 }
 
-Logger& Action::logger_m(Logger::getInstance("Action"));
+Logger &Action::logger_m(Logger::getInstance("Action"));
 
-Action* Action::create(const std::string& type)
+Action *Action::create(const std::string &type)
 {
     if (type == "dim-up")
         return new DimUpAction();
@@ -517,12 +526,12 @@ Action* Action::create(const std::string& type)
         return 0;
 }
 
-Action* Action::create(ticpp::Element* pConfig)
+Action *Action::create(ticpp::Element *pConfig)
 {
     std::string type = pConfig->GetAttribute("type");
     int delay;
     delay = RuleServer::parseDuration(pConfig->GetAttribute("delay"), false, true);
-    Action* action = Action::create(type);
+    Action *action = Action::create(type);
     if (action == 0)
     {
         std::stringstream msg;
@@ -534,30 +543,30 @@ Action* Action::create(ticpp::Element* pConfig)
     return action;
 }
 
-void Action::exportXml(ticpp::Element* pConfig)
+void Action::exportXml(ticpp::Element *pConfig)
 {
     if (delay_m != 0)
         pConfig->SetAttribute("delay", RuleServer::formatDuration(delay_m, true));
 }
 
-bool Action::sleep(int delay, pth_sem_t * stop)
+bool Action::sleep(int delay, pth_sem_t *stop)
 {
     struct timeval timeout;
     timeout.tv_sec = delay / 1000;
     timeout.tv_usec = (delay % 1000) * 1000;
-    pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
+    pth_event_t stop_ev = pth_event(PTH_EVENT_SEM, stop);
     pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
-    return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
+    return (pth_event_status(stop_ev) == PTH_STATUS_OCCURRED);
 }
 
-bool Action::usleep(int delay, pth_sem_t * stop)
+bool Action::usleep(int delay, pth_sem_t *stop)
 {
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = delay;
-    pth_event_t stop_ev = pth_event (PTH_EVENT_SEM, stop);
+    pth_event_t stop_ev = pth_event(PTH_EVENT_SEM, stop);
     pth_select_ev(0, NULL, NULL, NULL, &timeout, stop_ev);
-    return (pth_event_status (stop_ev) == PTH_STATUS_OCCURRED);
+    return (pth_event_status(stop_ev) == PTH_STATUS_OCCURRED);
 }
 
 bool Action::parseVarString(std::string &str, bool checkOnly)
@@ -574,12 +583,13 @@ bool Action::parseVarString(std::string &str, bool checkOnly)
             size_t idx2 = str.find('}', ++idx);
             if (idx2 == std::string::npos)
                 break;
-            Object* obj = ObjectController::instance()->getObject(str.substr(idx, idx2-idx));
-            if (!checkOnly) {
+            Object *obj = ObjectController::instance()->getObject(str.substr(idx, idx2 - idx));
+            if (!checkOnly)
+            {
                 std::string val = obj->getValue();
-                logger_m.debugStream() << "Action: insert value '"<< val <<"' of object " << obj->getID() << endlog;
-                str.replace(idx-2, 3+idx2-idx, val);
-                idx += val.length()-2;
+                logger_m.debugStream() << "Action: insert value '" << val << "' of object " << obj->getID() << endlog;
+                str.replace(idx - 2, 3 + idx2 - idx, val);
+                idx += val.length() - 2;
             }
             obj->decRefCount();
             modified = true;
@@ -594,7 +604,8 @@ bool Action::parseVarString(std::string &str, bool checkOnly)
 }
 
 DimUpAction::DimUpAction() : object_m(0), start_m(0), stop_m(255), duration_m(60)
-{}
+{
+}
 
 DimUpAction::~DimUpAction()
 {
@@ -602,14 +613,14 @@ DimUpAction::~DimUpAction()
         object_m->decRefCount();
 }
 
-void DimUpAction::importXml(ticpp::Element* pConfig)
+void DimUpAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
-    Object* obj = ObjectController::instance()->getObject(id); 
+    Object *obj = ObjectController::instance()->getObject(id);
     if (object_m)
         object_m->decRefCount();
-    object_m = dynamic_cast<UIntObject*>(obj);
+    object_m = dynamic_cast<UIntObject *>(obj);
     if (!object_m)
     {
         obj->decRefCount();
@@ -620,13 +631,11 @@ void DimUpAction::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("start", &start_m);
     pConfig->GetAttribute("stop", &stop_m);
     duration_m = RuleServer::parseDuration(pConfig->GetAttribute("duration"), false, true);
-    logger_m.infoStream() << "DimUpAction: Configured for object " << object_m->getID()
-    << " with start=" << start_m
-    << "; stop=" << stop_m
-    << "; duration=" << duration_m << endlog;
+    logger_m.infoStream() << "DimUpAction: Configured for object " << object_m->getID() << " with start=" << start_m
+                          << "; stop=" << stop_m << "; duration=" << duration_m << endlog;
 }
 
-void DimUpAction::exportXml(ticpp::Element* pConfig)
+void DimUpAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "dim-up");
     pConfig->SetAttribute("id", object_m->getID());
@@ -637,7 +646,7 @@ void DimUpAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void DimUpAction::Run (pth_sem_t * stop)
+void DimUpAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -645,13 +654,13 @@ void DimUpAction::Run (pth_sem_t * stop)
     {
         logger_m.infoStream() << "Execute DimUpAction" << endlog;
         /* set increment to send 2 values per second at most */
-        unsigned long incr = (((stop_m - start_m) * 1000/2 / duration_m) + 1);
+        unsigned long incr = (((stop_m - start_m) * 1000 / 2 / duration_m) + 1);
 
         unsigned long step = (duration_m / (stop_m - start_m));
-        for (unsigned int idx=start_m; idx < stop_m; idx+=incr)
+        for (unsigned int idx = start_m; idx < stop_m; idx += incr)
         {
             object_m->setIntValue(idx);
-            if (sleep(step*incr, stop))
+            if (sleep(step * incr, stop))
                 return;
             if (object_m->getIntValue() < idx)
             {
@@ -667,10 +676,10 @@ void DimUpAction::Run (pth_sem_t * stop)
         unsigned int incr = (((start_m - stop_m) * 500 / duration_m) + 1.0);
 
         unsigned long step = (duration_m / (start_m - stop_m));
-        for (unsigned int idx=start_m; idx > stop_m; idx-=incr)
+        for (unsigned int idx = start_m; idx > stop_m; idx -= incr)
         {
             object_m->setIntValue(idx);
-            if (sleep(step*incr, stop))
+            if (sleep(step * incr, stop))
                 return;
             if (object_m->getIntValue() > idx)
             {
@@ -685,7 +694,8 @@ void DimUpAction::Run (pth_sem_t * stop)
 }
 
 SetValueAction::SetValueAction() : object_m(0), value_m(0)
-{}
+{
+}
 
 SetValueAction::~SetValueAction()
 {
@@ -694,7 +704,7 @@ SetValueAction::~SetValueAction()
     delete value_m;
 }
 
-void SetValueAction::importXml(ticpp::Element* pConfig)
+void SetValueAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
@@ -706,10 +716,11 @@ void SetValueAction::importXml(ticpp::Element* pConfig)
     value = pConfig->GetAttribute("value");
 
     value_m = object_m->createObjectValue(value);
-    logger_m.infoStream() << "SetValueAction: Configured for object " << object_m->getID() << " with value " << value_m->toString() << endlog;
+    logger_m.infoStream() << "SetValueAction: Configured for object " << object_m->getID() << " with value "
+                          << value_m->toString() << endlog;
 }
 
-void SetValueAction::exportXml(ticpp::Element* pConfig)
+void SetValueAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "set-value");
     pConfig->SetAttribute("id", object_m->getID());
@@ -718,24 +729,27 @@ void SetValueAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void SetValueAction::Run (pth_sem_t * stop)
+void SetValueAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
     if (object_m)
     {
-        logger_m.infoStream() << "Execute SetValueAction: set " << object_m->getID() << " with value " << value_m->toString() << endlog;
+        logger_m.infoStream() << "Execute SetValueAction: set " << object_m->getID() << " with value "
+                              << value_m->toString() << endlog;
         object_m->setValue(value_m);
     }
 }
 
 CopyValueAction::CopyValueAction() : from_m(0), to_m(0)
-{}
+{
+}
 
 CopyValueAction::~CopyValueAction()
-{}
+{
+}
 
-void CopyValueAction::importXml(ticpp::Element* pConfig)
+void CopyValueAction::importXml(ticpp::Element *pConfig)
 {
     std::string obj;
     obj = pConfig->GetAttribute("to");
@@ -749,14 +763,16 @@ void CopyValueAction::importXml(ticpp::Element* pConfig)
     if (from_m->getType() != to_m->getType())
     {
         std::stringstream msg;
-        msg << "Incompatible object types for CopyValueAction: from='" << from_m->getID() << "' to='" << to_m->getID() << "'" << std::endl;
+        msg << "Incompatible object types for CopyValueAction: from='" << from_m->getID() << "' to='" << to_m->getID()
+            << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
 
-    logger_m.infoStream() << "CopyValueAction: Configured to copy value from " << from_m->getID() << " to " << to_m->getID() << endlog;
+    logger_m.infoStream() << "CopyValueAction: Configured to copy value from " << from_m->getID() << " to "
+                          << to_m->getID() << endlog;
 }
 
-void CopyValueAction::exportXml(ticpp::Element* pConfig)
+void CopyValueAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "copy-value");
     pConfig->SetAttribute("from", from_m->getID());
@@ -765,7 +781,7 @@ void CopyValueAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void CopyValueAction::Run (pth_sem_t * stop)
+void CopyValueAction::Run(pth_sem_t *stop)
 {
     if (from_m && to_m)
     {
@@ -774,10 +790,11 @@ void CopyValueAction::Run (pth_sem_t * stop)
         try
         {
             std::string value = from_m->getValue();
-            logger_m.infoStream() << "Execute CopyValueAction set " << to_m->getID() << " with value " << value << endlog;
+            logger_m.infoStream() << "Execute CopyValueAction set " << to_m->getID() << " with value " << value
+                                  << endlog;
             to_m->setValue(value);
         }
-        catch( ticpp::Exception& ex )
+        catch (ticpp::Exception &ex)
         {
             logger_m.warnStream() << "Error in CopyValueAction: " << ex.m_details << endlog;
         }
@@ -785,7 +802,8 @@ void CopyValueAction::Run (pth_sem_t * stop)
 }
 
 ToggleValueAction::ToggleValueAction() : object_m(0)
-{}
+{
+}
 
 ToggleValueAction::~ToggleValueAction()
 {
@@ -793,14 +811,14 @@ ToggleValueAction::~ToggleValueAction()
         object_m->decRefCount();
 }
 
-void ToggleValueAction::importXml(ticpp::Element* pConfig)
+void ToggleValueAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
-    Object* obj = ObjectController::instance()->getObject(id);
+    Object *obj = ObjectController::instance()->getObject(id);
     if (object_m)
         object_m->decRefCount();
-    object_m = dynamic_cast<SwitchingObject*>(obj);
+    object_m = dynamic_cast<SwitchingObject *>(obj);
     if (!object_m)
     {
         obj->decRefCount();
@@ -812,7 +830,7 @@ void ToggleValueAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "ToggleValueAction: Configured for object " << object_m->getID() << endlog;
 }
 
-void ToggleValueAction::exportXml(ticpp::Element* pConfig)
+void ToggleValueAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "toggle-value");
     pConfig->SetAttribute("id", object_m->getID());
@@ -820,7 +838,7 @@ void ToggleValueAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void ToggleValueAction::Run (pth_sem_t * stop)
+void ToggleValueAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -832,7 +850,8 @@ void ToggleValueAction::Run (pth_sem_t * stop)
 }
 
 FormulaAction::FormulaAction() : object_m(0), x_m(0), y_m(0), a_m(1), b_m(1), c_m(0), m_m(1), n_m(1)
-{}
+{
+}
 
 FormulaAction::~FormulaAction()
 {
@@ -844,7 +863,7 @@ FormulaAction::~FormulaAction()
         y_m->decRefCount();
 }
 
-void FormulaAction::importXml(ticpp::Element* pConfig)
+void FormulaAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
@@ -852,7 +871,7 @@ void FormulaAction::importXml(ticpp::Element* pConfig)
         object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
-//    float a, b, c;
+    //    float a, b, c;
     if (x_m)
         x_m->decRefCount();
     id = pConfig->GetAttribute("x");
@@ -876,7 +895,7 @@ void FormulaAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "FormulaAction: Configured for object " << object_m->getID() << endlog;
 }
 
-void FormulaAction::exportXml(ticpp::Element* pConfig)
+void FormulaAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "formula");
     pConfig->SetAttribute("id", object_m->getID());
@@ -898,7 +917,7 @@ void FormulaAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void FormulaAction::Run (pth_sem_t * stop)
+void FormulaAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -915,7 +934,8 @@ void FormulaAction::Run (pth_sem_t * stop)
 }
 
 SetStringAction::SetStringAction() : object_m(0)
-{}
+{
+}
 
 SetStringAction::~SetStringAction()
 {
@@ -923,7 +943,7 @@ SetStringAction::~SetStringAction()
         object_m->decRefCount();
 }
 
-void SetStringAction::importXml(ticpp::Element* pConfig)
+void SetStringAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
@@ -931,14 +951,15 @@ void SetStringAction::importXml(ticpp::Element* pConfig)
         object_m->decRefCount();
     object_m = ObjectController::instance()->getObject(id);
 
-    std::string value =pConfig->GetAttribute("value");
+    std::string value = pConfig->GetAttribute("value");
     value_m = value;
     parseVarString(value, true); // Just to check string parsing and that referenced object are present
 
-    logger_m.infoStream() << "SetStringAction: Configured for object " << object_m->getID() << " with string " << value_m << endlog;
+    logger_m.infoStream() << "SetStringAction: Configured for object " << object_m->getID() << " with string "
+                          << value_m << endlog;
 }
 
-void SetStringAction::exportXml(ticpp::Element* pConfig)
+void SetStringAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "set-string");
     pConfig->SetAttribute("id", object_m->getID());
@@ -947,7 +968,7 @@ void SetStringAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void SetStringAction::Run (pth_sem_t * stop)
+void SetStringAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -955,13 +976,15 @@ void SetStringAction::Run (pth_sem_t * stop)
     parseVarString(value);
     if (object_m)
     {
-        logger_m.infoStream() << "Execute SetStringAction for object " << object_m->getID() << " with value " << value << endlog;
+        logger_m.infoStream() << "Execute SetStringAction for object " << object_m->getID() << " with value " << value
+                              << endlog;
         object_m->setValue(value);
     }
 }
 
 SendReadRequestAction::SendReadRequestAction() : object_m(0)
-{}
+{
+}
 
 SendReadRequestAction::~SendReadRequestAction()
 {
@@ -969,7 +992,7 @@ SendReadRequestAction::~SendReadRequestAction()
         object_m->decRefCount();
 }
 
-void SendReadRequestAction::importXml(ticpp::Element* pConfig)
+void SendReadRequestAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
@@ -980,7 +1003,7 @@ void SendReadRequestAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "SendReadRequestAction: Configured for object " << object_m->getID() << endlog;
 }
 
-void SendReadRequestAction::exportXml(ticpp::Element* pConfig)
+void SendReadRequestAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "send-read-request");
     pConfig->SetAttribute("id", object_m->getID());
@@ -988,7 +1011,7 @@ void SendReadRequestAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void SendReadRequestAction::Run (pth_sem_t * stop)
+void SendReadRequestAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -1001,7 +1024,8 @@ void SendReadRequestAction::Run (pth_sem_t * stop)
 
 CycleOnOffAction::CycleOnOffAction()
     : object_m(0), delayOn_m(0), delayOff_m(0), count_m(0), stopCondition_m(0), running_m(false)
-{}
+{
+}
 
 CycleOnOffAction::~CycleOnOffAction()
 {
@@ -1010,14 +1034,14 @@ CycleOnOffAction::~CycleOnOffAction()
     delete stopCondition_m;
 }
 
-void CycleOnOffAction::importXml(ticpp::Element* pConfig)
+void CycleOnOffAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
     if (object_m)
         object_m->decRefCount();
-    Object* obj = ObjectController::instance()->getObject(id); 
-    object_m = dynamic_cast<SwitchingObject*>(obj); 
+    Object *obj = ObjectController::instance()->getObject(id);
+    object_m = dynamic_cast<SwitchingObject *>(obj);
     if (!object_m)
     {
         obj->decRefCount();
@@ -1030,8 +1054,8 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
     delayOff_m = RuleServer::parseDuration(pConfig->GetAttribute("off"), false, true);
     pConfig->GetAttribute("count", &count_m);
 
-    ticpp::Iterator< ticpp::Element > child;
-    ticpp::Element* pStopCondition = pConfig->FirstChildElement("stopcondition", false);
+    ticpp::Iterator<ticpp::Element> child;
+    ticpp::Element *pStopCondition = pConfig->FirstChildElement("stopcondition", false);
     if (pStopCondition)
     {
         delete stopCondition_m;
@@ -1039,12 +1063,11 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
     }
 
     logger_m.infoStream() << "CycleOnOffAction: Configured for object " << object_m->getID()
-    << " with delay_on=" << delayOn_m
-    << "; delay_off=" << delayOff_m
-    << "; count=" << count_m << endlog;
+                          << " with delay_on=" << delayOn_m << "; delay_off=" << delayOff_m << "; count=" << count_m
+                          << endlog;
 }
 
-void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
+void CycleOnOffAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "cycle-on-off");
     pConfig->SetAttribute("id", object_m->getID());
@@ -1062,13 +1085,13 @@ void CycleOnOffAction::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void CycleOnOffAction::onChange(Object* object)
+void CycleOnOffAction::onChange(Object *object)
 {
     if (stopCondition_m && running_m && stopCondition_m->evaluate())
         running_m = false;
 }
 
-void CycleOnOffAction::Run (pth_sem_t * stop)
+void CycleOnOffAction::Run(pth_sem_t *stop)
 {
     if (!object_m)
         return;
@@ -1076,7 +1099,7 @@ void CycleOnOffAction::Run (pth_sem_t * stop)
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute CycleOnOffAction" << endlog;
-    for (int i=0; i<count_m; i++)
+    for (int i = 0; i < count_m; i++)
     {
         if (!running_m)
             break;
@@ -1095,9 +1118,9 @@ void CycleOnOffAction::Run (pth_sem_t * stop)
         logger_m.infoStream() << "CycleOnOffAction stopped by condition" << endlog;
 }
 
-RepeatListAction::RepeatListAction()
-    : period_m(0), count_m(0)
-{}
+RepeatListAction::RepeatListAction() : period_m(0), count_m(0)
+{
+}
 
 RepeatListAction::~RepeatListAction()
 {
@@ -1109,7 +1132,7 @@ RepeatListAction::~RepeatListAction()
     }
 }
 
-void RepeatListAction::importXml(ticpp::Element* pConfig)
+void RepeatListAction::importXml(ticpp::Element *pConfig)
 {
     std::string id;
     id = pConfig->GetAttribute("id");
@@ -1117,17 +1140,16 @@ void RepeatListAction::importXml(ticpp::Element* pConfig)
     pConfig->GetAttribute("count", &count_m);
 
     ticpp::Iterator<ticpp::Element> actionIt("action");
-    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
+    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++)
     {
-        Action* action = Action::create(&(*actionIt));
+        Action *action = Action::create(&(*actionIt));
         actionsList_m.push_back(action);
     }
 
-    logger_m.infoStream() << "RepeatListAction: Configured with period=" << period_m
-    << "; count=" << count_m << endlog;
+    logger_m.infoStream() << "RepeatListAction: Configured with period=" << period_m << "; count=" << count_m << endlog;
 }
 
-void RepeatListAction::exportXml(ticpp::Element* pConfig)
+void RepeatListAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "repeat");
     pConfig->SetAttribute("period", RuleServer::formatDuration(period_m, true));
@@ -1136,7 +1158,7 @@ void RepeatListAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 
     ActionsList_t::iterator it;
-    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+    for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
     {
         ticpp::Element pElem("action");
         (*it)->exportXml(&pElem);
@@ -1144,20 +1166,20 @@ void RepeatListAction::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void RepeatListAction::Run (pth_sem_t * stop)
+void RepeatListAction::Run(pth_sem_t *stop)
 {
     bool running = true;
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute RepeatListAction" << endlog;
-    for (int i=0; i<count_m; i++)
+    for (int i = 0; i < count_m; i++)
     {
         ActionsList_t::iterator it;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
             (*it)->execute();
         if (sleep(period_m, stop))
         {
-            for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+            for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
                 (*it)->cancel();
             return;
         }
@@ -1167,7 +1189,7 @@ void RepeatListAction::Run (pth_sem_t * stop)
     {
         ActionsList_t::iterator it;
         running = false;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
         {
             if (!(*it)->isFinished())
             {
@@ -1175,7 +1197,7 @@ void RepeatListAction::Run (pth_sem_t * stop)
                 if (sleep(1000, stop))
                 {
                     logger_m.infoStream() << "RepeatListAction canceled." << endlog;
-                    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+                    for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
                         (*it)->cancel();
                     return;
                 }
@@ -1185,9 +1207,9 @@ void RepeatListAction::Run (pth_sem_t * stop)
     }
 }
 
-ConditionalAction::ConditionalAction()
-    : condition_m(0)
-{}
+ConditionalAction::ConditionalAction() : condition_m(0)
+{
+}
 
 ConditionalAction::~ConditionalAction()
 {
@@ -1200,22 +1222,22 @@ ConditionalAction::~ConditionalAction()
     }
 }
 
-void ConditionalAction::importXml(ticpp::Element* pConfig)
+void ConditionalAction::importXml(ticpp::Element *pConfig)
 {
-    ticpp::Element* pCondition = pConfig->FirstChildElement("condition");
+    ticpp::Element *pCondition = pConfig->FirstChildElement("condition");
     condition_m = Condition::create(pCondition, 0);
 
     ticpp::Iterator<ticpp::Element> actionIt("action");
-    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++ )
+    for (actionIt = pConfig->FirstChildElement("action", false); actionIt != actionIt.end(); actionIt++)
     {
-        Action* action = Action::create(&(*actionIt));
+        Action *action = Action::create(&(*actionIt));
         actionsList_m.push_back(action);
     }
 
     logger_m.infoStream() << "ConditionalAction: Configured" << endlog;
 }
 
-void ConditionalAction::exportXml(ticpp::Element* pConfig)
+void ConditionalAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "conditional");
     if (condition_m)
@@ -1228,7 +1250,7 @@ void ConditionalAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 
     ActionsList_t::iterator it;
-    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+    for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
     {
         ticpp::Element pElem("action");
         (*it)->exportXml(&pElem);
@@ -1236,7 +1258,7 @@ void ConditionalAction::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void ConditionalAction::Run (pth_sem_t * stop)
+void ConditionalAction::Run(pth_sem_t *stop)
 {
     bool running = true;
     if (sleep(delay_m, stop))
@@ -1247,7 +1269,7 @@ void ConditionalAction::Run (pth_sem_t * stop)
     if (curValue)
     {
         ActionsList_t::iterator it;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
             (*it)->execute();
     }
     // Wait until all actions are finished to be able to cancel them if main action is canceled
@@ -1255,7 +1277,7 @@ void ConditionalAction::Run (pth_sem_t * stop)
     {
         ActionsList_t::iterator it;
         running = false;
-        for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+        for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
         {
             if (!(*it)->isFinished())
             {
@@ -1263,7 +1285,7 @@ void ConditionalAction::Run (pth_sem_t * stop)
                 if (sleep(1000, stop))
                 {
                     logger_m.infoStream() << "ConditionalAction canceled." << endlog;
-                    for(it=actionsList_m.begin(); it != actionsList_m.end(); ++it)
+                    for (it = actionsList_m.begin(); it != actionsList_m.end(); ++it)
                         (*it)->cancel();
                     return;
                 }
@@ -1274,12 +1296,14 @@ void ConditionalAction::Run (pth_sem_t * stop)
 }
 
 SendSmsAction::SendSmsAction() : varFlags_m(0)
-{}
+{
+}
 
 SendSmsAction::~SendSmsAction()
-{}
+{
+}
 
-void SendSmsAction::importXml(ticpp::Element* pConfig)
+void SendSmsAction::importXml(ticpp::Element *pConfig)
 {
     id_m = pConfig->GetAttribute("id");
     value_m = pConfig->GetAttribute("value");
@@ -1299,7 +1323,7 @@ void SendSmsAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "SendSmsAction: Configured for id " << id_m << " with value " << value_m << endlog;
 }
 
-void SendSmsAction::exportXml(ticpp::Element* pConfig)
+void SendSmsAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "send-sms");
     pConfig->SetAttribute("id", id_m);
@@ -1310,7 +1334,7 @@ void SendSmsAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void SendSmsAction::Run (pth_sem_t * stop)
+void SendSmsAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -1322,18 +1346,20 @@ void SendSmsAction::Run (pth_sem_t * stop)
     if (varFlags_m & VarValue)
         parseVarString(value);
 
-    logger_m.infoStream() << "Execute SendSmsAction to id '" << id << "' with value '" << value << "'"<< endlog;
+    logger_m.infoStream() << "Execute SendSmsAction to id '" << id << "' with value '" << value << "'" << endlog;
 
     Services::instance()->getSmsGateway()->sendSms(id, value);
 }
 
 SendEmailAction::SendEmailAction() : varFlags_m(0)
-{}
+{
+}
 
 SendEmailAction::~SendEmailAction()
-{}
+{
+}
 
-void SendEmailAction::importXml(ticpp::Element* pConfig)
+void SendEmailAction::importXml(ticpp::Element *pConfig)
 {
     to_m = pConfig->GetAttribute("to");
     subject_m = pConfig->GetAttribute("subject");
@@ -1357,7 +1383,7 @@ void SendEmailAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "SendEmailAction: Configured to=" << to_m << " subject=" << subject_m << endlog;
 }
 
-void SendEmailAction::exportXml(ticpp::Element* pConfig)
+void SendEmailAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "send-email");
     pConfig->SetAttribute("to", to_m);
@@ -1374,7 +1400,7 @@ void SendEmailAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void SendEmailAction::Run (pth_sem_t * stop)
+void SendEmailAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -1395,12 +1421,14 @@ void SendEmailAction::Run (pth_sem_t * stop)
 }
 
 ShellCommandAction::ShellCommandAction() : varFlags_m(0)
-{}
+{
+}
 
 ShellCommandAction::~ShellCommandAction()
-{}
+{
+}
 
-void ShellCommandAction::importXml(ticpp::Element* pConfig)
+void ShellCommandAction::importXml(ticpp::Element *pConfig)
 {
     cmd_m = pConfig->GetAttribute("cmd");
     if (pConfig->GetAttribute("var") == "true")
@@ -1416,7 +1444,7 @@ void ShellCommandAction::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "ShellCommandAction: Configured" << endlog;
 }
 
-void ShellCommandAction::exportXml(ticpp::Element* pConfig)
+void ShellCommandAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "shell-cmd");
     pConfig->SetAttribute("cmd", cmd_m);
@@ -1426,7 +1454,7 @@ void ShellCommandAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void ShellCommandAction::Run (pth_sem_t * stop)
+void ShellCommandAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
@@ -1441,19 +1469,21 @@ void ShellCommandAction::Run (pth_sem_t * stop)
 }
 
 StartActionlistAction::StartActionlistAction() : list_m(true)
-{}
+{
+}
 
 StartActionlistAction::~StartActionlistAction()
-{}
+{
+}
 
-void StartActionlistAction::importXml(ticpp::Element* pConfig)
+void StartActionlistAction::importXml(ticpp::Element *pConfig)
 {
     pConfig->GetAttribute("rule-id", &ruleId_m);
     list_m = (pConfig->GetAttribute("list") != "false");
     logger_m.infoStream() << "StartActionlistAction: Configured" << endlog;
 }
 
-void StartActionlistAction::exportXml(ticpp::Element* pConfig)
+void StartActionlistAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "start-actionlist");
     pConfig->SetAttribute("rule-id", ruleId_m);
@@ -1462,43 +1492,46 @@ void StartActionlistAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void StartActionlistAction::Run (pth_sem_t * stop)
+void StartActionlistAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute StartActionlistAction for rule ID: " << ruleId_m << endlog;
 
-    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
-    if (rule) {
+    Rule *rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    if (rule)
+    {
         if (list_m)
-		{
+        {
             rule->executeActions(ActionList::OnTrue);
             rule->executeActions(ActionList::IfTrue);
-		}
+        }
         else
-		{
+        {
             rule->executeActions(ActionList::OnFalse);
             rule->executeActions(ActionList::IfFalse);
-		}
+        }
     }
     else
         logger_m.errorStream() << "CancelAction: Rule not found '" << ruleId_m << "'" << endlog;
 }
 
 CancelAction::CancelAction()
-{}
+{
+}
 
 CancelAction::~CancelAction()
-{}
+{
+}
 
-void CancelAction::importXml(ticpp::Element* pConfig)
+void CancelAction::importXml(ticpp::Element *pConfig)
 {
     pConfig->GetAttribute("rule-id", &ruleId_m);
 
     logger_m.infoStream() << "CancelAction: Configured" << endlog;
 }
 
-void CancelAction::exportXml(ticpp::Element* pConfig)
+void CancelAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "cancel");
     pConfig->SetAttribute("rule-id", ruleId_m);
@@ -1506,13 +1539,13 @@ void CancelAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void CancelAction::Run (pth_sem_t * stop)
+void CancelAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute CancelAction for rule ID: " << ruleId_m << endlog;
 
-    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    Rule *rule = RuleServer::instance()->getRule(ruleId_m.c_str());
     if (rule)
         rule->cancel();
     else
@@ -1520,45 +1553,48 @@ void CancelAction::Run (pth_sem_t * stop)
 }
 
 SetRuleActiveAction::SetRuleActiveAction() : active_m(true)
-{}
+{
+}
 
 SetRuleActiveAction::~SetRuleActiveAction()
-{}
+{
+}
 
-void SetRuleActiveAction::importXml(ticpp::Element* pConfig)
+void SetRuleActiveAction::importXml(ticpp::Element *pConfig)
 {
     pConfig->GetAttribute("rule-id", &ruleId_m);
     std::string value = pConfig->GetAttribute("active");
     active_m = (value != "off" && value != "false" && value != "no");
 
-    logger_m.infoStream() << "SetRuleActiveAction: Configured (" << (active_m ? "yes" : "no" ) << ") for rule " << ruleId_m << endlog;
+    logger_m.infoStream() << "SetRuleActiveAction: Configured (" << (active_m ? "yes" : "no") << ") for rule "
+                          << ruleId_m << endlog;
 }
 
-void SetRuleActiveAction::exportXml(ticpp::Element* pConfig)
+void SetRuleActiveAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "set-rule-active");
     pConfig->SetAttribute("rule-id", ruleId_m);
-    pConfig->SetAttribute("active", (active_m ? "yes" : "no" ));
+    pConfig->SetAttribute("active", (active_m ? "yes" : "no"));
 
     Action::exportXml(pConfig);
 }
 
-void SetRuleActiveAction::Run (pth_sem_t * stop)
+void SetRuleActiveAction::Run(pth_sem_t *stop)
 {
     if (sleep(delay_m, stop))
         return;
     logger_m.infoStream() << "Execute SetRuleActiveAction for rule ID: " << ruleId_m << endlog;
 
-    Rule* rule = RuleServer::instance()->getRule(ruleId_m.c_str());
+    Rule *rule = RuleServer::instance()->getRule(ruleId_m.c_str());
     if (rule)
         rule->setActive(active_m);
     else
         logger_m.errorStream() << "SetRuleActiveAction: Rule not found '" << ruleId_m << "'" << endlog;
 }
 
-Logger& Condition::logger_m(Logger::getInstance("Condition"));
+Logger &Condition::logger_m(Logger::getInstance("Condition"));
 
-Condition* Condition::create(const std::string& type, ChangeListener* cl)
+Condition *Condition::create(const std::string &type, ChangeListener *cl)
 {
     if (type == "and")
         return new AndCondition(cl);
@@ -1590,11 +1626,11 @@ Condition* Condition::create(const std::string& type, ChangeListener* cl)
         return 0;
 }
 
-Condition* Condition::create(ticpp::Element* pConfig, ChangeListener* cl)
+Condition *Condition::create(ticpp::Element *pConfig, ChangeListener *cl)
 {
     std::string type;
     type = pConfig->GetAttribute("type");
-    Condition* condition = Condition::create(type, cl);
+    Condition *condition = Condition::create(type, cl);
     if (condition == 0)
     {
         std::stringstream msg;
@@ -1605,36 +1641,37 @@ Condition* Condition::create(ticpp::Element* pConfig, ChangeListener* cl)
     return condition;
 }
 
-AndCondition::AndCondition(ChangeListener* cl) : cl_m(cl)
-{}
+AndCondition::AndCondition(ChangeListener *cl) : cl_m(cl)
+{
+}
 
 AndCondition::~AndCondition()
 {
     ConditionsList_t::iterator it;
-    for(it=conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
         delete (*it);
 }
 
 bool AndCondition::evaluate()
 {
     ConditionsList_t::iterator it;
-    for(it=conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
         if (!(*it)->evaluate())
             return false;
     return true;
 }
 
-void AndCondition::importXml(ticpp::Element* pConfig)
+void AndCondition::importXml(ticpp::Element *pConfig)
 {
-    ticpp::Iterator< ticpp::Element > child("condition");
-    for ( child = pConfig->FirstChildElement("condition"); child != child.end(); child++ )
+    ticpp::Iterator<ticpp::Element> child("condition");
+    for (child = pConfig->FirstChildElement("condition"); child != child.end(); child++)
     {
-        Condition* condition = Condition::create(&(*child), cl_m);
+        Condition *condition = Condition::create(&(*child), cl_m);
         conditionsList_m.push_back(condition);
     }
 }
 
-void AndCondition::exportXml(ticpp::Element* pConfig)
+void AndCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "and");
     ConditionsList_t::iterator it;
@@ -1646,7 +1683,7 @@ void AndCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void AndCondition::statusXml(ticpp::Element* pStatus)
+void AndCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "and");
     ConditionsList_t::iterator it;
@@ -1658,36 +1695,37 @@ void AndCondition::statusXml(ticpp::Element* pStatus)
     }
 }
 
-OrCondition::OrCondition(ChangeListener* cl) : cl_m(cl)
-{}
+OrCondition::OrCondition(ChangeListener *cl) : cl_m(cl)
+{
+}
 
 OrCondition::~OrCondition()
 {
     ConditionsList_t::iterator it;
-    for(it=conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
         delete (*it);
 }
 
 bool OrCondition::evaluate()
 {
     ConditionsList_t::iterator it;
-    for(it=conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
+    for (it = conditionsList_m.begin(); it != conditionsList_m.end(); ++it)
         if ((*it)->evaluate())
             return true;
     return false;
 }
 
-void OrCondition::importXml(ticpp::Element* pConfig)
+void OrCondition::importXml(ticpp::Element *pConfig)
 {
-    ticpp::Iterator< ticpp::Element > child("condition");
-    for ( child = pConfig->FirstChildElement("condition"); child != child.end(); child++ )
+    ticpp::Iterator<ticpp::Element> child("condition");
+    for (child = pConfig->FirstChildElement("condition"); child != child.end(); child++)
     {
-        Condition* condition = Condition::create(&(*child), cl_m);
+        Condition *condition = Condition::create(&(*child), cl_m);
         conditionsList_m.push_back(condition);
     }
 }
 
-void OrCondition::exportXml(ticpp::Element* pConfig)
+void OrCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "or");
     ConditionsList_t::iterator it;
@@ -1699,7 +1737,7 @@ void OrCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void OrCondition::statusXml(ticpp::Element* pStatus)
+void OrCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "or");
     ConditionsList_t::iterator it;
@@ -1711,8 +1749,9 @@ void OrCondition::statusXml(ticpp::Element* pStatus)
     }
 }
 
-NotCondition::NotCondition(ChangeListener* cl) : condition_m(0), cl_m(cl)
-{}
+NotCondition::NotCondition(ChangeListener *cl) : condition_m(0), cl_m(cl)
+{
+}
 
 NotCondition::~NotCondition()
 {
@@ -1724,12 +1763,12 @@ bool NotCondition::evaluate()
     return !condition_m->evaluate();
 }
 
-void NotCondition::importXml(ticpp::Element* pConfig)
+void NotCondition::importXml(ticpp::Element *pConfig)
 {
     condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);
 }
 
-void NotCondition::exportXml(ticpp::Element* pConfig)
+void NotCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "not");
     if (condition_m)
@@ -1740,7 +1779,7 @@ void NotCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void NotCondition::statusXml(ticpp::Element* pStatus)
+void NotCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "not");
     if (condition_m)
@@ -1751,8 +1790,9 @@ void NotCondition::statusXml(ticpp::Element* pStatus)
     }
 }
 
-ObjectCondition::ObjectCondition(ChangeListener* cl) : object_m(0), value_m(0), cl_m(cl), trigger_m(false), op_m(eq)
-{}
+ObjectCondition::ObjectCondition(ChangeListener *cl) : object_m(0), value_m(0), cl_m(cl), trigger_m(false), op_m(eq)
+{
+}
 
 ObjectCondition::~ObjectCondition()
 {
@@ -1772,13 +1812,12 @@ bool ObjectCondition::evaluate()
         int res = object_m->get()->compare(value_m);
         val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
     }
-    logger_m.infoStream() << "ObjectCondition (id='" << object_m->getID()
-    << "') evaluated as '" << val
-    << "'" << endlog;
+    logger_m.infoStream() << "ObjectCondition (id='" << object_m->getID() << "') evaluated as '" << val << "'"
+                          << endlog;
     return val;
 }
 
-void ObjectCondition::importXml(ticpp::Element* pConfig)
+void ObjectCondition::importXml(ticpp::Element *pConfig)
 {
     std::string trigger;
     trigger = pConfig->GetAttribute("trigger");
@@ -1830,7 +1869,7 @@ void ObjectCondition::importXml(ticpp::Element* pConfig)
     }
 }
 
-void ObjectCondition::exportXml(ticpp::Element* pConfig)
+void ObjectCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "object");
     pConfig->SetAttribute("id", object_m->getID());
@@ -1855,7 +1894,7 @@ void ObjectCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("trigger", "true");
 }
 
-void ObjectCondition::statusXml(ticpp::Element* pStatus)
+void ObjectCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "object");
     pStatus->SetAttribute("id", object_m->getID());
@@ -1864,8 +1903,9 @@ void ObjectCondition::statusXml(ticpp::Element* pStatus)
         pStatus->SetAttribute("trigger", "true");
 }
 
-ObjectComparisonCondition::ObjectComparisonCondition(ChangeListener* cl) : ObjectCondition(cl), object2_m(0)
-{}
+ObjectComparisonCondition::ObjectComparisonCondition(ChangeListener *cl) : ObjectCondition(cl), object2_m(0)
+{
+}
 
 ObjectComparisonCondition::~ObjectComparisonCondition()
 {
@@ -1880,11 +1920,11 @@ bool ObjectComparisonCondition::evaluate()
     int res = object_m->get()->compare(object2_m->get());
     bool val = ((op_m & eq) && (res == 0)) || ((op_m & lt) && (res == -1)) || ((op_m & gt) && (res == 1));
     logger_m.infoStream() << "ObjectComparisonCondition (id='" << object_m->getID() << "'; id2='" << object2_m->getID()
-    << "')" << endlog;
+                          << "')" << endlog;
     return val;
 }
 
-void ObjectComparisonCondition::importXml(ticpp::Element* pConfig)
+void ObjectComparisonCondition::importXml(ticpp::Element *pConfig)
 {
     std::string trigger;
     trigger = pConfig->GetAttribute("trigger");
@@ -1929,7 +1969,7 @@ void ObjectComparisonCondition::importXml(ticpp::Element* pConfig)
     }
 }
 
-void ObjectComparisonCondition::exportXml(ticpp::Element* pConfig)
+void ObjectComparisonCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "object-compare");
     pConfig->SetAttribute("id", object_m->getID());
@@ -1953,7 +1993,7 @@ void ObjectComparisonCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("trigger", "true");
 }
 
-void ObjectComparisonCondition::statusXml(ticpp::Element* pStatus)
+void ObjectComparisonCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "object-compare");
     pStatus->SetAttribute("id", object_m->getID());
@@ -1962,22 +2002,23 @@ void ObjectComparisonCondition::statusXml(ticpp::Element* pStatus)
         pStatus->SetAttribute("trigger", "true");
 }
 
-ObjectSourceCondition::ObjectSourceCondition(ChangeListener* cl) : ObjectCondition(cl), src_m(0)
-{}
+ObjectSourceCondition::ObjectSourceCondition(ChangeListener *cl) : ObjectCondition(cl), src_m(0)
+{
+}
 
 ObjectSourceCondition::~ObjectSourceCondition()
-{}
+{
+}
 
 bool ObjectSourceCondition::evaluate()
 {
     bool val = (src_m == object_m->getLastTx()) && ObjectCondition::evaluate();
-    logger_m.infoStream() << "ObjectSourceCondition (id='" << object_m->getID()
-    << "') evaluated as '" << val
-    << "'" << endlog;
+    logger_m.infoStream() << "ObjectSourceCondition (id='" << object_m->getID() << "') evaluated as '" << val << "'"
+                          << endlog;
     return val;
 }
 
-void ObjectSourceCondition::importXml(ticpp::Element* pConfig)
+void ObjectSourceCondition::importXml(ticpp::Element *pConfig)
 {
     std::string src;
     src = pConfig->GetAttribute("src");
@@ -1986,21 +2027,23 @@ void ObjectSourceCondition::importXml(ticpp::Element* pConfig)
     ObjectCondition::importXml(pConfig);
 }
 
-void ObjectSourceCondition::exportXml(ticpp::Element* pConfig)
+void ObjectSourceCondition::exportXml(ticpp::Element *pConfig)
 {
     ObjectCondition::exportXml(pConfig);
     pConfig->SetAttribute("type", "object-src");
     pConfig->SetAttribute("src", Object::WriteAddr(src_m));
 }
 
-void ObjectSourceCondition::statusXml(ticpp::Element* pStatus)
+void ObjectSourceCondition::statusXml(ticpp::Element *pStatus)
 {
     ObjectCondition::statusXml(pStatus);
     pStatus->SetAttribute("type", "object-src");
 }
 
-ObjectThresholdCondition::ObjectThresholdCondition(ChangeListener* cl) : ObjectCondition(cl), refValue_m(0), deltaUp_m(-1), deltaLow_m(-1), condition_m(0)
-{}
+ObjectThresholdCondition::ObjectThresholdCondition(ChangeListener *cl)
+    : ObjectCondition(cl), refValue_m(0), deltaUp_m(-1), deltaLow_m(-1), condition_m(0)
+{
+}
 
 ObjectThresholdCondition::~ObjectThresholdCondition()
 {
@@ -2017,19 +2060,21 @@ bool ObjectThresholdCondition::evaluate()
         double delta = object_m->get()->toNumber() - refValue_m;
         if (deltaUp_m >= 0 && delta > deltaUp_m)
         {
-            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID() << "') upper threshold reached" << endlog;
+            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID()
+                                  << "') upper threshold reached" << endlog;
             return true;
         }
         if (deltaLow_m >= 0 && delta < -deltaLow_m)
         {
-            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID() << "') lower threshold reached" << endlog;
+            logger_m.infoStream() << "ObjectThresholdCondition (id='" << object_m->getID()
+                                  << "') lower threshold reached" << endlog;
             return true;
         }
     }
     return false;
 }
 
-void ObjectThresholdCondition::importXml(ticpp::Element* pConfig)
+void ObjectThresholdCondition::importXml(ticpp::Element *pConfig)
 {
     if (!cl_m)
         throw ticpp::Exception("Threshold condition not supported in this context");
@@ -2054,7 +2099,7 @@ void ObjectThresholdCondition::importXml(ticpp::Element* pConfig)
     }
 }
 
-void ObjectThresholdCondition::exportXml(ticpp::Element* pConfig)
+void ObjectThresholdCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "threshold");
     if (deltaUp_m >= 0)
@@ -2068,8 +2113,6 @@ void ObjectThresholdCondition::exportXml(ticpp::Element* pConfig)
         condition_m->exportXml(&pElem);
         pConfig->LinkEndChild(&pElem);
     }
-
-
 
     pConfig->SetAttribute("id", object_m->getID());
     if (op_m != eq)
@@ -2091,7 +2134,7 @@ void ObjectThresholdCondition::exportXml(ticpp::Element* pConfig)
         pConfig->SetAttribute("trigger", "true");
 }
 
-void ObjectThresholdCondition::statusXml(ticpp::Element* pStatus)
+void ObjectThresholdCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "threshold");
     if (condition_m)
@@ -2106,13 +2149,13 @@ void ObjectThresholdCondition::statusXml(ticpp::Element* pStatus)
         pStatus->SetAttribute("trigger", "true");
 }
 
-
-TimerCondition::TimerCondition(ChangeListener* cl)
-        : PeriodicTask(cl), trigger_m(false), initVal_m(initValGuess)
-{}
+TimerCondition::TimerCondition(ChangeListener *cl) : PeriodicTask(cl), trigger_m(false), initVal_m(initValGuess)
+{
+}
 
 TimerCondition::~TimerCondition()
-{}
+{
+}
 
 bool TimerCondition::evaluate()
 {
@@ -2120,7 +2163,7 @@ bool TimerCondition::evaluate()
     return value_m;
 }
 
-void TimerCondition::importXml(ticpp::Element* pConfig)
+void TimerCondition::importXml(ticpp::Element *pConfig)
 {
     std::string trigger = pConfig->GetAttribute("trigger");
 
@@ -2134,8 +2177,8 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         cl_m = 0;
     std::string initVal = pConfig->GetAttribute("initval");
 
-    ticpp::Element* at = pConfig->FirstChildElement("at", false);
-    ticpp::Element* every = pConfig->FirstChildElement("every", false);
+    ticpp::Element *at = pConfig->FirstChildElement("at", false);
+    ticpp::Element *every = pConfig->FirstChildElement("every", false);
     if (at && every)
         throw ticpp::Exception("Timer can't define <at> and <every> elements simultaneously");
     if (at)
@@ -2148,8 +2191,8 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     else
         throw ticpp::Exception("Timer must define <at> or <every> elements");
 
-    ticpp::Element* during = pConfig->FirstChildElement("during", false);
-    ticpp::Element* until = pConfig->FirstChildElement("until", false);
+    ticpp::Element *during = pConfig->FirstChildElement("during", false);
+    ticpp::Element *until = pConfig->FirstChildElement("until", false);
     if (during && until)
         throw ticpp::Exception("Timer can't define <until> and <during> elements simultaneously");
     if (during)
@@ -2164,7 +2207,7 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     {
         delete until_m;
         until_m = TimeSpec::create(until, this);
-//        until_m.importXml(until);
+        //        until_m.importXml(until);
         during_m = -1;
     }
     else
@@ -2187,12 +2230,12 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         initVal_m = initValGuess;
 }
 
-void TimerCondition::exportXml(ticpp::Element* pConfig)
+void TimerCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "timer");
     if (trigger_m)
         pConfig->SetAttribute("trigger", "true");
-        
+
     if (initVal_m == initValTrue)
         pConfig->SetAttribute("initval", "true");
     else if (initVal_m == initValFalse)
@@ -2228,7 +2271,7 @@ void TimerCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void TimerCondition::statusXml(ticpp::Element* pStatus)
+void TimerCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "timer");
     if (trigger_m)
@@ -2236,8 +2279,10 @@ void TimerCondition::statusXml(ticpp::Element* pStatus)
     PeriodicTask::statusXml(pStatus);
 }
 
-TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : condition_m(0), cl_m(cl), lastTime_m(0), lastVal_m(false), counter_m(0), threshold_m(0), resetDelay_m(0)
-{}
+TimeCounterCondition::TimeCounterCondition(ChangeListener *cl)
+    : condition_m(0), cl_m(cl), lastTime_m(0), lastVal_m(false), counter_m(0), threshold_m(0), resetDelay_m(0)
+{
+}
 
 TimeCounterCondition::~TimeCounterCondition()
 {
@@ -2247,7 +2292,7 @@ TimeCounterCondition::~TimeCounterCondition()
 bool TimeCounterCondition::evaluate()
 {
     time_t now = time(0);
-    bool val = condition_m->evaluate(); 
+    bool val = condition_m->evaluate();
     if (lastVal_m && (counter_m < threshold_m))
     {
         counter_m += now - lastTime_m;
@@ -2273,7 +2318,7 @@ bool TimeCounterCondition::evaluate()
         reschedule(0);
     }
 
-    if ((!lastVal_m && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m || lastTime_m == 0))
+    if ((!lastVal_m && lastTime_m > 0 && (now - lastTime_m) > resetDelay_m || lastTime_m == 0))
     {
         counter_m = 0;
         lastTime_m = 0;
@@ -2288,7 +2333,7 @@ void TimeCounterCondition::onTimer(time_t time)
         cl_m->onChange(0);
 }
 
-void TimeCounterCondition::importXml(ticpp::Element* pConfig)
+void TimeCounterCondition::importXml(ticpp::Element *pConfig)
 {
     if (!cl_m)
         throw ticpp::Exception("TimeCounter condition not supported in this context");
@@ -2297,7 +2342,7 @@ void TimeCounterCondition::importXml(ticpp::Element* pConfig)
     condition_m = Condition::create(pConfig->FirstChildElement("condition"), cl_m);
 }
 
-void TimeCounterCondition::exportXml(ticpp::Element* pConfig)
+void TimeCounterCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "time-counter");
     if (threshold_m != 0)
@@ -2313,7 +2358,7 @@ void TimeCounterCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void TimeCounterCondition::statusXml(ticpp::Element* pStatus)
+void TimeCounterCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "time-counter");
     FixedTimeTask::statusXml(pStatus);
@@ -2326,74 +2371,75 @@ void TimeCounterCondition::statusXml(ticpp::Element* pStatus)
     }
 }
 
-void RuleInitializer::Run (pth_sem_t * stop)
+void RuleInitializer::Run(pth_sem_t *stop)
 {
     RuleServer::instance()->initialize();
 }
 
 void Rule::executeActions(ActionList &actions)
 {
-    for(ActionList::iterator it=actions.begin(); it != actions.end(); ++it)
-	{
+    for (ActionList::iterator it = actions.begin(); it != actions.end(); ++it)
+    {
         (*it)->execute();
-	}
+    }
 
-    logger_m.debugStream() << "Action list '" << actions.getTriggerTypeToString()  << "' executed for rule " << id_m << endlog;
+    logger_m.debugStream() << "Action list '" << actions.getTriggerTypeToString() << "' executed for rule " << id_m
+                           << endlog;
 }
 
 void ActionList::exportXml(ticpp::Element *pConfig)
 {
-	if (triggerType_m != OnTrue)
-	{
-		pConfig->SetAttribute("type", getTriggerTypeToString(triggerType_m));
-	}
+    if (triggerType_m != OnTrue)
+    {
+        pConfig->SetAttribute("type", getTriggerTypeToString(triggerType_m));
+    }
 
-	for(iterator it=this->begin(); it != this->end(); ++it)
-	{
-		ticpp::Element pElem("action");
-		(*it)->exportXml(&pElem);
-		pConfig->LinkEndChild(&pElem);
-	}
+    for (iterator it = this->begin(); it != this->end(); ++it)
+    {
+        ticpp::Element pElem("action");
+        (*it)->exportXml(&pElem);
+        pConfig->LinkEndChild(&pElem);
+    }
 }
 
 void ActionList::cancel()
 {
-	for(iterator it = this->begin(); it != this->end(); ++it)
-		(*it)->cancel();
+    for (iterator it = this->begin(); it != this->end(); ++it)
+        (*it)->cancel();
 }
 
 std::string ActionList::getTriggerTypeToString(TriggerType trigger)
 {
-	switch (trigger)
-	{
-		case ActionList::IfTrue:
-			return "if-true";
-		case ActionList::OnTrue:
-			return "on-true";
-		case ActionList::IfFalse:
-			return "if-false";
-		case ActionList::OnFalse:
-			return "on-false";
-	}
+    switch (trigger)
+    {
+    case ActionList::IfTrue:
+        return "if-true";
+    case ActionList::OnTrue:
+        return "on-true";
+    case ActionList::IfFalse:
+        return "if-false";
+    case ActionList::OnFalse:
+        return "on-false";
+    }
 }
 
 ActionList::TriggerType ActionList::parseTriggerType(const std::string &trigger)
 {
-	if (trigger == "if-true")
-	{
-		return ActionList::IfTrue;
-	}
-	if (trigger == "on-true")
-	{
-		return ActionList::OnTrue;
-	}
-	if (trigger == "if-false")
-	{
-		return ActionList::IfFalse;
-	}
-	if (trigger == "on-false")
-	{
-		return ActionList::OnFalse;
-	}
-	throw "Invalid trigger type.";
+    if (trigger == "if-true")
+    {
+        return ActionList::IfTrue;
+    }
+    if (trigger == "on-true")
+    {
+        return ActionList::OnTrue;
+    }
+    if (trigger == "if-false")
+    {
+        return ActionList::IfFalse;
+    }
+    if (trigger == "on-false")
+    {
+        return ActionList::OnFalse;
+    }
+    throw "Invalid trigger type.";
 }

@@ -1,17 +1,17 @@
 /*
     LinKNX KNX home automation platform
     Copyright (C) 2007 Jean-François Meessen <linknx@ouaye.net>
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -23,30 +23,33 @@
 
 extern "C"
 {
+#include "lauxlib.h"
 #include "lua.h"
 #include "lualib.h"
-#include "lauxlib.h"
 }
-#include <ctime>
-#include "services.h"
 #include "ioport.h"
+#include "services.h"
+#include <ctime>
 
-LuaMain* LuaMain::instance_m;
+LuaMain *LuaMain::instance_m;
 
 LuaMain::LuaMain()
 {
     if (pth_mutex_init(&mutex_m))
     {
         Logger::getInstance("LuaMain").debugStream() << "Lua Mutex Initialized" << endlog;
-    } else {
+    }
+    else
+    {
         Logger::getInstance("LuaMain").errorStream() << "Error initializing Lua Mutex" << endlog;
     }
 }
 
 LuaMain::~LuaMain()
-{}
+{
+}
 
-LuaMain* LuaMain::instance()
+LuaMain *LuaMain::instance()
 {
     if (instance_m == 0)
         instance_m = new LuaMain();
@@ -63,15 +66,16 @@ void LuaMain::unlock()
     pth_mutex_release(&instance()->mutex_m);
 }
 
-LuaCondition::LuaCondition(ChangeListener* cl) : cl_m(cl), l_m(0)
+LuaCondition::LuaCondition(ChangeListener *cl) : cl_m(cl), l_m(0)
 {
-    l_m = luaL_newstate();  
+    l_m = luaL_newstate();
     /* stop collector during initialisation
      * http://lua-users.org/lists/lua-l/2008-07/msg00690.html
      */
-    lua_gc(l_m, LUA_GCSTOP, 0);    luaL_openlibs(l_m);
-    lua_register(l_m, "obj", LuaCondition::obj);  
-    lua_register(l_m, "isException", LuaCondition::isException);  
+    lua_gc(l_m, LUA_GCSTOP, 0);
+    luaL_openlibs(l_m);
+    lua_register(l_m, "obj", LuaCondition::obj);
+    lua_register(l_m, "isException", LuaCondition::isException);
     lua_gc(l_m, LUA_GCRESTART, 0);
 }
 
@@ -84,25 +88,25 @@ bool LuaCondition::evaluate()
 {
     LuaMain::lock();
     if (luaL_dostring(l_m, code_m.c_str()) != 0)
-    { 
+    {
         logger_m.errorStream() << "LuaCondition error: " << lua_tostring(l_m, -1) << endlog;
         return false;
     }
-    int ret = lua_toboolean(l_m, -1);  
-    logger_m.infoStream() << "LuaCondition evaluated as " << (ret? "true":"false") << endlog;
+    int ret = lua_toboolean(l_m, -1);
+    logger_m.infoStream() << "LuaCondition evaluated as " << (ret ? "true" : "false") << endlog;
     lua_settop(l_m, 0);
     LuaMain::unlock();
     return ret;
 }
 
-void LuaCondition::importXml(ticpp::Element* pConfig)
+void LuaCondition::importXml(ticpp::Element *pConfig)
 {
     code_m = pConfig->GetText();
 
     infoStream("LuaCondition") << "LuaCondition: Configured code=" << code_m << endlog;
 }
 
-void LuaCondition::exportXml(ticpp::Element* pConfig)
+void LuaCondition::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "script");
     if (code_m.length())
@@ -113,7 +117,7 @@ void LuaCondition::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void LuaCondition::statusXml(ticpp::Element* pStatus)
+void LuaCondition::statusXml(ticpp::Element *pStatus)
 {
     pStatus->SetAttribute("type", "script");
 }
@@ -127,14 +131,15 @@ int LuaCondition::obj(lua_State *L)
     }
     std::string id(lua_tostring(L, 1));
     debugStream("LuaCondition") << "Getting object with id=" << id << endlog;
-    try {
-        Object* object = ObjectController::instance()->getObject(id);
+    try
+    {
+        Object *object = ObjectController::instance()->getObject(id);
         std::string ret = object->getValue();
         object->decRefCount();
         debugStream("LuaCondition") << "Object '" << id << "' has value '" << ret << "'" << endlog;
         lua_pushstring(L, ret.c_str());
     }
-    catch( ticpp::Exception& ex )
+    catch (ticpp::Exception &ex)
     {
         lua_pushstring(L, "Error while retrieving object value");
         lua_error(L);
@@ -160,7 +165,7 @@ int LuaCondition::isException(lua_State *L)
         ts = lua_tointeger(L, 1);
     }
     bool ret = Services::instance()->getExceptionDays()->isException(ts);
-    debugStream("LuaCondition") << "Is timestamp (" << ts << ") an exception day: " << (ret ? "yes" : "no" ) << endlog;
+    debugStream("LuaCondition") << "Is timestamp (" << ts << ") an exception day: " << (ret ? "yes" : "no") << endlog;
 
     lua_pushboolean(L, ret);
     return 1;
@@ -174,9 +179,9 @@ LuaScriptAction::LuaScriptAction()
      */
     lua_gc(l_m, LUA_GCSTOP, 0);
     luaL_openlibs(l_m);
-    lua_register(l_m, "obj", LuaScriptAction::obj);  
-    lua_register(l_m, "set", LuaScriptAction::set);  
-    lua_register(l_m, "iosend", LuaScriptAction::iosend);  
+    lua_register(l_m, "obj", LuaScriptAction::obj);
+    lua_register(l_m, "set", LuaScriptAction::set);
+    lua_register(l_m, "iosend", LuaScriptAction::iosend);
     lua_register(l_m, "sleep", LuaScriptAction::sleep);
     lua_gc(l_m, LUA_GCRESTART, 0);
 }
@@ -186,13 +191,13 @@ LuaScriptAction::~LuaScriptAction()
     lua_close(l_m);
 }
 
-void LuaScriptAction::importXml(ticpp::Element* pConfig)
+void LuaScriptAction::importXml(ticpp::Element *pConfig)
 {
     code_m = pConfig->GetText();
     logger_m.infoStream() << "LuaScriptAction: Configured." << endlog;
 }
 
-void LuaScriptAction::exportXml(ticpp::Element* pConfig)
+void LuaScriptAction::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "script");
     if (code_m.length())
@@ -204,7 +209,7 @@ void LuaScriptAction::exportXml(ticpp::Element* pConfig)
     Action::exportXml(pConfig);
 }
 
-void LuaScriptAction::Run (pth_sem_t * stop)
+void LuaScriptAction::Run(pth_sem_t *stop)
 {
     if (Action::sleep(delay_m, stop))
         return;
@@ -233,14 +238,15 @@ int LuaScriptAction::obj(lua_State *L)
     }
     std::string id(lua_tostring(L, 1));
     debugStream("LuaScriptAction") << "Getting object with id=" << id << endlog;
-    try {
-        Object* object = ObjectController::instance()->getObject(id);
+    try
+    {
+        Object *object = ObjectController::instance()->getObject(id);
         std::string ret = object->getValue();
         object->decRefCount();
         debugStream("LuaScriptAction") << "Object '" << id << "' has value '" << ret << "'" << endlog;
         lua_pushstring(L, ret.c_str());
     }
-    catch( ticpp::Exception& ex )
+    catch (ticpp::Exception &ex)
     {
         lua_pushstring(L, "Error while retrieving object value");
         lua_error(L);
@@ -264,13 +270,14 @@ int LuaScriptAction::set(lua_State *L)
     std::string id(lua_tostring(L, 1));
     std::string value(val);
     debugStream("LuaScriptAction") << "Setting object with id=" << id << endlog;
-    try {
-        Object* object = ObjectController::instance()->getObject(id);
+    try
+    {
+        Object *object = ObjectController::instance()->getObject(id);
         object->setValue(value);
         object->decRefCount();
         debugStream("LuaScriptAction") << "Object '" << id << "' set to value '" << value << "'" << endlog;
     }
-    catch( ticpp::Exception& ex )
+    catch (ticpp::Exception &ex)
     {
         lua_pushstring(L, "Error while setting object value");
         lua_error(L);
@@ -297,20 +304,21 @@ int LuaScriptAction::iosend(lua_State *L)
     debugStream("LuaScriptAction") << "Sending on ioport " << id << endlog;
     try
     {
-        IOPort* port = IOPortManager::instance()->getPort(id);
+        IOPort *port = IOPortManager::instance()->getPort(id);
         if (!port)
             throw ticpp::Exception("IO Port ID not found.");
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(value.c_str());
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(value.c_str());
         int len = value.length();
         int ret = port->send(data, len);
-        if (ret != len) {
+        if (ret != len)
+        {
             ret = port->send(data, len);
             if (ret != len)
                 throw ticpp::Exception("Unable to send data.");
         }
         debugStream("LuaScriptAction") << "Sent '" << value << "' on ioport " << id << endlog;
     }
-    catch( ticpp::Exception& ex )
+    catch (ticpp::Exception &ex)
     {
         lua_pushstring(L, "Error while sending on io port");
         lua_error(L);
@@ -321,7 +329,7 @@ int LuaScriptAction::iosend(lua_State *L)
 
 int LuaScriptAction::sleep(lua_State *L)
 {
-    lua_Number delay, ret=0;
+    lua_Number delay, ret = 0;
     if (lua_gettop(L) != 1 || !lua_isnumber(L, 1))
     {
         lua_pushstring(L, "Incorrect argument to 'sleep'");
@@ -330,11 +338,11 @@ int LuaScriptAction::sleep(lua_State *L)
     delay = lua_tonumber(L, 1);
     debugStream("LuaScriptAction") << "Sleep for '" << delay << "' seconds" << endlog;
     lua_getglobal(L, "__linknx_stop");
-    if (lua_islightuserdata (L, -1))
+    if (lua_islightuserdata(L, -1))
     {
-        pth_sem_t * stop = (pth_sem_t *)lua_touserdata(L, -1);
+        pth_sem_t *stop = (pth_sem_t *)lua_touserdata(L, -1);
         LuaMain::unlock();
-        if (Action::sleep(delay*1000, stop))
+        if (Action::sleep(delay * 1000, stop))
         {
             LuaMain::lock();
             lua_pushstring(L, "Action interrupted");
@@ -347,7 +355,7 @@ int LuaScriptAction::sleep(lua_State *L)
     {
         LuaMain::unlock();
         if (delay < 1)
-            ret = pth_usleep(delay*1000000);
+            ret = pth_usleep(delay * 1000000);
         else
             ret = pth_sleep(delay);
         LuaMain::lock();
@@ -357,4 +365,3 @@ int LuaScriptAction::sleep(lua_State *L)
 }
 
 #endif // HAVE_LUA
-

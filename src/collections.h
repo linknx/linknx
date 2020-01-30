@@ -22,26 +22,27 @@
 
 #include <list>
 
-template <class T, bool owns=true> class List : public std::list<T>
-{
-	public:
-		virtual void clear() {std::list<T>::clear();}
+template <class T, bool owns = true>
+class List : public std::list<T> {
+public:
+    virtual void clear()
+    {
+        std::list<T>::clear();
+    }
 };
 
-template <class T, bool owns> class List<T*, owns> : public std::list<T*>
-{
-	public:
-		virtual void clear()
-		{
-			if (owns)
-			{
-				for (typename std::list<T*>::iterator it = this->begin(); it != this->end(); ++it)
-				{
-					delete *it;
-				}
-			}
-			std::list<T*>::clear();
-		}
+template <class T, bool owns>
+class List<T *, owns> : public std::list<T *> {
+public:
+    virtual void clear()
+    {
+        if (owns) {
+            for (typename std::list<T *>::iterator it = this->begin(); it != this->end(); ++it) {
+                delete *it;
+            }
+        }
+        std::list<T *>::clear();
+    }
 };
 
 #endif

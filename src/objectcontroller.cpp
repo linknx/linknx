@@ -1,17 +1,17 @@
 /*
     LinKNX KNX home automation platform
     Copyright (C) 2007 Jean-François Meessen <linknx@ouaye.net>
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -20,86 +20,90 @@
 #include "objectcontroller.h"
 #include "persistentstorage.h"
 #include "services.h"
-#include <cmath>
 #include <cassert>
-#include <iomanip>
+#include <cmath>
 #include <iconv.h>
+#include <iomanip>
 
-ObjectController* ObjectController::instance_m;
+ObjectController *ObjectController::instance_m;
 
-Logger& Object::logger_m(Logger::getInstance("Object"));
+Logger &Object::logger_m(Logger::getInstance("Object"));
 
-Object::Object() : init_m(false), flags_m(Default), refCount_m(0), gad_m(0), readRequestGad_m(0), persist_m(false), writeLog_m(false), readPending_m(false)
-{}
+Object::Object()
+    : init_m(false), flags_m(Default), refCount_m(0), gad_m(0), readRequestGad_m(0), persist_m(false),
+      writeLog_m(false), readPending_m(false)
+{
+}
 
 Object::~Object()
 {
     if (refCount_m > 0)
-        logger_m.errorStream() << "Object (id=" << getID() << "): deleted object still has " << refCount_m << " references" << endlog;
+        logger_m.errorStream() << "Object (id=" << getID() << "): deleted object still has " << refCount_m
+                               << " references" << endlog;
 }
 
-Object* Object::create(const std::string& type)
+Object *Object::create(const std::string &type)
 {
     if (type == "" || type == "EIS1" || type == "1.001")
         return new SwitchingSwitchObject();
     if (type.compare(0, 2, "1.") == 0)
     {
         if (type == "1.002")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<2> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<2>>();
         if (type == "1.003")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<3> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<3>>();
         if (type == "1.004")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<4> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<4>>();
         if (type == "1.005")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<5> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<5>>();
         if (type == "1.006")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<6> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<6>>();
         if (type == "1.007")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<7> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<7>>();
         if (type == "1.008")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<8> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<8>>();
         if (type == "1.009")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<9> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<9>>();
         if (type == "1.010")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<10> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<10>>();
         if (type == "1.011")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<11> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<11>>();
         if (type == "1.012")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<12> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<12>>();
         if (type == "1.013")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<13> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<13>>();
         if (type == "1.014")
-            return new SwitchingObjectImpl<SwitchingImplObjectValue<14> >();
+            return new SwitchingObjectImpl<SwitchingImplObjectValue<14>>();
         return 0;
     }
     if (type.compare(0, 2, "2.") == 0)
     {
         if (type == "2.xxx")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<0> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<0>>();
         if (type == "2.001")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<1> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<1>>();
         if (type == "2.002")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<2> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<2>>();
         if (type == "2.003")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<3> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<3>>();
         if (type == "2.004")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<4> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<4>>();
         if (type == "2.005")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<5> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<5>>();
         if (type == "2.006")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<6> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<6>>();
         if (type == "2.007")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<7> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<7>>();
         if (type == "2.008")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<8> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<8>>();
         if (type == "2.009")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<9> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<9>>();
         if (type == "2.010")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<10> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<10>>();
         if (type == "2.011")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<11> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<11>>();
         if (type == "2.012")
-            return new SwitchingControlObject<SwitchingControlImplObjectValue<12> >();
+            return new SwitchingControlObject<SwitchingControlImplObjectValue<12>>();
         return 0;
     }
     if (type == "EIS2" || type == "3.007")
@@ -115,47 +119,47 @@ Object* Object::create(const std::string& type)
     if (type == "EIS4" || type == "11.001")
         return new DateObject();
     if (type == "EIS5" || type == "9.xxx")
-        return new ValueObjectImpl<ValueImplObjectValue<0> >();
+        return new ValueObjectImpl<ValueImplObjectValue<0>>();
     if (type.compare(0, 2, "9.") == 0)
-    {    
+    {
         if (type == "9.001")
-            return new ValueObjectImpl<ValueImplObjectValue<1> >();
+            return new ValueObjectImpl<ValueImplObjectValue<1>>();
         if (type == "9.002")
-            return new ValueObjectImpl<ValueImplObjectValue<2> >();
+            return new ValueObjectImpl<ValueImplObjectValue<2>>();
         if (type == "9.003")
-            return new ValueObjectImpl<ValueImplObjectValue<3> >();
+            return new ValueObjectImpl<ValueImplObjectValue<3>>();
         if (type == "9.004")
-            return new ValueObjectImpl<ValueImplObjectValue<4> >();
+            return new ValueObjectImpl<ValueImplObjectValue<4>>();
         if (type == "9.005")
-            return new ValueObjectImpl<ValueImplObjectValue<5> >();
+            return new ValueObjectImpl<ValueImplObjectValue<5>>();
         if (type == "9.006")
-            return new ValueObjectImpl<ValueImplObjectValue<6> >();
+            return new ValueObjectImpl<ValueImplObjectValue<6>>();
         if (type == "9.007")
-            return new ValueObjectImpl<ValueImplObjectValue<7> >();
+            return new ValueObjectImpl<ValueImplObjectValue<7>>();
         if (type == "9.008")
-            return new ValueObjectImpl<ValueImplObjectValue<8> >();
+            return new ValueObjectImpl<ValueImplObjectValue<8>>();
         if (type == "9.010")
-            return new ValueObjectImpl<ValueImplObjectValue<10> >();
+            return new ValueObjectImpl<ValueImplObjectValue<10>>();
         if (type == "9.011")
-            return new ValueObjectImpl<ValueImplObjectValue<11> >();
+            return new ValueObjectImpl<ValueImplObjectValue<11>>();
         if (type == "9.020")
-            return new ValueObjectImpl<ValueImplObjectValue<20> >();
+            return new ValueObjectImpl<ValueImplObjectValue<20>>();
         if (type == "9.021")
-            return new ValueObjectImpl<ValueImplObjectValue<21> >();
+            return new ValueObjectImpl<ValueImplObjectValue<21>>();
         if (type == "9.022")
-            return new ValueObjectImpl<ValueImplObjectValue<22> >();
+            return new ValueObjectImpl<ValueImplObjectValue<22>>();
         if (type == "9.023")
-            return new ValueObjectImpl<ValueImplObjectValue<23> >();
+            return new ValueObjectImpl<ValueImplObjectValue<23>>();
         if (type == "9.024")
-            return new ValueObjectImpl<ValueImplObjectValue<24> >();
+            return new ValueObjectImpl<ValueImplObjectValue<24>>();
         if (type == "9.025")
-            return new ValueObjectImpl<ValueImplObjectValue<25> >();
+            return new ValueObjectImpl<ValueImplObjectValue<25>>();
         if (type == "9.026")
-            return new ValueObjectImpl<ValueImplObjectValue<26> >();
+            return new ValueObjectImpl<ValueImplObjectValue<26>>();
         if (type == "9.027")
-            return new ValueObjectImpl<ValueImplObjectValue<27> >();
+            return new ValueObjectImpl<ValueImplObjectValue<27>>();
         if (type == "9.028")
-            return new ValueObjectImpl<ValueImplObjectValue<28> >();
+            return new ValueObjectImpl<ValueImplObjectValue<28>>();
         return 0;
     }
     if (type == "14.xxx")
@@ -198,10 +202,10 @@ Object* Object::create(const std::string& type)
         return 0;
 }
 
-Object* Object::create(ticpp::Element* pConfig)
+Object *Object::create(ticpp::Element *pConfig)
 {
     std::string type = pConfig->GetAttribute("type");
-    Object* obj = Object::create(type);
+    Object *obj = Object::create(type);
     if (obj == 0)
     {
         std::stringstream msg;
@@ -212,7 +216,7 @@ Object* Object::create(ticpp::Element* pConfig)
     return obj;
 }
 
-void Object::setValue(ObjectValue* value)
+void Object::setValue(ObjectValue *value)
 {
     if (set(value) || forceUpdate())
         onInternalUpdate();
@@ -224,7 +228,7 @@ void Object::setFloatValue(double value)
         onInternalUpdate();
 }
 
-ObjectValue* Object::get()
+ObjectValue *Object::get()
 {
     if (!init_m)
         read();
@@ -232,14 +236,14 @@ ObjectValue* Object::get()
     return getObjectValue();
 }
 
-void Object::importXml(ticpp::Element* pConfig)
+void Object::importXml(ticpp::Element *pConfig)
 {
     std::string type = pConfig->GetAttribute("type");
     if (type != getType())
     {
         // sometimes, different type strings refer to the same type
         // in that case, create a temporary object just to get the type string.
-        Object* obj = Object::create(type);
+        Object *obj = Object::create(type);
         type = obj->getType();
         delete obj;
         if (type != getType())
@@ -248,10 +252,10 @@ void Object::importXml(ticpp::Element* pConfig)
     std::string id = pConfig->GetAttribute("id");
     if (id == "")
         throw ticpp::Exception("Missing or empty object ID");
-    if(id.find("/", 0) != std::string::npos)
+    if (id.find("/", 0) != std::string::npos)
     {
         std::stringstream msg;
-        msg << "Slash character '/' not allowed in Object ID: " << id <<std::endl;
+        msg << "Slash character '/' not allowed in Object ID: " << id << std::endl;
         throw ticpp::Exception(msg.str());
     }
 
@@ -268,8 +272,8 @@ void Object::importXml(ticpp::Element* pConfig)
 
     bool has_descr = false;
     bool has_listener = false;
-    ticpp::Iterator< ticpp::Node > child;
-    for ( child = pConfig->FirstChild(false); child != child.end(); child++ )
+    ticpp::Iterator<ticpp::Node> child;
+    for (child = pConfig->FirstChild(false); child != child.end(); child++)
     {
         std::string val = child->Value();
         if (child->Type() == TiXmlNode::TEXT && val.length())
@@ -322,7 +326,7 @@ void Object::importXml(ticpp::Element* pConfig)
         if (flags.find('s') != flags.npos || flags.find('f') != flags.npos)
             flags_m |= Stateless;
     }
-    catch( ticpp::Exception& ex )
+    catch (ticpp::Exception &ex)
     {
         flags_m = Default;
     }
@@ -367,7 +371,7 @@ void Object::importXml(ticpp::Element* pConfig)
     logger_m.infoStream() << "Configured object '" << id_m << "': gad=" << WriteGroupAddr(gad_m) << endlog;
 }
 
-void Object::exportXml(ticpp::Element* pConfig)
+void Object::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", getType());
     pConfig->SetAttribute("id", id_m);
@@ -380,11 +384,10 @@ void Object::exportXml(ticpp::Element* pConfig)
 
     if (writeLog_m)
         pConfig->SetAttribute("log", "true");
-        
+
     std::string precision = getObjectValue()->getPrecision();
     if (!precision.empty())
         pConfig->SetAttribute("precision", precision);
-
 
     if (flags_m != Default)
     {
@@ -422,21 +425,21 @@ void Object::exportXml(ticpp::Element* pConfig)
 
 void Object::read()
 {
-    KnxConnection* con = Services::instance()->getKnxConnection();
-	if (con->isVoid())
-	{
-		init_m = true;
-		return;
-	}
+    KnxConnection *con = Services::instance()->getKnxConnection();
+    if (con->isVoid())
+    {
+        init_m = true;
+        return;
+    }
 
     if (!readPending_m)
     {
-        uint8_t buf[2] = { 0, 0 };
+        uint8_t buf[2] = {0, 0};
         con->write(getReadRequestGad(), buf, 2);
     }
     readPending_m = true;
 
-    pth_event_t tmout = pth_event (PTH_EVENT_TIME, pth_timeout(1,0));
+    pth_event_t tmout = pth_event(PTH_EVENT_TIME, pth_timeout(1, 0));
     int cnt = 0;
     while (cnt < 100 && readPending_m)
     {
@@ -449,7 +452,7 @@ void Object::read()
             pth_usleep(10000);
         ++cnt;
     }
-    pth_event_free (tmout, PTH_FREE_THIS);
+    pth_event_free(tmout, PTH_FREE_THIS);
     // If the device didn't answer after 1 second, we consider the object's
     // default value as the current value to avoid waiting forever.
     init_m = true;
@@ -465,8 +468,9 @@ void Object::onInternalUpdate()
 void Object::onUpdate()
 {
     init_m = true;
-    logger_m.infoStream() << "New value " << getValue() << " for object " << getID() << " (type: " << getType() << ")" << endlog;
-    
+    logger_m.infoStream() << "New value " << getValue() << " for object " << getID() << " (type: " << getType() << ")"
+                          << endlog;
+
     ListenerList_t::iterator it;
     for (it = listenerList_m.begin(); it != listenerList_m.end(); it++)
     {
@@ -486,7 +490,7 @@ void Object::onUpdate()
     }
 }
 
-void Object::onWrite(const uint8_t* buf, int len, eibaddr_t src)
+void Object::onWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if ((flags_m & Write) && (flags_m & Comm))
     {
@@ -495,13 +499,13 @@ void Object::onWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
-void Object::onRead(const uint8_t* buf, int len, eibaddr_t src)
+void Object::onRead(const uint8_t *buf, int len, eibaddr_t src)
 {
     if ((flags_m & Read) && (flags_m & Comm))
         doSend(false);
 }
 
-void Object::onResponse(const uint8_t* buf, int len, eibaddr_t src)
+void Object::onResponse(const uint8_t *buf, int len, eibaddr_t src)
 {
     if ((flags_m & Update) && (flags_m & Comm))
     {
@@ -511,36 +515,36 @@ void Object::onResponse(const uint8_t* buf, int len, eibaddr_t src)
     }
 }
 
-void Object::addChangeListener(ChangeListener* listener)
+void Object::addChangeListener(ChangeListener *listener)
 {
-    logger_m.debugStream()  << "Adding listener to object '" << id_m << "'" << endlog;
+    logger_m.debugStream() << "Adding listener to object '" << id_m << "'" << endlog;
     listenerList_m.push_back(listener);
 }
-void Object::removeChangeListener(ChangeListener* listener)
+void Object::removeChangeListener(ChangeListener *listener)
 {
     listenerList_m.remove(listener);
 }
 
-eibaddr_t Object::ReadGroupAddr(const std::string& addr)
+eibaddr_t Object::ReadGroupAddr(const std::string &addr)
 {
     int a, b, c;
-    if (sscanf (addr.c_str(), "%d/%d/%d", &a, &b, &c) == 3)
+    if (sscanf(addr.c_str(), "%d/%d/%d", &a, &b, &c) == 3)
         return ((a & 0x01f) << 11) | ((b & 0x07) << 8) | ((c & 0xff));
-    if (sscanf (addr.c_str(), "%d/%d", &a, &b) == 2)
+    if (sscanf(addr.c_str(), "%d/%d", &a, &b) == 2)
         return ((a & 0x01f) << 11) | ((b & 0x7FF));
-    if (sscanf (addr.c_str(), "%x", &a) == 1)
+    if (sscanf(addr.c_str(), "%x", &a) == 1)
         return a & 0xffff;
     std::stringstream msg;
     msg << "Object: Invalid group address format: '" << addr << "'" << std::endl;
     throw ticpp::Exception(msg.str());
 }
 
-eibaddr_t Object::ReadAddr(const std::string& addr)
+eibaddr_t Object::ReadAddr(const std::string &addr)
 {
     int a, b, c;
-    if (sscanf (addr.c_str(), "%d.%d.%d", &a, &b, &c) == 3)
+    if (sscanf(addr.c_str(), "%d.%d.%d", &a, &b, &c) == 3)
         return ((a & 0x0f) << 12) | ((b & 0x0f) << 8) | ((c & 0xff));
-    if (sscanf (addr.c_str(), "%x", &a) == 1)
+    if (sscanf(addr.c_str(), "%x", &a) == 1)
         return a & 0xffff;
     std::stringstream msg;
     msg << "Object: Invalid individual address format: '" << addr << "'" << std::endl;
@@ -550,25 +554,25 @@ eibaddr_t Object::ReadAddr(const std::string& addr)
 std::string Object::WriteGroupAddr(eibaddr_t addr)
 {
     char writegaddr_buf[16];
-    sprintf (writegaddr_buf, "%d/%d/%d", (addr >> 11) & 0x1f, (addr >> 8) & 0x07, (addr) & 0xff);
+    sprintf(writegaddr_buf, "%d/%d/%d", (addr >> 11) & 0x1f, (addr >> 8) & 0x07, (addr)&0xff);
     return std::string(writegaddr_buf);
 }
 
 std::string Object::WriteAddr(eibaddr_t addr)
 {
     char writeaddr_buf[16];
-    sprintf (writeaddr_buf, "%d.%d.%d", (addr >> 12) & 0x0f, (addr >> 8) & 0x0f, (addr) & 0xff);
+    sprintf(writeaddr_buf, "%d.%d.%d", (addr >> 12) & 0x0f, (addr >> 8) & 0x0f, (addr)&0xff);
     return std::string(writeaddr_buf);
 }
 
-KnxConnection* Object::getKnxConnection()
+KnxConnection *Object::getKnxConnection()
 {
     return Services::instance()->getKnxConnection();
 }
 
-Logger& ObjectValue::logger_m(Logger::getInstance("ObjectValue"));
+Logger &ObjectValue::logger_m(Logger::getInstance("ObjectValue"));
 
-void SwitchingObjectValue::init(const std::string& value)
+void SwitchingObjectValue::init(const std::string &value)
 {
     if (value == "1" || value == "on" || value == getValueString(true))
         value_m = true;
@@ -592,29 +596,33 @@ double SwitchingObjectValue::toNumber()
     return value_m ? 1.0 : 0.0;
 }
 
-bool SwitchingObjectValue::equals(ObjectValue* value)
+bool SwitchingObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
+    SwitchingObjectValue *val = dynamic_cast<SwitchingObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "SwitchingObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "SwitchingObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "SwitchingObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m
+                          << "'" << endlog;
     return value_m == val->value_m;
 }
 
-int SwitchingObjectValue::compare(ObjectValue* value)
+int SwitchingObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
+    SwitchingObjectValue *val = dynamic_cast<SwitchingObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "SwitchingObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "SwitchingObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "SwitchingObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m
+                          << "'" << endlog;
     if (value_m == val->value_m)
         return 0;
     if (value_m)
@@ -632,12 +640,13 @@ bool SwitchingObjectValue::set(bool value)
     return false;
 }
 
-bool SwitchingObjectValue::set(ObjectValue* value)
+bool SwitchingObjectValue::set(ObjectValue *value)
 {
-    SwitchingObjectValue* val = dynamic_cast<SwitchingObjectValue*>(value);
+    SwitchingObjectValue *val = dynamic_cast<SwitchingObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "SwitchingObjectValue: ERROR, set() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingObjectValue: ERROR, set() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
     return set(val->value_m);
@@ -648,9 +657,9 @@ bool SwitchingObjectValue::set(double value)
     return set(value != 0.0);
 }
 
-Logger& SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
+Logger &SwitchingObject::logger_m(Logger::getInstance("SwitchingObject"));
 
-void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void SwitchingObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     bool newValue;
     if (len == 2)
@@ -664,11 +673,11 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void SwitchingObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0)) };
+    uint8_t buf[2] = {0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0))};
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
-void SwitchingControlObjectValue::init(const std::string& value)
+void SwitchingControlObjectValue::init(const std::string &value)
 {
     control_m = (value != "-1" && value != "no control");
     if (value == "1" || value == "on" || value == getValueString(true))
@@ -695,29 +704,35 @@ double SwitchingControlObjectValue::toNumber()
     return control_m ? (value_m ? 1.0 : 0.0) : -1.0;
 }
 
-bool SwitchingControlObjectValue::equals(ObjectValue* value)
+bool SwitchingControlObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    SwitchingControlObjectValue *val = dynamic_cast<SwitchingControlObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "SwitchingControlObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingControlObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='" << control_m << "' to value='" << val->value_m << "' : control='" << val->control_m << "'" << endlog;
+    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='"
+                          << control_m << "' to value='" << val->value_m << "' : control='" << val->control_m << "'"
+                          << endlog;
     return (!control_m && !val->control_m) || (control_m && val->control_m && value_m == val->value_m);
 }
 
-int SwitchingControlObjectValue::compare(ObjectValue* value)
+int SwitchingControlObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    SwitchingControlObjectValue *val = dynamic_cast<SwitchingControlObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "SwitchingControlObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingControlObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='" << control_m << "' with value='" << val->value_m << "' : control='" << val->control_m << "'" << endlog;
+    logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='"
+                          << control_m << "' with value='" << val->value_m << "' : control='" << val->control_m << "'"
+                          << endlog;
     if (!control_m && !val->control_m)
         return 0;
     if (control_m && !val->control_m)
@@ -742,12 +757,13 @@ bool SwitchingControlObjectValue::set(bool value, bool control)
     return false;
 }
 
-bool SwitchingControlObjectValue::set(ObjectValue* value)
+bool SwitchingControlObjectValue::set(ObjectValue *value)
 {
-    SwitchingControlObjectValue* val = dynamic_cast<SwitchingControlObjectValue*>(value);
+    SwitchingControlObjectValue *val = dynamic_cast<SwitchingControlObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "SwitchingControlObjectValue: ERROR, set() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "SwitchingControlObjectValue: ERROR, set() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
     return set(val->value_m, val->control_m);
@@ -760,33 +776,33 @@ bool SwitchingControlObjectValue::set(double value)
     return set(value != 0.0, true);
 }
 
-bool StepDirObjectValue::equals(ObjectValue* value)
+bool StepDirObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
+    StepDirObjectValue *val = dynamic_cast<StepDirObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "StepDirObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StepDirObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "StepDirObjectValue: Compare object='"
-    << toString() << "' to value='"
-    << val->toString() << "'" << endlog;
+    logger_m.infoStream() << "StepDirObjectValue: Compare object='" << toString() << "' to value='" << val->toString()
+                          << "'" << endlog;
     return (direction_m == val->direction_m) && (stepcode_m == val->stepcode_m);
 }
 
-int StepDirObjectValue::compare(ObjectValue* value)
+int StepDirObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
+    StepDirObjectValue *val = dynamic_cast<StepDirObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "StepDirObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StepDirObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "StepDirObjectValue: Compare object='"
-    << toString() << "' to value='"
-    << val->toString() << "'" << endlog;
+    logger_m.infoStream() << "StepDirObjectValue: Compare object='" << toString() << "' to value='" << val->toString()
+                          << "'" << endlog;
 
     if (stepcode_m == 0 && val->stepcode_m == 0)
         return 0;
@@ -801,12 +817,13 @@ int StepDirObjectValue::compare(ObjectValue* value)
     return direction_m ? 1 : -1;
 }
 
-bool StepDirObjectValue::set(ObjectValue* value)
+bool StepDirObjectValue::set(ObjectValue *value)
 {
-    StepDirObjectValue* val = dynamic_cast<StepDirObjectValue*>(value);
+    StepDirObjectValue *val = dynamic_cast<StepDirObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "StepDirObjectValue: ERROR, set() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StepDirObjectValue: ERROR, set() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
     if (direction_m != val->direction_m || stepcode_m != val->stepcode_m)
@@ -844,15 +861,17 @@ double StepDirObjectValue::toNumber()
     return (direction_m ? 1.0 : -1.0) * stepcode_m;
 }
 
-Logger& StepDirObject::logger_m(Logger::getInstance("StepDirObject"));
+Logger &StepDirObject::logger_m(Logger::getInstance("StepDirObject"));
 
 StepDirObject::StepDirObject()
-{}
+{
+}
 
 StepDirObject::~StepDirObject()
-{}
+{
+}
 
-void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void StepDirObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     int newValue;
     if (len == 2)
@@ -870,11 +889,12 @@ void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void StepDirObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07)) };
+    uint8_t buf[2] = {
+        0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07))};
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
-DimmingObjectValue::DimmingObjectValue(const std::string& value)
+DimmingObjectValue::DimmingObjectValue(const std::string &value)
 {
     std::string dir;
     size_t pos = value.find(":");
@@ -882,9 +902,9 @@ DimmingObjectValue::DimmingObjectValue(const std::string& value)
     stepcode_m = 1;
     if (pos != value.npos)
     {
-        if (value.length() > pos+1)
+        if (value.length() > pos + 1)
         {
-            char step = value[pos+1];
+            char step = value[pos + 1];
             if (step >= '1' && step <= '7')
                 stepcode_m = step - '0';
             else
@@ -925,14 +945,14 @@ std::string DimmingObjectValue::toString()
     return ret;
 }
 
-Logger& DimmingObject::logger_m(Logger::getInstance("DimmingObject"));
+Logger &DimmingObject::logger_m(Logger::getInstance("DimmingObject"));
 
-ObjectValue* DimmingObject::createObjectValue(const std::string& value)
+ObjectValue *DimmingObject::createObjectValue(const std::string &value)
 {
     return new DimmingObjectValue(value);
 }
 
-void DimmingObject::setValue(const std::string& value)
+void DimmingObject::setValue(const std::string &value)
 {
     DimmingObjectValue val(value);
     Object::setValue(&val);
@@ -940,7 +960,7 @@ void DimmingObject::setValue(const std::string& value)
 
 void DimmingObject::setStepValue(int direction, int stepcode)
 {
-    if (forceUpdate() || stepcode_m != stepcode  || direction_m != direction)
+    if (forceUpdate() || stepcode_m != stepcode || direction_m != direction)
     {
         stepcode_m = stepcode;
         direction_m = direction;
@@ -948,7 +968,7 @@ void DimmingObject::setStepValue(int direction, int stepcode)
     }
 }
 
-BlindsObjectValue::BlindsObjectValue(const std::string& value)
+BlindsObjectValue::BlindsObjectValue(const std::string &value)
 {
     std::string dir;
     size_t pos = value.find(":");
@@ -956,9 +976,9 @@ BlindsObjectValue::BlindsObjectValue(const std::string& value)
     stepcode_m = 1;
     if (pos != value.npos)
     {
-        if (value.length() > pos+1)
+        if (value.length() > pos + 1)
         {
-            char step = value[pos+1];
+            char step = value[pos + 1];
             if (step >= '1' && step <= '7')
                 stepcode_m = step - '0';
             else
@@ -999,14 +1019,14 @@ std::string BlindsObjectValue::toString()
     return ret;
 }
 
-Logger& BlindsObject::logger_m(Logger::getInstance("BlindsObject"));
+Logger &BlindsObject::logger_m(Logger::getInstance("BlindsObject"));
 
-ObjectValue* BlindsObject::createObjectValue(const std::string& value)
+ObjectValue *BlindsObject::createObjectValue(const std::string &value)
 {
     return new BlindsObjectValue(value);
 }
 
-void BlindsObject::setValue(const std::string& value)
+void BlindsObject::setValue(const std::string &value)
 {
     BlindsObjectValue val(value);
     Object::setValue(&val);
@@ -1014,7 +1034,7 @@ void BlindsObject::setValue(const std::string& value)
 
 void BlindsObject::setStepValue(int direction, int stepcode)
 {
-    if (forceUpdate() || stepcode_m != stepcode  || direction_m != direction)
+    if (forceUpdate() || stepcode_m != stepcode || direction_m != direction)
     {
         stepcode_m = stepcode;
         direction_m = direction;
@@ -1022,7 +1042,7 @@ void BlindsObject::setStepValue(int direction, int stepcode)
     }
 }
 
-TimeObjectValue::TimeObjectValue(const std::string& value) : wday_m(-1), hour_m(-1), min_m(-1), sec_m(-1)
+TimeObjectValue::TimeObjectValue(const std::string &value) : wday_m(-1), hour_m(-1), min_m(-1), sec_m(-1)
 {
     if (value == "now")
         return;
@@ -1031,10 +1051,8 @@ TimeObjectValue::TimeObjectValue(const std::string& value) : wday_m(-1), hour_m(
     val >> hour_m >> s1 >> min_m >> s2 >> sec_m;
     wday_m = 0;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         s1 != ':' || s2 != ':' ||
-         hour_m < 0 || hour_m > 23  || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        s1 != ':' || s2 != ':' || hour_m < 0 || hour_m > 23 || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59)
     {
         std::stringstream msg;
         msg << "TimeObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1047,10 +1065,8 @@ std::string TimeObjectValue::toString()
     if (hour_m == -1)
         return "now";
     std::ostringstream out;
-    out << std::setfill('0') << std::setw(2) 
-    << hour_m << ":" << std::setfill('0') << std::setw(2) 
-    << min_m << ":" << std::setfill('0') << std::setw(2)
-    << sec_m;
+    out << std::setfill('0') << std::setw(2) << hour_m << ":" << std::setfill('0') << std::setw(2) << min_m << ":"
+        << std::setfill('0') << std::setw(2) << sec_m;
     return out.str();
 }
 
@@ -1061,32 +1077,36 @@ double TimeObjectValue::toNumber()
     return hour_m * 3600 + min_m * 60 + sec_m;
 }
 
-bool TimeObjectValue::equals(ObjectValue* value)
+bool TimeObjectValue::equals(ObjectValue *value)
 {
     int wday, hour, min, sec;
     assert(value);
-    TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
+    TimeObjectValue *val = dynamic_cast<TimeObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "TimeObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "TimeObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    // logger_m.debugStream() << "TimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    // logger_m.debugStream() << "TimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to
+    // value='" << val->value_m << "'" << endlog;
     val->getTimeValue(&wday, &hour, &min, &sec);
     return (sec_m == sec) && (min_m == min) && (hour_m == hour) && (wday_m == wday);
 }
 
-int TimeObjectValue::compare(ObjectValue* value)
+int TimeObjectValue::compare(ObjectValue *value)
 {
     int wday, hour, min, sec;
     assert(value);
-    TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
+    TimeObjectValue *val = dynamic_cast<TimeObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "TimeObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "TimeObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    // logger_m.debugStream() << "TimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    // logger_m.debugStream() << "TimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to
+    // value='" << val->value_m << "'" << endlog;
     val->getTimeValue(&wday, &hour, &min, &sec);
 
     if (wday_m > wday)
@@ -1111,13 +1131,14 @@ int TimeObjectValue::compare(ObjectValue* value)
     return 0;
 }
 
-bool TimeObjectValue::set(ObjectValue* value)
+bool TimeObjectValue::set(ObjectValue *value)
 {
     int wday, hour, min, sec;
     assert(value);
-    TimeObjectValue* val = dynamic_cast<TimeObjectValue*>(value);
+    TimeObjectValue *val = dynamic_cast<TimeObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "TimeObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "TimeObject: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         val->getTimeValue(&wday, &hour, &min, &sec);
@@ -1167,7 +1188,7 @@ void TimeObjectValue::getTimeValue(int *wday, int *hour, int *min, int *sec)
     if (hour_m == -1)
     {
         time_t t = time(0);
-        struct tm * timeinfo = localtime(&t);
+        struct tm *timeinfo = localtime(&t);
         *wday = timeinfo->tm_wday;
         if (*wday == 0)
             *wday = 7;
@@ -1184,26 +1205,28 @@ void TimeObjectValue::getTimeValue(int *wday, int *hour, int *min, int *sec)
     }
 }
 
-Logger& TimeObject::logger_m(Logger::getInstance("TimeObject"));
+Logger &TimeObject::logger_m(Logger::getInstance("TimeObject"));
 
 TimeObject::TimeObject() : TimeObjectValue(0, 0, 0, 0)
-{}
+{
+}
 
 TimeObject::~TimeObject()
-{}
+{
+}
 
-ObjectValue* TimeObject::createObjectValue(const std::string& value)
+ObjectValue *TimeObject::createObjectValue(const std::string &value)
 {
     return new TimeObjectValue(value);
 }
 
-void TimeObject::setValue(const std::string& value)
+void TimeObject::setValue(const std::string &value)
 {
     TimeObjectValue val(value);
     Object::setValue(&val);
 }
 
-void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void TimeObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -1228,7 +1251,7 @@ void TimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void TimeObject::setTime(time_t time)
 {
-    struct tm * timeinfo = localtime(&time);
+    struct tm *timeinfo = localtime(&time);
     int wday = timeinfo->tm_wday;
     if (wday == 0)
         wday = 7;
@@ -1237,7 +1260,9 @@ void TimeObject::setTime(time_t time)
 
 void TimeObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0, static_cast<uint8_t>(isWrite ? 0x80 : 0x40), static_cast<uint8_t>(((wday_m<<5) & 0xE0) | (hour_m & 0x1F)), static_cast<uint8_t>(min_m), static_cast<uint8_t>(sec_m) };
+    uint8_t buf[5] = {0, static_cast<uint8_t>(isWrite ? 0x80 : 0x40),
+                      static_cast<uint8_t>(((wday_m << 5) & 0xE0) | (hour_m & 0x1F)), static_cast<uint8_t>(min_m),
+                      static_cast<uint8_t>(sec_m)};
     Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
 }
 
@@ -1255,7 +1280,7 @@ void TimeObject::getTime(int *wday, int *hour, int *min, int *sec)
     *sec = sec_m;
 }
 
-DateObjectValue::DateObjectValue(const std::string& value) : day_m(-1), month_m(-1), year_m(-1)
+DateObjectValue::DateObjectValue(const std::string &value) : day_m(-1), month_m(-1), year_m(-1)
 {
     if (value == "now")
         return;
@@ -1263,10 +1288,8 @@ DateObjectValue::DateObjectValue(const std::string& value) : day_m(-1), month_m(
     char s1, s2;
     val >> year_m >> s1 >> month_m >> s2 >> day_m;
     year_m -= 1900;
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         s1 != '-' || s2 != '-' ||
-         year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        s1 != '-' || s2 != '-' || year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31)
     {
         std::stringstream msg;
         msg << "DateObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1279,7 +1302,7 @@ std::string DateObjectValue::toString()
     if (day_m == -1)
         return "now";
     std::ostringstream out;
-    out << year_m+1900 << "-" << month_m << "-" << day_m;
+    out << year_m + 1900 << "-" << month_m << "-" << day_m;
     return out.str();
 }
 
@@ -1290,32 +1313,36 @@ double DateObjectValue::toNumber()
     return year_m * 400 + month_m * 31 + day_m;
 }
 
-bool DateObjectValue::equals(ObjectValue* value)
+bool DateObjectValue::equals(ObjectValue *value)
 {
     int day, month, year;
     assert(value);
-    DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
+    DateObjectValue *val = dynamic_cast<DateObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream()  << "DateObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "DateObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    // logger_m.debugStream() << "DateObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    // logger_m.debugStream() << "DateObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to
+    // value='" << val->value_m << "'" << endlog;
     val->getDateValue(&day, &month, &year);
     return (day_m == day) && (month_m == month) && (year_m == year);
 }
 
-int DateObjectValue::compare(ObjectValue* value)
+int DateObjectValue::compare(ObjectValue *value)
 {
     int day, month, year;
     assert(value);
-    DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
+    DateObjectValue *val = dynamic_cast<DateObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "DateObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "DateObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    // logger_m.debugStream() << "DateObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    // logger_m.debugStream() << "DateObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to
+    // value='" << val->value_m << "'" << endlog;
     val->getDateValue(&day, &month, &year);
 
     if (year_m > year)
@@ -1335,17 +1362,18 @@ int DateObjectValue::compare(ObjectValue* value)
     return 0;
 }
 
-bool DateObjectValue::set(ObjectValue* value)
+bool DateObjectValue::set(ObjectValue *value)
 {
     int day, month, year;
     assert(value);
-    DateObjectValue* val = dynamic_cast<DateObjectValue*>(value);
+    DateObjectValue *val = dynamic_cast<DateObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "DateObjectValue: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "DateObjectValue: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         val->getDateValue(&day, &month, &year);
-        if ( day_m != day || month_m != month || year_m != year )
+        if (day_m != day || month_m != month || year_m != year)
         {
             day_m = day;
             month_m = month;
@@ -1372,7 +1400,7 @@ bool DateObjectValue::set(double value)
         month = value / 31;
         day = value - month * 31;
     }
-    if ( day_m != day || month_m != month || year_m != year )
+    if (day_m != day || month_m != month || year_m != year)
     {
         day_m = day;
         month_m = month;
@@ -1387,9 +1415,9 @@ void DateObjectValue::getDateValue(int *day, int *month, int *year)
     if (day_m == -1)
     {
         time_t t = time(0);
-        struct tm * timeinfo = localtime(&t);
+        struct tm *timeinfo = localtime(&t);
         *day = timeinfo->tm_mday;
-        *month = timeinfo->tm_mon+1;
+        *month = timeinfo->tm_mon + 1;
         *year = timeinfo->tm_year;
     }
     else
@@ -1400,26 +1428,28 @@ void DateObjectValue::getDateValue(int *day, int *month, int *year)
     }
 }
 
-Logger& DateObject::logger_m(Logger::getInstance("DateObject"));
+Logger &DateObject::logger_m(Logger::getInstance("DateObject"));
 
 DateObject::DateObject() : DateObjectValue(0, 0, 0)
-{}
+{
+}
 
 DateObject::~DateObject()
-{}
+{
+}
 
-ObjectValue* DateObject::createObjectValue(const std::string& value)
+ObjectValue *DateObject::createObjectValue(const std::string &value)
 {
     return new DateObjectValue(value);
 }
 
-void DateObject::setValue(const std::string& value)
+void DateObject::setValue(const std::string &value)
 {
     DateObjectValue val(value);
     Object::setValue(&val);
 }
 
-void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void DateObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 5)
     {
@@ -1444,15 +1474,15 @@ void DateObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void DateObject::setDate(time_t time)
 {
-    struct tm * timeinfo = localtime(&time);
-    setDate(timeinfo->tm_mday, timeinfo->tm_mon+1, timeinfo->tm_year);
+    struct tm *timeinfo = localtime(&time);
+    setDate(timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year);
 }
 
 void DateObject::doSend(bool isWrite)
 {
-	BufferBuilder builder(5, DateObject::logger_m);
-	builder << 0 << (isWrite ? 0x80 : 0x40) << day_m << month_m;
-	builder << ((year_m >= 100 && year_m < 190) ? year_m-100 : year_m);
+    BufferBuilder builder(5, DateObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << day_m << month_m;
+    builder << ((year_m >= 100 && year_m < 190) ? year_m - 100 : year_m);
 
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 5);
 }
@@ -1475,16 +1505,14 @@ void DateObject::getDate(int *day, int *month, int *year)
         *year = 1900;
 }
 
-void ValueObjectValue::init(const std::string& value)
+void ValueObjectValue::init(const std::string &value)
 {
     precision_m = 0;
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > getBound(true) ||
-         value_m < getBound(false))
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        value_m > getBound(true) || value_m < getBound(false))
     {
         std::stringstream msg;
         msg << "ValueObjectValue: Bad value: '" << value << "' for object type " << getType() << std::endl;
@@ -1497,8 +1525,7 @@ void ValueObjectValue::setPrecision(std::string precision)
     std::istringstream val(precision);
     val >> precision_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "ValueObjectValue: Bad precision: '" << precision << "'" << std::endl;
@@ -1531,29 +1558,33 @@ double ValueObjectValue::toNumber()
     return value_m;
 }
 
-bool ValueObjectValue::equals(ObjectValue* value)
+bool ValueObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
+    ValueObjectValue *val = dynamic_cast<ValueObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "ValueObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "ValueObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "ValueObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "ValueObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
     return value_m == val->value_m;
 }
 
-int ValueObjectValue::compare(ObjectValue* value)
+int ValueObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
+    ValueObjectValue *val = dynamic_cast<ValueObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "ValueObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "ValueObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "ValueObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "ValueObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -1562,12 +1593,13 @@ int ValueObjectValue::compare(ObjectValue* value)
     return -1;
 }
 
-bool ValueObjectValue::set(ObjectValue* value)
+bool ValueObjectValue::set(ObjectValue *value)
 {
     assert(value);
-    ValueObjectValue* val = dynamic_cast<ValueObjectValue*>(value);
+    ValueObjectValue *val = dynamic_cast<ValueObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "ValueObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "ValueObject: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         return set(val->value_m);
@@ -1602,12 +1634,14 @@ double ValueObjectValue::roundToKnxPrecision(double value)
 
 bool ValueObjectValue::set(double value)
 {
-    if (precision_m != 0) {
-        int div = static_cast<int>(value/precision_m + (value >= 0 ? 0.5 : -0.5));
-        value = div*precision_m;
-        logger_m.debugStream() << "ValueObject: rounded value "<< value << endlog;
+    if (precision_m != 0)
+    {
+        int div = static_cast<int>(value / precision_m + (value >= 0 ? 0.5 : -0.5));
+        value = div * precision_m;
+        logger_m.debugStream() << "ValueObject: rounded value " << value << endlog;
     }
-    else {
+    else
+    {
         value = roundToKnxPrecision(value);
     }
     if (value_m != value)
@@ -1618,13 +1652,15 @@ bool ValueObjectValue::set(double value)
     return false;
 }
 
-Logger& ValueObject::logger_m(Logger::getInstance("ValueObject"));
+Logger &ValueObject::logger_m(Logger::getInstance("ValueObject"));
 
 ValueObject::ValueObject()
-{}
+{
+}
 
 ValueObject::~ValueObject()
-{}
+{
+}
 /*
 ObjectValue* ValueObject::createObjectValue(const std::string& value)
 {
@@ -1637,7 +1673,7 @@ void ValueObject::setValue(const std::string& value)
     Object::setValue(&val);
 }
 */
-void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void ValueObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 4)
     {
@@ -1659,8 +1695,8 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void ValueObject::doSend(bool isWrite)
 {
-	BufferBuilder builder(4, ValueObject::logger_m);
-	builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0;
+    BufferBuilder builder(4, ValueObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0;
     int ex = 0;
     int m = static_cast<int>(rint(getFloatValue() * 100));
     if (m < 0)
@@ -1672,7 +1708,7 @@ void ValueObject::doSend(bool isWrite)
             ex++;
         }
         m = -m;
-		builder.setValue(2, ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7));
+        builder.setValue(2, ((m >> 8) & 0x07) | ((ex << 3) & 0x78) | (1 << 7));
     }
     else
     {
@@ -1694,13 +1730,12 @@ void ValueObjectImpl::setFloatValue(double value)
     Object::setValue(&val);
 }*/
 
-ValueObject32Value::ValueObject32Value(const std::string& value)
+ValueObject32Value::ValueObject32Value(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "ValueObject32Value: Bad value: '" << value << "'" << std::endl;
@@ -1716,20 +1751,20 @@ std::string ValueObject32Value::toString()
     return out.str();
 }
 
-Logger& ValueObject32::logger_m(Logger::getInstance("valueObject32"));
+Logger &ValueObject32::logger_m(Logger::getInstance("valueObject32"));
 
-ObjectValue* ValueObject32::createObjectValue(const std::string& value)
+ObjectValue *ValueObject32::createObjectValue(const std::string &value)
 {
     return new ValueObject32Value(value);
 }
 
-void ValueObject32::setValue(const std::string& value)
+void ValueObject32::setValue(const std::string &value)
 {
     ValueObject32Value val(value);
     Object::setValue(&val);
 }
 
-void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void ValueObject32::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 6)
     {
@@ -1738,9 +1773,9 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
     }
 
     convfloat tmp;
-    tmp.u32 = buf[2]<<24 | buf[3]<<16 | buf[4]<<8 | buf[5];
-//    logger_m.infoStream() << "New value int tmp " << tmp << " for ValueObject32 " << getID() << endlog;
-//    const float* nv = reinterpret_cast<const float*>(&tmp);
+    tmp.u32 = buf[2] << 24 | buf[3] << 16 | buf[4] << 8 | buf[5];
+    //    logger_m.infoStream() << "New value int tmp " << tmp << " for ValueObject32 " << getID() << endlog;
+    //    const float* nv = reinterpret_cast<const float*>(&tmp);
     double newValue = tmp.fl;
     if (set(newValue) || forceUpdate())
     {
@@ -1750,8 +1785,8 @@ void ValueObject32::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void ValueObject32::doSend(bool isWrite)
 {
-	BufferBuilder builder(6, ValueObject32::logger_m);
-	builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0 << 0 << 0;
+    BufferBuilder builder(6, ValueObject32::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0 << 0 << 0;
     convfloat tmp;
     tmp.fl = static_cast<float>(value_m);
     builder.setValue(5, (tmp.u32 & 0x000000FF));
@@ -1762,13 +1797,12 @@ void ValueObject32::doSend(bool isWrite)
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
-UIntObjectValue::UIntObjectValue(const std::string& value)
+UIntObjectValue::UIntObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "UIntObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1788,29 +1822,33 @@ double UIntObjectValue::toNumber()
     return value_m;
 }
 
-bool UIntObjectValue::equals(ObjectValue* value)
+bool UIntObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
+    UIntObjectValue *val = dynamic_cast<UIntObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "UIntObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "UIntObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "UIntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "UIntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
     return value_m == val->value_m;
 }
 
-int UIntObjectValue::compare(ObjectValue* value)
+int UIntObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
+    UIntObjectValue *val = dynamic_cast<UIntObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "UIntObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "UIntObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "UIntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "UIntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -1819,12 +1857,13 @@ int UIntObjectValue::compare(ObjectValue* value)
     return -1;
 }
 
-bool UIntObjectValue::set(ObjectValue* value)
+bool UIntObjectValue::set(ObjectValue *value)
 {
     assert(value);
-    UIntObjectValue* val = dynamic_cast<UIntObjectValue*>(value);
+    UIntObjectValue *val = dynamic_cast<UIntObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "UIntObjectValue: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "UIntObjectValue: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         if (value_m != val->value_m)
@@ -1836,13 +1875,15 @@ bool UIntObjectValue::set(ObjectValue* value)
     return false;
 }
 
-Logger& UIntObject::logger_m(Logger::getInstance("UIntObject"));
+Logger &UIntObject::logger_m(Logger::getInstance("UIntObject"));
 
 UIntObject::UIntObject()
-{}
+{
+}
 
 UIntObject::~UIntObject()
-{}
+{
+}
 
 void UIntObject::setIntValue(uint32_t value)
 {
@@ -1857,15 +1898,17 @@ uint32_t UIntObject::getIntValue()
     return getInt();
 }
 
-Logger& U8ImplObject::logger_m(Logger::getInstance("U8ImplObject"));
+Logger &U8ImplObject::logger_m(Logger::getInstance("U8ImplObject"));
 
 U8ImplObject::U8ImplObject()
-{}
+{
+}
 
 U8ImplObject::~U8ImplObject()
-{}
+{
+}
 
-void U8ImplObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void U8ImplObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     uint32_t newValue;
     if (len == 2)
@@ -1878,20 +1921,18 @@ void U8ImplObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U8ImplObject::doSend(bool isWrite)
 {
-	BufferBuilder builder(3, U8ImplObject::logger_m);
-	builder << 0 << (isWrite ? 0x80 : 0x40) << (getInt() & 0xff);
+    BufferBuilder builder(3, U8ImplObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << (getInt() & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 3);
 }
 
-U8ObjectValue::U8ObjectValue(const std::string& value)
+U8ObjectValue::U8ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > 255 ||
-         value_m < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        value_m > 255 || value_m < 0)
     {
         std::stringstream msg;
         msg << "U8ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1906,35 +1947,35 @@ std::string U8ObjectValue::toString()
     return out.str();
 }
 
-Logger& U8Object::logger_m(Logger::getInstance("U8Object"));
+Logger &U8Object::logger_m(Logger::getInstance("U8Object"));
 
 U8Object::U8Object()
-{}
+{
+}
 
 U8Object::~U8Object()
-{}
+{
+}
 
-ObjectValue* U8Object::createObjectValue(const std::string& value)
+ObjectValue *U8Object::createObjectValue(const std::string &value)
 {
     return new U8ObjectValue(value);
 }
 
-void U8Object::setValue(const std::string& value)
+void U8Object::setValue(const std::string &value)
 {
     U8ObjectValue val(value);
     Object::setValue(&val);
 }
 
-ScalingObjectValue::ScalingObjectValue(const std::string& value)
+ScalingObjectValue::ScalingObjectValue(const std::string &value)
 {
     float fvalue;
     std::istringstream val(value);
     val >> fvalue;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         fvalue > 100 ||
-         fvalue < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        fvalue > 100 || fvalue < 0)
     {
         std::stringstream msg;
         msg << "ScalingObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1951,35 +1992,35 @@ std::string ScalingObjectValue::toString()
     return out.str();
 }
 
-Logger& ScalingObject::logger_m(Logger::getInstance("ScalingObject"));
+Logger &ScalingObject::logger_m(Logger::getInstance("ScalingObject"));
 
-ScalingObject::ScalingObject(): ScalingObjectValue(0)
-{}
+ScalingObject::ScalingObject() : ScalingObjectValue(0)
+{
+}
 
 ScalingObject::~ScalingObject()
-{}
+{
+}
 
-ObjectValue* ScalingObject::createObjectValue(const std::string& value)
+ObjectValue *ScalingObject::createObjectValue(const std::string &value)
 {
     return new ScalingObjectValue(value);
 }
 
-void ScalingObject::setValue(const std::string& value)
+void ScalingObject::setValue(const std::string &value)
 {
     ScalingObjectValue val(value);
     Object::setValue(&val);
 }
 
-AngleObjectValue::AngleObjectValue(const std::string& value)
+AngleObjectValue::AngleObjectValue(const std::string &value)
 {
     float fvalue;
     std::istringstream val(value);
     val >> fvalue;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         fvalue > 360 ||
-         fvalue < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        fvalue > 360 || fvalue < 0)
     {
         std::stringstream msg;
         msg << "AngleObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -1996,26 +2037,28 @@ std::string AngleObjectValue::toString()
     return out.str();
 }
 
-Logger& AngleObject::logger_m(Logger::getInstance("AngleObject"));
+Logger &AngleObject::logger_m(Logger::getInstance("AngleObject"));
 
 AngleObject::AngleObject() : AngleObjectValue(0)
-{}
+{
+}
 
 AngleObject::~AngleObject()
-{}
+{
+}
 
-ObjectValue* AngleObject::createObjectValue(const std::string& value)
+ObjectValue *AngleObject::createObjectValue(const std::string &value)
 {
     return new AngleObjectValue(value);
 }
 
-void AngleObject::setValue(const std::string& value)
+void AngleObject::setValue(const std::string &value)
 {
     AngleObjectValue val(value);
     Object::setValue(&val);
 }
 
-HeatingModeObjectValue::HeatingModeObjectValue(const std::string& value)
+HeatingModeObjectValue::HeatingModeObjectValue(const std::string &value)
 {
     if (value == "comfort")
         value_m = 1;
@@ -2053,31 +2096,30 @@ std::string HeatingModeObjectValue::toString()
     return "frost";
 }
 
-Logger& HeatingModeObject::logger_m(Logger::getInstance("HeatingModeObject"));
+Logger &HeatingModeObject::logger_m(Logger::getInstance("HeatingModeObject"));
 
-ObjectValue* HeatingModeObject::createObjectValue(const std::string& value)
+ObjectValue *HeatingModeObject::createObjectValue(const std::string &value)
 {
     return new HeatingModeObjectValue(value);
 }
 
-void HeatingModeObject::setValue(const std::string& value)
+void HeatingModeObject::setValue(const std::string &value)
 {
     HeatingModeObjectValue val(value);
     Object::setValue(&val);
 }
 
-Latin1CharObjectValue::Latin1CharObjectValue(const std::string& value)
+Latin1CharObjectValue::Latin1CharObjectValue(const std::string &value)
 {
-	// Transcode passed value to latin1.
-	std::string latin1Value = StringObjectValue::transcode(value, StringObjectValue::getUTF8Encoding(), StringObjectValue::getLatin1Encoding());
+    // Transcode passed value to latin1.
+    std::string latin1Value = StringObjectValue::transcode(value, StringObjectValue::getUTF8Encoding(),
+                                                           StringObjectValue::getLatin1Encoding());
     unsigned char chvalue;
     std::istringstream val(latin1Value);
     val >> chvalue;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         chvalue > 255 ||
-         chvalue < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        chvalue > 255 || chvalue < 0)
     {
         std::stringstream msg;
         msg << "Latin1CharObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2090,38 +2132,39 @@ std::string Latin1CharObjectValue::toString()
 {
     std::ostringstream out;
     out << (unsigned char)value_m;
-    return StringObjectValue::transcode(out.str(), StringObjectValue::getLatin1Encoding(), StringObjectValue::getUTF8Encoding());
+    return StringObjectValue::transcode(out.str(), StringObjectValue::getLatin1Encoding(),
+                                        StringObjectValue::getUTF8Encoding());
 }
 
-Logger& Latin1CharObject::logger_m(Logger::getInstance("Latin1CharObject"));
+Logger &Latin1CharObject::logger_m(Logger::getInstance("Latin1CharObject"));
 
 Latin1CharObject::Latin1CharObject() : Latin1CharObjectValue(0)
-{}
+{
+}
 
 Latin1CharObject::~Latin1CharObject()
-{}
+{
+}
 
-ObjectValue* Latin1CharObject::createObjectValue(const std::string& value)
+ObjectValue *Latin1CharObject::createObjectValue(const std::string &value)
 {
     return new Latin1CharObjectValue(value);
 }
 
-void Latin1CharObject::setValue(const std::string& value)
+void Latin1CharObject::setValue(const std::string &value)
 {
     Latin1CharObjectValue val(value);
     Object::setValue(&val);
 }
 
-AsciiCharObjectValue::AsciiCharObjectValue(const std::string& value)
+AsciiCharObjectValue::AsciiCharObjectValue(const std::string &value)
 {
     unsigned char chvalue;
     std::istringstream val(value);
     val >> chvalue;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         chvalue > 127 ||
-         chvalue < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        chvalue > 127 || chvalue < 0)
     {
         std::stringstream msg;
         msg << "AsciiCharObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2137,34 +2180,34 @@ std::string AsciiCharObjectValue::toString()
     return out.str();
 }
 
-Logger& AsciiCharObject::logger_m(Logger::getInstance("AsciiCharObject"));
+Logger &AsciiCharObject::logger_m(Logger::getInstance("AsciiCharObject"));
 
 AsciiCharObject::AsciiCharObject() : AsciiCharObjectValue(0)
-{}
+{
+}
 
 AsciiCharObject::~AsciiCharObject()
-{}
+{
+}
 
-ObjectValue* AsciiCharObject::createObjectValue(const std::string& value)
+ObjectValue *AsciiCharObject::createObjectValue(const std::string &value)
 {
     return new AsciiCharObjectValue(value);
 }
 
-void AsciiCharObject::setValue(const std::string& value)
+void AsciiCharObject::setValue(const std::string &value)
 {
     AsciiCharObjectValue val(value);
     Object::setValue(&val);
 }
 
-U16ObjectValue::U16ObjectValue(const std::string& value)
+U16ObjectValue::U16ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > 65535 ||
-         value_m < 0)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        value_m > 65535 || value_m < 0)
     {
         std::stringstream msg;
         msg << "U16ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2179,29 +2222,31 @@ std::string U16ObjectValue::toString()
     return out.str();
 }
 
-Logger& U16Object::logger_m(Logger::getInstance("U16Object"));
+Logger &U16Object::logger_m(Logger::getInstance("U16Object"));
 
 U16Object::U16Object()
-{}
+{
+}
 
 U16Object::~U16Object()
-{}
+{
+}
 
-ObjectValue* U16Object::createObjectValue(const std::string& value)
+ObjectValue *U16Object::createObjectValue(const std::string &value)
 {
     return new U16ObjectValue(value);
 }
 
-void U16Object::setValue(const std::string& value)
+void U16Object::setValue(const std::string &value)
 {
     U16ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void U16Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
-    newValue = (buf[2]<<8) | buf[3];
+    newValue = (buf[2] << 8) | buf[3];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;
@@ -2211,18 +2256,17 @@ void U16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U16Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(4, U16Object::logger_m);
-	builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    BufferBuilder builder(4, U16Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00) >> 8) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 4);
 }
 
-U32ObjectValue::U32ObjectValue(const std::string& value)
+U32ObjectValue::U32ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "U32ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2237,29 +2281,31 @@ std::string U32ObjectValue::toString()
     return out.str();
 }
 
-Logger& U32Object::logger_m(Logger::getInstance("U32Object"));
+Logger &U32Object::logger_m(Logger::getInstance("U32Object"));
 
 U32Object::U32Object()
-{}
+{
+}
 
 U32Object::~U32Object()
-{}
+{
+}
 
-ObjectValue* U32Object::createObjectValue(const std::string& value)
+ObjectValue *U32Object::createObjectValue(const std::string &value)
 {
     return new U32ObjectValue(value);
 }
 
-void U32Object::setValue(const std::string& value)
+void U32Object::setValue(const std::string &value)
 {
     U32ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void U32Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
-    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    newValue = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;
@@ -2269,19 +2315,19 @@ void U32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void U32Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(6, U32Object::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000)>>24) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    BufferBuilder builder(6, U32Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000) >> 24) << ((value_m & 0xff0000) >> 16)
+            << ((value_m & 0xff00) >> 8) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
-RGBObjectValue::RGBObjectValue(const std::string& value)
+RGBObjectValue::RGBObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val.setf(std::ios::hex, std::ios::basefield);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "RGBObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2298,29 +2344,31 @@ std::string RGBObjectValue::toString()
     return out.str();
 }
 
-Logger& RGBObject::logger_m(Logger::getInstance("RGBObject"));
+Logger &RGBObject::logger_m(Logger::getInstance("RGBObject"));
 
 RGBObject::RGBObject()
-{}
+{
+}
 
 RGBObject::~RGBObject()
-{}
+{
+}
 
-ObjectValue* RGBObject::createObjectValue(const std::string& value)
+ObjectValue *RGBObject::createObjectValue(const std::string &value)
 {
     return new RGBObjectValue(value);
 }
 
-void RGBObject::setValue(const std::string& value)
+void RGBObject::setValue(const std::string &value)
 {
     RGBObjectValue val(value);
     Object::setValue(&val);
 }
 
-void RGBObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void RGBObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
-    newValue = (buf[2]<<16) | (buf[3]<<8) | buf[4];
+    newValue = (buf[2] << 16) | (buf[3] << 8) | buf[4];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;
@@ -2330,20 +2378,20 @@ void RGBObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void RGBObject::doSend(bool isWrite)
 {
-	BufferBuilder builder(5, RGBObject::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    BufferBuilder builder(5, RGBObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff0000) >> 16) << ((value_m & 0xff00) >> 8)
+            << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 5);
 }
 
 #ifdef STL_STREAM_SUPPORT_INT64
-RGBWObjectValue::RGBWObjectValue(const std::string& value)
+RGBWObjectValue::RGBWObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val.setf(std::ios::hex, std::ios::basefield);
     val >> RGBWObjectValue::value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "RGBWObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2360,29 +2408,31 @@ std::string RGBWObjectValue::toString()
     return out.str();
 }
 
-Logger& RGBWObject::logger_m(Logger::getInstance("RGBWObject"));
+Logger &RGBWObject::logger_m(Logger::getInstance("RGBWObject"));
 
 RGBWObject::RGBWObject()
-{}
+{
+}
 
 RGBWObject::~RGBWObject()
-{}
+{
+}
 
-ObjectValue* RGBWObject::createObjectValue(const std::string& value)
+ObjectValue *RGBWObject::createObjectValue(const std::string &value)
 {
     return new RGBWObjectValue(value);
 }
 
-void RGBWObject::setValue(const std::string& value)
+void RGBWObject::setValue(const std::string &value)
 {
     RGBWObjectValue val(value);
     Object::setValue(&val);
 }
 
-void RGBWObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void RGBWObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     unsigned int newValue;
-    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    newValue = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
     if (forceUpdate() || newValue != RGBWObjectValue::value_m)
     {
         RGBWObjectValue::value_m = newValue;
@@ -2392,24 +2442,20 @@ void RGBWObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void RGBWObject::doSend(bool isWrite)
 {
-	BufferBuilder builder(8, RGBWObject::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40)
-    << ((RGBWObjectValue::value_m & 0xff000000)>>24)
-    << ((RGBWObjectValue::value_m & 0xff0000)>>16)
-    << ((RGBWObjectValue::value_m & 0xff00)>>8)
-    << (RGBWObjectValue::value_m & 0xff)
-    << 0x00 << 0x0f;
+    BufferBuilder builder(8, RGBWObject::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((RGBWObjectValue::value_m & 0xff000000) >> 24)
+            << ((RGBWObjectValue::value_m & 0xff0000) >> 16) << ((RGBWObjectValue::value_m & 0xff00) >> 8)
+            << (RGBWObjectValue::value_m & 0xff) << 0x00 << 0x0f;
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 8);
 }
 #endif
 
-IntObjectValue::IntObjectValue(const std::string& value)
+IntObjectValue::IntObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "IntObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2429,29 +2475,33 @@ double IntObjectValue::toNumber()
     return value_m;
 }
 
-bool IntObjectValue::equals(ObjectValue* value)
+bool IntObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    IntObjectValue *val = dynamic_cast<IntObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "IntObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "IntObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "IntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "IntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
     return value_m == val->value_m;
 }
 
-int IntObjectValue::compare(ObjectValue* value)
+int IntObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    IntObjectValue *val = dynamic_cast<IntObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "IntObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "IntObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "IntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "IntObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -2460,12 +2510,13 @@ int IntObjectValue::compare(ObjectValue* value)
     return -1;
 }
 
-bool IntObjectValue::set(ObjectValue* value)
+bool IntObjectValue::set(ObjectValue *value)
 {
     assert(value);
-    IntObjectValue* val = dynamic_cast<IntObjectValue*>(value);
+    IntObjectValue *val = dynamic_cast<IntObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "IntObjectValue: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "IntObjectValue: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         if (value_m != val->value_m)
@@ -2477,13 +2528,15 @@ bool IntObjectValue::set(ObjectValue* value)
     return false;
 }
 
-Logger& IntObject::logger_m(Logger::getInstance("IntObject"));
+Logger &IntObject::logger_m(Logger::getInstance("IntObject"));
 
 IntObject::IntObject()
-{}
+{
+}
 
 IntObject::~IntObject()
-{}
+{
+}
 
 void IntObject::setIntValue(int32_t value)
 {
@@ -2498,15 +2551,13 @@ int32_t IntObject::getIntValue()
     return getInt();
 }
 
-S8ObjectValue::S8ObjectValue(const std::string& value)
+S8ObjectValue::S8ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > 127 ||
-         value_m < -128)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        value_m > 127 || value_m < -128)
     {
         std::stringstream msg;
         msg << "S8ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2521,26 +2572,28 @@ std::string S8ObjectValue::toString()
     return out.str();
 }
 
-Logger& S8Object::logger_m(Logger::getInstance("S8Object"));
+Logger &S8Object::logger_m(Logger::getInstance("S8Object"));
 
 S8Object::S8Object()
-{}
+{
+}
 
 S8Object::~S8Object()
-{}
+{
+}
 
-ObjectValue* S8Object::createObjectValue(const std::string& value)
+ObjectValue *S8Object::createObjectValue(const std::string &value)
 {
     return new S8ObjectValue(value);
 }
 
-void S8Object::setValue(const std::string& value)
+void S8Object::setValue(const std::string &value)
 {
     S8ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void S8Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     int32_t newValue;
     if (len == 2)
@@ -2558,20 +2611,18 @@ void S8Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S8Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(3, S8Object::logger_m);
+    BufferBuilder builder(3, S8Object::logger_m);
     builder << 0 << (isWrite ? 0x80 : 0x40) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 3);
 }
 
-S16ObjectValue::S16ObjectValue(const std::string& value)
+S16ObjectValue::S16ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         value_m > 32767 ||
-         value_m < -32768)
+    if (val.fail() || val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+        value_m > 32767 || value_m < -32768)
     {
         std::stringstream msg;
         msg << "S16ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2586,29 +2637,31 @@ std::string S16ObjectValue::toString()
     return out.str();
 }
 
-Logger& S16Object::logger_m(Logger::getInstance("S16Object"));
+Logger &S16Object::logger_m(Logger::getInstance("S16Object"));
 
 S16Object::S16Object()
-{}
+{
+}
 
 S16Object::~S16Object()
-{}
+{
+}
 
-ObjectValue* S16Object::createObjectValue(const std::string& value)
+ObjectValue *S16Object::createObjectValue(const std::string &value)
 {
     return new S16ObjectValue(value);
 }
 
-void S16Object::setValue(const std::string& value)
+void S16Object::setValue(const std::string &value)
 {
     S16ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void S16Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     int32_t newValue;
-    newValue = (buf[2]<<8) | buf[3];
+    newValue = (buf[2] << 8) | buf[3];
     if (newValue > 32767)
         newValue -= 65536;
     if (forceUpdate() || newValue != value_m)
@@ -2620,18 +2673,17 @@ void S16Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S16Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(4, S16Object::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    BufferBuilder builder(4, S16Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00) >> 8) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 4);
 }
 
-S32ObjectValue::S32ObjectValue(const std::string& value)
+S32ObjectValue::S32ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "S32ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2646,29 +2698,31 @@ std::string S32ObjectValue::toString()
     return out.str();
 }
 
-Logger& S32Object::logger_m(Logger::getInstance("S32Object"));
+Logger &S32Object::logger_m(Logger::getInstance("S32Object"));
 
 S32Object::S32Object()
-{}
+{
+}
 
 S32Object::~S32Object()
-{}
+{
+}
 
-ObjectValue* S32Object::createObjectValue(const std::string& value)
+ObjectValue *S32Object::createObjectValue(const std::string &value)
 {
     return new S32ObjectValue(value);
 }
 
-void S32Object::setValue(const std::string& value)
+void S32Object::setValue(const std::string &value)
 {
     S32ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void S32Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     int32_t newValue;
-    newValue = (buf[2]<<24) | (buf[3]<<16) | (buf[4]<<8) | buf[5];
+    newValue = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;
@@ -2678,19 +2732,19 @@ void S32Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S32Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(6, S32Object::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000)>>24) << ((value_m & 0xff0000)>>16) << ((value_m & 0xff00)>>8) << (value_m & 0xff);
+    BufferBuilder builder(6, S32Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff000000) >> 24) << ((value_m & 0xff0000) >> 16)
+            << ((value_m & 0xff00) >> 8) << (value_m & 0xff);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 6);
 }
 
 #ifdef STL_STREAM_SUPPORT_INT64
-S64ObjectValue::S64ObjectValue(const std::string& value)
+S64ObjectValue::S64ObjectValue(const std::string &value)
 {
     std::istringstream val(value);
     val >> value_m;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         std::stringstream msg;
         msg << "S64ObjectValue: Bad value: '" << value << "'" << std::endl;
@@ -2710,29 +2764,33 @@ double S64ObjectValue::toNumber()
     return value_m;
 }
 
-bool S64ObjectValue::equals(ObjectValue* value)
+bool S64ObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    S64ObjectValue *val = dynamic_cast<S64ObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "S64ObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "S64ObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "S64ObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "S64ObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
     return value_m == val->value_m;
 }
 
-int S64ObjectValue::compare(ObjectValue* value)
+int S64ObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    S64ObjectValue *val = dynamic_cast<S64ObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "S64ObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "S64ObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "S64ObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "S64ObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -2741,12 +2799,13 @@ int S64ObjectValue::compare(ObjectValue* value)
     return -1;
 }
 
-bool S64ObjectValue::set(ObjectValue* value)
+bool S64ObjectValue::set(ObjectValue *value)
 {
     assert(value);
-    S64ObjectValue* val = dynamic_cast<S64ObjectValue*>(value);
+    S64ObjectValue *val = dynamic_cast<S64ObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "S64ObjectValue: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "S64ObjectValue: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         if (value_m != val->value_m)
@@ -2758,15 +2817,17 @@ bool S64ObjectValue::set(ObjectValue* value)
     return false;
 }
 
-Logger& S64Object::logger_m(Logger::getInstance("S64Object"));
+Logger &S64Object::logger_m(Logger::getInstance("S64Object"));
 
 S64Object::S64Object()
-{}
+{
+}
 
 S64Object::~S64Object()
-{}
+{
+}
 
-ObjectValue* S64Object::createObjectValue(const std::string& value)
+ObjectValue *S64Object::createObjectValue(const std::string &value)
 {
     return new S64ObjectValue(value);
 }
@@ -2784,17 +2845,19 @@ int64_t S64Object::getIntValue()
     return getInt();
 }
 
-void S64Object::setValue(const std::string& value)
+void S64Object::setValue(const std::string &value)
 {
     S64ObjectValue val(value);
     if (set(&val) || forceUpdate())
         onInternalUpdate();
 }
 
-void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void S64Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     int64_t newValue;
-    newValue = (static_cast<int64_t>(buf[2])<<56) | (static_cast<int64_t>(buf[3])<<48) | (static_cast<int64_t>(buf[4])<<40) | (static_cast<int64_t>(buf[5])<<32) | (buf[6]<<24) | (buf[7]<<16) | (buf[8]<<8) | buf[9];
+    newValue = (static_cast<int64_t>(buf[2]) << 56) | (static_cast<int64_t>(buf[3]) << 48) |
+               (static_cast<int64_t>(buf[4]) << 40) | (static_cast<int64_t>(buf[5]) << 32) | (buf[6] << 24) |
+               (buf[7] << 16) | (buf[8] << 8) | buf[9];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;
@@ -2804,17 +2867,19 @@ void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void S64Object::doSend(bool isWrite)
 {
-	BufferBuilder builder(10, S64Object::logger_m);
-    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00000000000000LL)>>56) << ((value_m & 0xff000000000000LL)>>48) << ((value_m & 0xff0000000000LL)>>40) << ((value_m & 0xff00000000LL)>>32)
-                                                    << ((value_m & 0xff000000LL)>>24) << ((value_m & 0xff0000LL)>>16) << ((value_m & 0xff00LL)>>8) << (value_m & 0xffLL);
+    BufferBuilder builder(10, S64Object::logger_m);
+    builder << 0 << (isWrite ? 0x80 : 0x40) << ((value_m & 0xff00000000000000LL) >> 56)
+            << ((value_m & 0xff000000000000LL) >> 48) << ((value_m & 0xff0000000000LL) >> 40)
+            << ((value_m & 0xff00000000LL) >> 32) << ((value_m & 0xff000000LL) >> 24) << ((value_m & 0xff0000LL) >> 16)
+            << ((value_m & 0xff00LL) >> 8) << (value_m & 0xffLL);
     Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 10);
 }
 #endif
 
-StringObjectValue::StringObjectValue(const std::string& value)
+StringObjectValue::StringObjectValue(const std::string &value)
 {
     value_m = value;
-//    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
+    //    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
 }
 
 std::string StringObjectValue::toString()
@@ -2828,37 +2893,40 @@ double StringObjectValue::toNumber()
     double value;
     val >> value;
 
-    if ( val.fail() ||
-         val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
+    if (val.fail() || val.peek() != std::char_traits<char>::eof()) // workaround for wrong val.eof() flag in uClibc++
     {
         value = 0;
     }
     return value;
 }
 
-bool StringObjectValue::equals(ObjectValue* value)
+bool StringObjectValue::equals(ObjectValue *value)
 {
     assert(value);
-    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    StringObjectValue *val = dynamic_cast<StringObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "StringObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StringObjectValue: ERROR, equals() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return false;
     }
-    logger_m.infoStream() << "StringObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "StringObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
     return value_m == val->value_m;
 }
 
-int StringObjectValue::compare(ObjectValue* value)
+int StringObjectValue::compare(ObjectValue *value)
 {
     assert(value);
-    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    StringObjectValue *val = dynamic_cast<StringObjectValue *>(value);
     if (val == 0)
     {
-        logger_m.errorStream() << "StringObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StringObjectValue: ERROR, compare() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
         return -1;
     }
-    logger_m.infoStream() << "StringObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    logger_m.infoStream() << "StringObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'"
+                          << endlog;
 
     if (value_m == val->value_m)
         return 0;
@@ -2867,12 +2935,13 @@ int StringObjectValue::compare(ObjectValue* value)
     return 1;
 }
 
-bool StringObjectValue::set(ObjectValue* value)
+bool StringObjectValue::set(ObjectValue *value)
 {
     assert(value);
-    StringObjectValue* val = dynamic_cast<StringObjectValue*>(value);
+    StringObjectValue *val = dynamic_cast<StringObjectValue *>(value);
     if (val == 0)
-        logger_m.errorStream() << "StringObject: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        logger_m.errorStream() << "StringObject: ERROR, setValue() received invalid class object (typeid="
+                               << typeid(*value).name() << ")" << endlog;
     else
     {
         if (value_m != val->value_m)
@@ -2898,63 +2967,71 @@ bool StringObjectValue::set(double value)
 
 const std::string &StringObjectValue::getLatin1Encoding()
 {
-	static const std::string encoding("ISO-8859-1"); // As iconv expects it (see https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
-	return encoding;
+    static const std::string encoding(
+        "ISO-8859-1"); // As iconv expects it (see
+                       // https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
+    return encoding;
 }
 
 const std::string &StringObjectValue::getUTF8Encoding()
 {
-	static const std::string encoding("UTF-8"); // As iconv expects it (see https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
-	return encoding;
+    static const std::string encoding(
+        "UTF-8"); // As iconv expects it (see
+                  // https://www.gnu.org/savannah-checkouts/gnu/libiconv/documentation/libiconv-1.13/iconv_open.3.html).
+    return encoding;
 }
 
-std::string StringObjectValue::transcode(const std::string &source, const std::string &sourceEncoding, const std::string &targetEncoding)
+std::string StringObjectValue::transcode(const std::string &source, const std::string &sourceEncoding,
+                                         const std::string &targetEncoding)
 {
-	if (source.empty()) return source; // iconv seems to not support empty strings.
+    if (source.empty())
+        return source; // iconv seems to not support empty strings.
 
-	// Ask iconv to use replacement chars that look like the original ones for characters
-	// that are unavailable in target encoding.
-	iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
-	char cSource[source.size()];
-	memcpy(cSource, source.c_str(), source.size() + 1);
-	ICONV_CONST char *sourceStart = &cSource[0];
-	size_t sourceLength = source.size();
-	const size_t targetLength = source.size() * 5; // Should be pretty enough even in worst cases.
-	char targetChars[targetLength];
-	char *targetCharPointer = &targetChars[0];
-	size_t targetSizeLeft = targetLength;
-	size_t res = iconv(conversionDescriptor, &sourceStart, &sourceLength, &targetCharPointer, &targetSizeLeft);
-	if(res == static_cast<size_t>(-1))
-	{
-		logger_m.errorStream() << "Transcoding of " << source << " from " << sourceEncoding << " to " << targetEncoding << " failed." << endlog;
-		return source;
-	}
+    // Ask iconv to use replacement chars that look like the original ones for characters
+    // that are unavailable in target encoding.
+    iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
+    char cSource[source.size()];
+    memcpy(cSource, source.c_str(), source.size() + 1);
+    ICONV_CONST char *sourceStart = &cSource[0];
+    size_t sourceLength = source.size();
+    const size_t targetLength = source.size() * 5; // Should be pretty enough even in worst cases.
+    char targetChars[targetLength];
+    char *targetCharPointer = &targetChars[0];
+    size_t targetSizeLeft = targetLength;
+    size_t res = iconv(conversionDescriptor, &sourceStart, &sourceLength, &targetCharPointer, &targetSizeLeft);
+    if (res == static_cast<size_t>(-1))
+    {
+        logger_m.errorStream() << "Transcoding of " << source << " from " << sourceEncoding << " to " << targetEncoding
+                               << " failed." << endlog;
+        return source;
+    }
 
-	std::string transcodedString(targetChars, targetLength - targetSizeLeft);
-	return transcodedString;
+    std::string transcodedString(targetChars, targetLength - targetSizeLeft);
+    return transcodedString;
 }
 
-
-Logger& StringObject::logger_m(Logger::getInstance("StringObject"));
+Logger &StringObject::logger_m(Logger::getInstance("StringObject"));
 
 StringObject::StringObject()
-{}
+{
+}
 
 StringObject::~StringObject()
-{}
+{
+}
 
-ObjectValue* StringObject::createObjectValue(const std::string& value)
+ObjectValue *StringObject::createObjectValue(const std::string &value)
 {
     return new StringObjectValue(value);
 }
 
-void StringObject::setValue(const std::string& value)
+void StringObject::setValue(const std::string &value)
 {
     StringObjectValue val(value);
     Object::setValue(&val);
 }
 
-void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void StringObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 2)
     {
@@ -2962,7 +3039,7 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     std::string value;
-    for(int j=2; j<len && buf[j]!=0; j++)
+    for (int j = 2; j < len && buf[j] != 0; j++)
         value.push_back(buf[j]);
     StringObjectValue val(value);
 
@@ -2973,25 +3050,25 @@ void StringObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 void StringObject::doSend(bool isWrite)
 {
     logger_m.debugStream() << "StringObject: Value: " << value_m << endlog;
-    uint bufsz = value_m.size()+3;
+    uint bufsz = value_m.size() + 3;
     uint8_t *buf = new uint8_t[bufsz];
-    memset(buf,0,bufsz);
+    memset(buf, 0, bufsz);
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-    for(uint j=2;j<bufsz;j++)
-        buf[j] = static_cast<uint8_t>(value_m[j-2]);
+    for (uint j = 2; j < bufsz; j++)
+        buf[j] = static_cast<uint8_t>(value_m[j - 2]);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, bufsz);
     delete buf;
 }
 
-void StringObject::setStringValue(const std::string& value)
+void StringObject::setStringValue(const std::string &value)
 {
     StringObjectValue val(value);
     Object::setValue(&val);
 }
 
-String14ObjectValue::String14ObjectValue(const std::string& value): StringObjectValue(value)
+String14ObjectValue::String14ObjectValue(const std::string &value) : StringObjectValue(value)
 {
     if (transcode(value, getUTF8Encoding(), getLatin1Encoding()).length() > 14)
     {
@@ -3001,16 +3078,16 @@ String14ObjectValue::String14ObjectValue(const std::string& value): StringObject
     }
 }
 
-String14AsciiObjectValue::String14AsciiObjectValue(const std::string& value): StringObjectValue(value)
+String14AsciiObjectValue::String14AsciiObjectValue(const std::string &value) : StringObjectValue(value)
 {
-    if ( value.length() > 14)
+    if (value.length() > 14)
     {
         std::stringstream msg;
         msg << "String14AsciiObjectValue: Bad value (too long): '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
     std::string::const_iterator it = value.begin();
-    while ( it != value.end())
+    while (it != value.end())
     {
         if (*it < 0 || *it > 127)
         {
@@ -3022,26 +3099,28 @@ String14AsciiObjectValue::String14AsciiObjectValue(const std::string& value): St
     }
 }
 
-Logger& String14Object::logger_m(Logger::getInstance("String14Object"));
+Logger &String14Object::logger_m(Logger::getInstance("String14Object"));
 
 String14Object::String14Object()
-{}
+{
+}
 
 String14Object::~String14Object()
-{}
+{
+}
 
-ObjectValue* String14Object::createObjectValue(const std::string& value)
+ObjectValue *String14Object::createObjectValue(const std::string &value)
 {
     return new String14ObjectValue(value);
 }
 
-void String14Object::setValue(const std::string& value)
+void String14Object::setValue(const std::string &value)
 {
     String14ObjectValue val(value);
     Object::setValue(&val);
 }
 
-void String14Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void String14Object::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 2)
     {
@@ -3049,10 +3128,10 @@ void String14Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     std::string value;
-    for(int j=2; j<len && buf[j]!=0; j++)
+    for (int j = 2; j < len && buf[j] != 0; j++)
         value.push_back(buf[j]);
 
-	value = transcode(value, getLatin1Encoding(), getUTF8Encoding());
+    value = transcode(value, getLatin1Encoding(), getUTF8Encoding());
     String14ObjectValue val(value);
 
     if (set(&val) || forceUpdate())
@@ -3063,42 +3142,44 @@ void String14Object::doSend(bool isWrite)
 {
     logger_m.debugStream() << "String14Object: Value: " << value_m << endlog;
     uint8_t buf[16];
-    memset(buf,0,sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-	std::string latin1Value = transcode(value_m, getUTF8Encoding(), getLatin1Encoding());
-    for(uint j=0;j<latin1Value.size();j++)
-        buf[j+2] = static_cast<uint8_t>(latin1Value[j]);
+    std::string latin1Value = transcode(value_m, getUTF8Encoding(), getLatin1Encoding());
+    for (uint j = 0; j < latin1Value.size(); j++)
+        buf[j + 2] = static_cast<uint8_t>(latin1Value[j]);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
 }
 
-void String14Object::setStringValue(const std::string& value)
+void String14Object::setStringValue(const std::string &value)
 {
     String14ObjectValue val(value);
     Object::setValue(&val);
 }
 
-Logger& String14AsciiObject::logger_m(Logger::getInstance("String14AsciiObject"));
+Logger &String14AsciiObject::logger_m(Logger::getInstance("String14AsciiObject"));
 
 String14AsciiObject::String14AsciiObject()
-{}
+{
+}
 
 String14AsciiObject::~String14AsciiObject()
-{}
+{
+}
 
-ObjectValue* String14AsciiObject::createObjectValue(const std::string& value)
+ObjectValue *String14AsciiObject::createObjectValue(const std::string &value)
 {
     return new String14AsciiObjectValue(value);
 }
 
-void String14AsciiObject::setValue(const std::string& value)
+void String14AsciiObject::setValue(const std::string &value)
 {
     String14AsciiObjectValue val(value);
     Object::setValue(&val);
 }
 
-void String14AsciiObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+void String14AsciiObject::doWrite(const uint8_t *buf, int len, eibaddr_t src)
 {
     if (len < 2)
     {
@@ -3106,7 +3187,7 @@ void String14AsciiObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     std::string value;
-    for(int j=2; j<len && buf[j]!=0; j++)
+    for (int j = 2; j < len && buf[j] != 0; j++)
         value.push_back(buf[j]);
     String14AsciiObjectValue val(value);
 
@@ -3118,25 +3199,26 @@ void String14AsciiObject::doSend(bool isWrite)
 {
     logger_m.debugStream() << "String14AsciiObject: Value: " << value_m << endlog;
     uint8_t buf[16];
-    memset(buf,0,sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     buf[1] = (isWrite ? 0x80 : 0x40);
     // Convert to hex
-    for(uint j=0;j<value_m.size();j++)
-        buf[j+2] = static_cast<uint8_t>(value_m[j]);
+    for (uint j = 0; j < value_m.size(); j++)
+        buf[j + 2] = static_cast<uint8_t>(value_m[j]);
 
     Services::instance()->getKnxConnection()->write(getGad(), buf, sizeof(buf));
 }
 
-void String14AsciiObject::setStringValue(const std::string& value)
+void String14AsciiObject::setStringValue(const std::string &value)
 {
     String14AsciiObjectValue val(value);
     Object::setValue(&val);
 }
 
-Logger& ObjectController::logger_m(Logger::getInstance("ObjectController"));
+Logger &ObjectController::logger_m(Logger::getInstance("ObjectController"));
 
 ObjectController::ObjectController()
-{}
+{
+}
 
 ObjectController::~ObjectController()
 {
@@ -3145,14 +3227,14 @@ ObjectController::~ObjectController()
         delete (*it).second;
 }
 
-ObjectController* ObjectController::instance()
+ObjectController *ObjectController::instance()
 {
     if (instance_m == 0)
         instance_m = new ObjectController();
     return instance_m;
 }
 
-void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
+void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t *buf, int len)
 {
     std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
     range = objectMap_m.equal_range(dest);
@@ -3160,12 +3242,11 @@ void ObjectController::onWrite(eibaddr_t src, eibaddr_t dest, const uint8_t* buf
     for (it = range.first; it != range.second; it++)
         (*it).second->onWrite(buf, len, src);
     if (range.first == range.second)
-        logger_m.debugStream() << "onWrite - dest eibaddr not found: "
-            << Object::WriteGroupAddr(dest)
-            << " sender=" << Object::WriteAddr( src ) << endlog;
+        logger_m.debugStream() << "onWrite - dest eibaddr not found: " << Object::WriteGroupAddr(dest)
+                               << " sender=" << Object::WriteAddr(src) << endlog;
 }
 
-void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
+void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t *buf, int len)
 {
     std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
     range = objectMap_m.equal_range(dest);
@@ -3173,12 +3254,11 @@ void ObjectController::onRead(eibaddr_t src, eibaddr_t dest, const uint8_t* buf,
     for (it = range.first; it != range.second; it++)
         (*it).second->onRead(buf, len, src);
     if (range.first == range.second)
-        logger_m.debugStream() << "onRead - dest eibaddr not found: "
-            << Object::WriteGroupAddr(dest)
-            << " sender=" << Object::WriteAddr( src ) << endlog;
+        logger_m.debugStream() << "onRead - dest eibaddr not found: " << Object::WriteGroupAddr(dest)
+                               << " sender=" << Object::WriteAddr(src) << endlog;
 }
 
-void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* buf, int len)
+void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t *buf, int len)
 {
     std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range;
     range = objectMap_m.equal_range(dest);
@@ -3186,12 +3266,11 @@ void ObjectController::onResponse(eibaddr_t src, eibaddr_t dest, const uint8_t* 
     for (it = range.first; it != range.second; it++)
         (*it).second->onResponse(buf, len, src);
     if (range.first == range.second)
-        logger_m.debugStream() << "onResponse - dest eibaddr not found: "
-            << Object::WriteGroupAddr(dest)
-            << " sender=" << Object::WriteAddr( src ) << endlog;
+        logger_m.debugStream() << "onResponse - dest eibaddr not found: " << Object::WriteGroupAddr(dest)
+                               << " sender=" << Object::WriteAddr(src) << endlog;
 }
 
-Object* ObjectController::getObject(const std::string& id)
+Object *ObjectController::getObject(const std::string &id)
 {
     ObjectIdMap_t::iterator it = objectIdMap_m.find(id);
     if (it == objectIdMap_m.end())
@@ -3204,7 +3283,7 @@ Object* ObjectController::getObject(const std::string& id)
     return (*it).second;
 }
 
-void ObjectController::addObject(Object* object)
+void ObjectController::addObject(Object *object)
 {
     if (!objectIdMap_m.insert(ObjectIdPair_t(object->getID(), object)).second)
         throw ticpp::Exception("Object ID already exists");
@@ -3212,18 +3291,18 @@ void ObjectController::addObject(Object* object)
         objectMap_m.insert(ObjectPair_t(object->getGad(), object));
     std::list<eibaddr_t>::iterator it2, it_end;
     it_end = object->getListenerGadEnd();
-    for (it2=object->getListenerGad(); it2!=it_end; it2++)
+    for (it2 = object->getListenerGad(); it2 != it_end; it2++)
         objectMap_m.insert(ObjectPair_t((*it2), object));
 }
 
-void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object* object)
+void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object *object)
 {
     if (gad == 0)
         return;
-    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range =
-        objectMap_m.equal_range(gad);
+    std::pair<ObjectMap_t::iterator, ObjectMap_t::iterator> range = objectMap_m.equal_range(gad);
     ObjectMap_t::iterator it = range.first;
-    while(it != range.second) {
+    while (it != range.second)
+    {
         if ((*it).second == object)
             objectMap_m.erase(it++);
         else
@@ -3231,7 +3310,7 @@ void ObjectController::removeObjectFromAddressMap(eibaddr_t gad, Object* object)
     }
 }
 
-void ObjectController::removeObject(Object* object)
+void ObjectController::removeObject(Object *object)
 {
     ObjectIdMap_t::iterator it = objectIdMap_m.find(object->getID());
     if (it != objectIdMap_m.end())
@@ -3241,7 +3320,7 @@ void ObjectController::removeObject(Object* object)
 
         std::list<eibaddr_t>::iterator it2, it_end;
         it_end = object->getListenerGadEnd();
-        for (it2=object->getListenerGad(); it2!=it_end; it2++)
+        for (it2 = object->getListenerGad(); it2 != it_end; it2++)
             removeObjectFromAddressMap((*it2), object);
 
         if (it->second->inUse())
@@ -3251,22 +3330,22 @@ void ObjectController::removeObject(Object* object)
     }
 }
 
-void ObjectController::importXml(ticpp::Element* pConfig)
+void ObjectController::importXml(ticpp::Element *pConfig)
 {
-    ticpp::Iterator< ticpp::Element > child("object");
-    for ( child = pConfig->FirstChildElement("object", false); child != child.end(); child++ )
+    ticpp::Iterator<ticpp::Element> child("object");
+    for (child = pConfig->FirstChildElement("object", false); child != child.end(); child++)
     {
         std::string id = child->GetAttribute("id");
         bool del = child->GetAttribute("delete") == "true";
         ObjectIdMap_t::iterator it = objectIdMap_m.find(id);
         if (it != objectIdMap_m.end())
         {
-            Object* object = it->second;
+            Object *object = it->second;
 
             removeObjectFromAddressMap(object->getGad(), object);
             std::list<eibaddr_t>::iterator it2, it_end;
             it_end = object->getListenerGadEnd();
-            for (it2=object->getListenerGad(); it2!=it_end; it2++)
+            for (it2 = object->getListenerGad(); it2 != it_end; it2++)
                 removeObjectFromAddressMap((*it2), object);
 
             if (del)
@@ -3283,7 +3362,7 @@ void ObjectController::importXml(ticpp::Element* pConfig)
                     objectMap_m.insert(ObjectPair_t(object->getGad(), object));
                 std::list<eibaddr_t>::iterator it2, it_end;
                 it_end = object->getListenerGadEnd();
-                for (it2=object->getListenerGad(); it2!=it_end; it2++)
+                for (it2 = object->getListenerGad(); it2 != it_end; it2++)
                     objectMap_m.insert(ObjectPair_t((*it2), object));
                 objectIdMap_m.insert(ObjectIdPair_t(id, object));
             }
@@ -3292,20 +3371,19 @@ void ObjectController::importXml(ticpp::Element* pConfig)
         {
             if (del)
                 throw ticpp::Exception("Object not found");
-            Object* object = Object::create(&(*child));
+            Object *object = Object::create(&(*child));
             if (object->getGad())
                 objectMap_m.insert(ObjectPair_t(object->getGad(), object));
             std::list<eibaddr_t>::iterator it2, it_end;
             it_end = object->getListenerGadEnd();
-            for (it2=object->getListenerGad(); it2!=it_end; it2++)
+            for (it2 = object->getListenerGad(); it2 != it_end; it2++)
                 objectMap_m.insert(ObjectPair_t((*it2), object));
             objectIdMap_m.insert(ObjectIdPair_t(id, object));
         }
     }
-
 }
 
-void ObjectController::exportXml(ticpp::Element* pConfig)
+void ObjectController::exportXml(ticpp::Element *pConfig)
 {
     ObjectIdMap_t::iterator it;
     for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
@@ -3316,7 +3394,7 @@ void ObjectController::exportXml(ticpp::Element* pConfig)
     }
 }
 
-void ObjectController::exportObjectValues(ticpp::Element* pObjects)
+void ObjectController::exportObjectValues(ticpp::Element *pObjects)
 {
     ObjectIdMap_t::iterator it;
     for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
@@ -3329,25 +3407,25 @@ void ObjectController::exportObjectValues(ticpp::Element* pObjects)
 }
 
 // Delivers all objects
-std::list<Object*> ObjectController::getObjects()
+std::list<Object *> ObjectController::getObjects()
 {
-    std::list<Object*> objects;
+    std::list<Object *> objects;
     ObjectIdMap_t::iterator it;
     for (it = objectIdMap_m.begin(); it != objectIdMap_m.end(); it++)
     {
-      it->second->incRefCount();
-      objects.push_back((*it).second);
+        it->second->incRefCount();
+        objects.push_back((*it).second);
     }
     return objects;
 }
 
 Object::BufferBuilder::BufferBuilder(int size, Logger &logger)
- : buffer_m(NULL), index_m(0), size_m(size), logger_m(logger)
+    : buffer_m(NULL), index_m(0), size_m(size), logger_m(logger)
 {
-	buffer_m = new uint8_t[size];
+    buffer_m = new uint8_t[size];
 }
 
 Object::BufferBuilder::~BufferBuilder()
 {
-	delete[] buffer_m;
+    delete[] buffer_m;
 }

@@ -20,59 +20,59 @@
 #ifndef PERSISTENTSTORAGE_H
 #define PERSISTENTSTORAGE_H
 
-#include <string>
 #include "config.h"
 #include "logger.h"
 #include "ticpp.h"
+#include <string>
 
 #ifdef HAVE_MYSQL
 #include <mysql/mysql.h>
 #endif
 
-class PersistentStorage
-{
+class PersistentStorage {
 public:
     virtual ~PersistentStorage() {};
 
-    static PersistentStorage* create(ticpp::Element* pConfig);
+    static PersistentStorage *create(ticpp::Element *pConfig);
 
-    virtual void exportXml(ticpp::Element* pConfig) = 0;
+    virtual void exportXml(ticpp::Element *pConfig) = 0;
 
-    virtual void write(const std::string& id, const std::string& value) = 0;
-    virtual std::string read(const std::string& id, const std::string& defval="") = 0;
-    virtual void writelog(const std::string& id, const std::string& value) = 0;
+    virtual void write(const std::string &id, const std::string &value) = 0;
+    virtual std::string read(const std::string &id, const std::string &defval = "") = 0;
+    virtual void writelog(const std::string &id, const std::string &value) = 0;
 };
 
-class FilePersistentStorage : public PersistentStorage
-{
+class FilePersistentStorage : public PersistentStorage {
 public:
     FilePersistentStorage(std::string &path, std::string &logPath);
     virtual ~FilePersistentStorage() {};
 
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    virtual void write(const std::string& id, const std::string& value);
-    virtual std::string read(const std::string& id, const std::string& defval="");
-    virtual void writelog(const std::string& id, const std::string& value);
+    virtual void write(const std::string &id, const std::string &value);
+    virtual std::string read(const std::string &id, const std::string &defval = "");
+    virtual void writelog(const std::string &id, const std::string &value);
+
 private:
     std::string path_m;
     std::string logPath_m;
+
 protected:
-    static Logger& logger_m;
+    static Logger &logger_m;
 };
 
 #ifdef HAVE_MYSQL
-class MysqlPersistentStorage : public PersistentStorage
-{
+class MysqlPersistentStorage : public PersistentStorage {
 public:
-    MysqlPersistentStorage(ticpp::Element* pConfig);
+    MysqlPersistentStorage(ticpp::Element *pConfig);
     virtual ~MysqlPersistentStorage();
 
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    virtual void write(const std::string& id, const std::string& value);
-    virtual std::string read(const std::string& id, const std::string& defval="");
-    virtual void writelog(const std::string& id, const std::string& value);
+    virtual void write(const std::string &id, const std::string &value);
+    virtual std::string read(const std::string &id, const std::string &defval = "");
+    virtual void writelog(const std::string &id, const std::string &value);
+
 private:
     MYSQL con_m;
 
@@ -83,8 +83,9 @@ private:
     std::string table_m;
     std::string logtable_m;
     std::string charset_m;
+
 protected:
-    static Logger& logger_m;
+    static Logger &logger_m;
 };
 #endif // HAVE_MYSQL
 

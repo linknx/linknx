@@ -1,17 +1,17 @@
 /*
     LinKNX KNX home automation platform
     Copyright (C) 2007-2009 Jean-François Meessen <linknx@ouaye.net>
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,64 +22,58 @@
 
 #include "config.h"
 #include "logger.h"
-#include "threads.h"
-#include <string>
-#include "ticpp.h"
 #include "ruleserver.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "threads.h"
+#include "ticpp.h"
 #include <arpa/inet.h>
-#include <termios.h>
+#include <netinet/in.h>
 #include <regex.h>
+#include <string>
+#include <sys/socket.h>
+#include <termios.h>
 
-
-
-class IOPortListener
-{
+class IOPortListener {
 public:
     virtual ~IOPortListener() {};
-    virtual void onDataReceived(const uint8_t* buf, unsigned int len) = 0;
+    virtual void onDataReceived(const uint8_t *buf, unsigned int len) = 0;
 };
 
 class RxThread;
 class ConnectCondition;
 class IOPort;
 
-class IOPortManager
-{
+class IOPortManager {
 public:
-    static IOPortManager* instance();
+    static IOPortManager *instance();
     static void reset()
     {
         if (instance_m)
             delete instance_m;
         instance_m = 0;
     };
-    void addPort(IOPort* port);
-    void removePort(IOPort* port);
+    void addPort(IOPort *port);
+    void removePort(IOPort *port);
 
-    IOPort* getPort(const std::string& id);
+    IOPort *getPort(const std::string &id);
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-//    virtual void exportObjectValues(ticpp::Element* pObjects);
+    //    virtual void exportObjectValues(ticpp::Element* pObjects);
 
 private:
     IOPortManager();
     virtual ~IOPortManager();
 
-    typedef std::pair<std::string ,IOPort*> IOPortPair_t;
-    typedef std::map<std::string ,IOPort*> IOPortMap_t;
+    typedef std::pair<std::string, IOPort *> IOPortPair_t;
+    typedef std::map<std::string, IOPort *> IOPortMap_t;
     IOPortMap_t portMap_m;
-    static IOPortManager* instance_m;
+    static IOPortManager *instance_m;
 };
 
-class IOPort
-{
+class IOPort {
 public:
-    enum Direction
-    {
+    enum Direction {
         In,
         Out,
         InOut
@@ -87,51 +81,65 @@ public:
 
     IOPort();
     virtual ~IOPort();
-	
+
 private:
-	IOPort(const IOPort &original);
-	IOPort &operator=(const IOPort &original) const;
+    IOPort(const IOPort &original);
+    IOPort &operator=(const IOPort &original) const;
 
 public:
-    static IOPort* create(ticpp::Element* pConfig);
-    static IOPort* create(const std::string& type);
+    static IOPort *create(ticpp::Element *pConfig);
+    static IOPort *create(const std::string &type);
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    void setID(const char* id) { id_m = id; };
-    const char* getID() { return id_m.c_str(); };
+    void setID(const char *id)
+    {
+        id_m = id;
+    };
+    const char *getID()
+    {
+        return id_m.c_str();
+    };
 
     void addListener(IOPortListener *l); // { if (rxThread_m) rxThread_m->addListener(l); };
-    bool removeListener(IOPortListener *l); // { if (rxThread_m) return (rxThread_m->removeListener(l)) else return false; };
+    bool removeListener(
+        IOPortListener *l); // { if (rxThread_m) return (rxThread_m->removeListener(l)) else return false; };
     void addConnectListener(ConnectCondition *c);
     bool removeConnectListener(ConnectCondition *c);
     void onConnect();
     virtual bool isRxEnabled() = 0;
     virtual bool mustConnect() = 0;
-    virtual int send(const uint8_t* buf, int len) = 0;
-    virtual int get(uint8_t* buf, int len, pth_event_t stop) = 0;
+    virtual int send(const uint8_t *buf, int len) = 0;
+    virtual int get(uint8_t *buf, int len, pth_event_t stop) = 0;
 
 private:
     RxThread *rxThread_m;
     std::string id_m;
-    
-    typedef std::list<ConnectCondition*> ConnectListenerList_t;
+
+    typedef std::list<ConnectCondition *> ConnectListenerList_t;
     ConnectListenerList_t connectListenerList_m;
 
     // Direction dir_m;
 
-    static Logger& logger_m;
+    static Logger &logger_m;
 };
 
-class RxThread : public Thread
-{
+class RxThread : public Thread {
 public:
     RxThread(IOPort *port);
     virtual ~RxThread();
 
-    void startPort() { isRunning_m = true; Start(); };
-    void stopPort() { isRunning_m = false; Stop(); };
+    void startPort()
+    {
+        isRunning_m = true;
+        Start();
+    };
+    void stopPort()
+    {
+        isRunning_m = false;
+        Stop();
+    };
 
     void addListener(IOPortListener *listener);
     bool removeListener(IOPortListener *listener);
@@ -140,26 +148,31 @@ private:
     IOPort *port_m;
     bool isRunning_m;
     pth_event_t stop_m;
-    typedef std::list<IOPortListener*> ListenerList_t;
+    typedef std::list<IOPortListener *> ListenerList_t;
     ListenerList_t listenerList_m;
 
-    void Run (pth_sem_t * stop);
-    static Logger& logger_m;
+    void Run(pth_sem_t *stop);
+    static Logger &logger_m;
 };
 
-class UdpIOPort : public IOPort
-{
+class UdpIOPort : public IOPort {
 public:
     UdpIOPort();
     virtual ~UdpIOPort();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    int send(const uint8_t* buf, int len);
-    int get(uint8_t* buf, int len, pth_event_t stop);
-    virtual bool isRxEnabled() { return rxport_m > 0; };
-    virtual bool mustConnect() { return false; };
+    int send(const uint8_t *buf, int len);
+    int get(uint8_t *buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled()
+    {
+        return rxport_m > 0;
+    };
+    virtual bool mustConnect()
+    {
+        return false;
+    };
 
 private:
     std::string host_m;
@@ -167,26 +180,30 @@ private:
     int port_m;
     int rxport_m;
     struct sockaddr_in addr_m;
-    static Logger& logger_m;
+    static Logger &logger_m;
 };
 
-class TcpClientIOPort : public IOPort
-{
+class TcpClientIOPort : public IOPort {
 public:
     TcpClientIOPort();
     virtual ~TcpClientIOPort();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    int send(const uint8_t* buf, int len);
-    int get(uint8_t* buf, int len, pth_event_t stop);
-    virtual bool isRxEnabled() { return permanent_m; };
-    virtual bool mustConnect() { return true; };
+    int send(const uint8_t *buf, int len);
+    int get(uint8_t *buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled()
+    {
+        return permanent_m;
+    };
+    virtual bool mustConnect()
+    {
+        return true;
+    };
 
 private:
-    struct Socket
-    {
+    struct Socket {
         Socket(TcpClientIOPort *ioport);
 
         ~Socket();
@@ -201,25 +218,30 @@ private:
     int port_m;
     bool permanent_m;
     struct sockaddr_in addr_m;
-    static Logger& logger_m;
-    
+    static Logger &logger_m;
+
     // void connectToServer();
     // void disconnectFromServer();
 };
 
-class SerialIOPort : public IOPort
-{
+class SerialIOPort : public IOPort {
 public:
     SerialIOPort();
     virtual ~SerialIOPort();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    int send(const uint8_t* buf, int len);
-    int get(uint8_t* buf, int len, pth_event_t stop);
-    virtual bool isRxEnabled() { return true; };
-    virtual bool mustConnect() { return true; };
+    int send(const uint8_t *buf, int len);
+    int get(uint8_t *buf, int len, pth_event_t stop);
+    virtual bool isRxEnabled()
+    {
+        return true;
+    };
+    virtual bool mustConnect()
+    {
+        return true;
+    };
 
 private:
     std::string dev_m;
@@ -229,25 +251,24 @@ private:
     int timeout_m;
     int msglength_m;
     struct termios oldtio_m, newtio_m;
-    static Logger& logger_m;
+    static Logger &logger_m;
 };
 
-class TxAction : public Action
-{
+class TxAction : public Action {
 public:
     TxAction();
     virtual ~TxAction();
 
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
 
-    void sendData(IOPort* port);
+    void sendData(IOPort *port);
+
 private:
-    virtual void Run (pth_sem_t * stop);
+    virtual void Run(pth_sem_t *stop);
 
     int varFlags_m;
-    enum replaceVarFlags
-    {
+    enum replaceVarFlags {
         VarEnabled = 1,
         VarData = 2,
     };
@@ -256,18 +277,17 @@ private:
     bool hex_m;
 };
 
-class RxCondition : public Condition, public IOPortListener
-{
+class RxCondition : public Condition, public IOPortListener {
 public:
-    RxCondition(ChangeListener* cl);
+    RxCondition(ChangeListener *cl);
     virtual ~RxCondition();
 
     virtual bool evaluate();
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
-    virtual void statusXml(ticpp::Element* pStatus);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
+    virtual void statusXml(ticpp::Element *pStatus);
 
-    virtual void onDataReceived(const uint8_t* buf, unsigned int len);
+    virtual void onDataReceived(const uint8_t *buf, unsigned int len);
 
 private:
     std::string port_m;
@@ -276,29 +296,27 @@ private:
     bool regexFlag_m;
     bool value_m;
     bool hex_m;
-    regmatch_t* pmatch_m;
-    std::vector<Object*> objects_m;
-    ChangeListener* cl_m;
+    regmatch_t *pmatch_m;
+    std::vector<Object *> objects_m;
+    ChangeListener *cl_m;
 };
 
-class ConnectCondition : public Condition
-{
+class ConnectCondition : public Condition {
 public:
-    ConnectCondition(ChangeListener* cl);
+    ConnectCondition(ChangeListener *cl);
     virtual ~ConnectCondition();
 
     virtual bool evaluate();
-    virtual void importXml(ticpp::Element* pConfig);
-    virtual void exportXml(ticpp::Element* pConfig);
-    virtual void statusXml(ticpp::Element* pStatus);
+    virtual void importXml(ticpp::Element *pConfig);
+    virtual void exportXml(ticpp::Element *pConfig);
+    virtual void statusXml(ticpp::Element *pStatus);
 
     virtual void onConnect();
 
 private:
     std::string port_m;
     bool value_m;
-    ChangeListener* cl_m;
+    ChangeListener *cl_m;
 };
-
 
 #endif

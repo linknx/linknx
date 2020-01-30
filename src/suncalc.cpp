@@ -6,17 +6,17 @@
     C++ wrapper:
     Copyright (C) 2008 Jean-François Meessen <linknx@ouaye.net>
 
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -24,12 +24,12 @@
 
 #include "suncalc.h"
 #include "services.h"
-#include <cstdio>
 #include <cmath>
-#include <ctime>
+#include <cstdio>
 #include <cstdlib>
-#include <getopt.h>
 #include <cstring>
+#include <ctime>
+#include <getopt.h>
 
 namespace suncalc
 {
@@ -51,113 +51,104 @@ Released to the public domain by Paul Schlyter, December 1992
 /* A macro to compute the number of days elapsed since 2000 Jan 0.0 */
 /* (which is equal to 1999 Dec 31, 0h UT)                           */
 
-#define days_since_2000_Jan_0(y,m,d) \
-    (367L*(y)-((7*((y)+(((m)+9)/12)))/4)+((275*(m))/9)+(d)-730530L)
+#define days_since_2000_Jan_0(y, m, d)                                                                                 \
+    (367L * (y) - ((7 * ((y) + (((m) + 9) / 12))) / 4) + ((275 * (m)) / 9) + (d)-730530L)
 
 /* Some conversion factors between radians and degrees */
 
 #ifndef PI
- #define PI        3.1415926535897932384
+#define PI 3.1415926535897932384
 #endif
 
-#define RADEG     ( 180.0 / PI )
-#define DEGRAD    ( PI / 180.0 )
+#define RADEG (180.0 / PI)
+#define DEGRAD (PI / 180.0)
 
 /* The trigonometric functions in degrees */
 
-#define sind(x)  sin((x)*DEGRAD)
-#define cosd(x)  cos((x)*DEGRAD)
-#define tand(x)  tan((x)*DEGRAD)
+#define sind(x) sin((x)*DEGRAD)
+#define cosd(x) cos((x)*DEGRAD)
+#define tand(x) tan((x)*DEGRAD)
 
-#define atand(x)    (RADEG*atan(x))
-#define asind(x)    (RADEG*asin(x))
-#define acosd(x)    (RADEG*acos(x))
-#define atan2d(y,x) (RADEG*atan2(y,x))
-
+#define atand(x) (RADEG * atan(x))
+#define asind(x) (RADEG * asin(x))
+#define acosd(x) (RADEG * acos(x))
+#define atan2d(y, x) (RADEG * atan2(y, x))
 
 /* Following are some macros around the "workhorse" function __daylen__ */
 /* They mainly fill in the desired values for the reference altitude    */
 /* below the horizon, and also selects whether this altitude should     */
 /* refer to the Sun's center or its upper limb.                         */
 
-
 /* This macro computes the length of the day, from sunrise to sunset. */
 /* Sunrise/set is considered to occur when the Sun's upper limb is    */
 /* 35 arc minutes below the horizon (this accounts for the refraction */
 /* of the Earth's atmosphere).                                        */
-#define day_length(year,month,day,lon,lat)  \
-        __daylen__( year, month, day, lon, lat, -35.0/60.0, 1 )
+#define day_length(year, month, day, lon, lat) __daylen__(year, month, day, lon, lat, -35.0 / 60.0, 1)
 
 /* This macro computes the length of the day, including civil twilight. */
 /* Civil twilight starts/ends when the Sun's center is 6 degrees below  */
 /* the horizon.                                                         */
-#define day_civil_twilight_length(year,month,day,lon,lat)  \
-        __daylen__( year, month, day, lon, lat, -6.0, 0 )
+#define day_civil_twilight_length(year, month, day, lon, lat) __daylen__(year, month, day, lon, lat, -6.0, 0)
 
 /* This macro computes the length of the day, incl. nautical twilight.  */
 /* Nautical twilight starts/ends when the Sun's center is 12 degrees    */
 /* below the horizon.                                                   */
-#define day_nautical_twilight_length(year,month,day,lon,lat)  \
-        __daylen__( year, month, day, lon, lat, -12.0, 0 )
+#define day_nautical_twilight_length(year, month, day, lon, lat) __daylen__(year, month, day, lon, lat, -12.0, 0)
 
 /* This macro computes the length of the day, incl. astronomical twilight. */
 /* Astronomical twilight starts/ends when the Sun's center is 18 degrees   */
 /* below the horizon.                                                      */
-#define day_astronomical_twilight_length(year,month,day,lon,lat)  \
-        __daylen__( year, month, day, lon, lat, -18.0, 0 )
-
+#define day_astronomical_twilight_length(year, month, day, lon, lat) __daylen__(year, month, day, lon, lat, -18.0, 0)
 
 /* This macro computes times for sunrise/sunset.                      */
 /* Sunrise/set is considered to occur when the Sun's upper limb is    */
 /* 35 arc minutes below the horizon (this accounts for the refraction */
 /* of the Earth's atmosphere).                                        */
-#define sun_rise_set(year,month,day,lon,lat,rise,set)  \
-        __sunriset__( year, month, day, lon, lat, -35.0/60.0, 1, rise, set )
+#define sun_rise_set(year, month, day, lon, lat, rise, set)                                                            \
+    __sunriset__(year, month, day, lon, lat, -35.0 / 60.0, 1, rise, set)
 
 /* This macro computes the start and end times of civil twilight.       */
 /* Civil twilight starts/ends when the Sun's center is 6 degrees below  */
 /* the horizon.                                                         */
-#define civil_twilight(year,month,day,lon,lat,start,end)  \
-        __sunriset__( year, month, day, lon, lat, -6.0, 0, start, end )
+#define civil_twilight(year, month, day, lon, lat, start, end)                                                         \
+    __sunriset__(year, month, day, lon, lat, -6.0, 0, start, end)
 
 /* This macro computes the start and end times of nautical twilight.    */
 /* Nautical twilight starts/ends when the Sun's center is 12 degrees    */
 /* below the horizon.                                                   */
-#define nautical_twilight(year,month,day,lon,lat,start,end)  \
-        __sunriset__( year, month, day, lon, lat, -12.0, 0, start, end )
+#define nautical_twilight(year, month, day, lon, lat, start, end)                                                      \
+    __sunriset__(year, month, day, lon, lat, -12.0, 0, start, end)
 
 /* This macro computes the start and end times of astronomical twilight.   */
 /* Astronomical twilight starts/ends when the Sun's center is 18 degrees   */
 /* below the horizon.                                                      */
-#define astronomical_twilight(year,month,day,lon,lat,start,end)  \
-        __sunriset__( year, month, day, lon, lat, -18.0, 0, start, end )
+#define astronomical_twilight(year, month, day, lon, lat, start, end)                                                  \
+    __sunriset__(year, month, day, lon, lat, -18.0, 0, start, end)
 
-
-#define hours(x)    (((int)(x))%24)
-#define minutes(x)  (((int)(((x)-hours(x))*60))%60)
+#define hours(x) (((int)(x)) % 24)
+#define minutes(x) (((int)(((x)-hours(x)) * 60)) % 60)
 
 /* Function prototypes */
 
-double __daylen__( int year, int month, int day, double lon, double lat,
-                   double altit, int upper_limb );
+double __daylen__(int year, int month, int day, double lon, double lat, double altit, int upper_limb);
 
-int __sunriset__( int year, int month, int day, double lon, double lat,
-                  double altit, int upper_limb, double *rise, double *set );
+int __sunriset__(int year, int month, int day, double lon, double lat, double altit, int upper_limb, double *rise,
+                 double *set);
 
-void sunpos( double d, double *lon, double *r );
+void sunpos(double d, double *lon, double *r);
 
-void sun_RA_dec( double d, double *RA, double *dec, double *r );
+void sun_RA_dec(double d, double *RA, double *dec, double *r);
 
-double revolution( double x );
+double revolution(double x);
 
-double rev180( double x );
+double rev180(double x);
 
-double GMST0( double d );
+double GMST0(double d);
 
 /* The "workhorse" function for sun rise/set times */
 
-int __sunriset__( int year, int month, int day, double lon, double lat,
-                  double altit, int upper_limb, double *trise, double *tset )
+int __sunriset__(int year, int month, int day, double lon, double lat, double altit, int upper_limb, double *trise,
+                 double *tset)
 /***************************************************************************/
 /* Note: year,month,date = calendar date, 1801-2099 only.             */
 /*       Eastern longitude positive, Western longitude negative       */
@@ -188,64 +179,59 @@ int __sunriset__( int year, int month, int day, double lon, double lat,
 /*                                                                    */
 /**********************************************************************/
 {
-      double  d,  /* Days since 2000 Jan 0.0 (negative before) */
-      sr,         /* Solar distance, astronomical units */
-      sRA,        /* Sun's Right Ascension */
-      sdec,       /* Sun's declination */
-      sradius,    /* Sun's apparent radius */
-      t,          /* Diurnal arc */
-      tsouth,     /* Time when Sun is at south */
-      sidtime;    /* Local sidereal time */
+    double d,    /* Days since 2000 Jan 0.0 (negative before) */
+        sr,      /* Solar distance, astronomical units */
+        sRA,     /* Sun's Right Ascension */
+        sdec,    /* Sun's declination */
+        sradius, /* Sun's apparent radius */
+        t,       /* Diurnal arc */
+        tsouth,  /* Time when Sun is at south */
+        sidtime; /* Local sidereal time */
 
-      int rc = 0; /* Return cde from function - usually 0 */
+    int rc = 0; /* Return cde from function - usually 0 */
 
-      /* Compute d of 12h local mean solar time */
-      d = days_since_2000_Jan_0(year,month,day) + 0.5 - lon/360.0;
+    /* Compute d of 12h local mean solar time */
+    d = days_since_2000_Jan_0(year, month, day) + 0.5 - lon / 360.0;
 
-      /* Compute local sideral time of this moment */
-      sidtime = revolution( GMST0(d) + 180.0 + lon );
+    /* Compute local sideral time of this moment */
+    sidtime = revolution(GMST0(d) + 180.0 + lon);
 
-      /* Compute Sun's RA + Decl at this moment */
-      sun_RA_dec( d, &sRA, &sdec, &sr );
+    /* Compute Sun's RA + Decl at this moment */
+    sun_RA_dec(d, &sRA, &sdec, &sr);
 
-      /* Compute time when Sun is at south - in hours UT */
-      tsouth = 12.0 - rev180(sidtime - sRA)/15.0;
+    /* Compute time when Sun is at south - in hours UT */
+    tsouth = 12.0 - rev180(sidtime - sRA) / 15.0;
 
-      /* Compute the Sun's apparent radius, degrees */
-      sradius = 0.2666 / sr;
+    /* Compute the Sun's apparent radius, degrees */
+    sradius = 0.2666 / sr;
 
-      /* Do correction to upper limb, if necessary */
-      if ( upper_limb )
-            altit -= sradius;
+    /* Do correction to upper limb, if necessary */
+    if (upper_limb)
+        altit -= sradius;
 
-      /* Compute the diurnal arc that the Sun traverses to reach */
-      /* the specified altitide altit: */
-      {
-            double cost;
-            cost = ( sind(altit) - sind(lat) * sind(sdec) ) /
-                  ( cosd(lat) * cosd(sdec) );
-            if ( cost >= 1.0 )
-                  rc = -1, t = 0.0;       /* Sun always below altit */
-            else if ( cost <= -1.0 )
-                  rc = +1, t = 12.0;      /* Sun always above altit */
-            else
-                  t = acosd(cost)/15.0;   /* The diurnal arc, hours */
-      }
+    /* Compute the diurnal arc that the Sun traverses to reach */
+    /* the specified altitide altit: */
+    {
+        double cost;
+        cost = (sind(altit) - sind(lat) * sind(sdec)) / (cosd(lat) * cosd(sdec));
+        if (cost >= 1.0)
+            rc = -1, t = 0.0; /* Sun always below altit */
+        else if (cost <= -1.0)
+            rc = +1, t = 12.0; /* Sun always above altit */
+        else
+            t = acosd(cost) / 15.0; /* The diurnal arc, hours */
+    }
 
-      /* Store rise and set times - in hours UT */
-      *trise = tsouth - t;
-      *tset  = tsouth + t;
+    /* Store rise and set times - in hours UT */
+    *trise = tsouth - t;
+    *tset = tsouth + t;
 
-      return rc;
-}  /* __sunriset__ */
-
-
+    return rc;
+} /* __sunriset__ */
 
 /* The "workhorse" function */
 
-
-double __daylen__( int year, int month, int day, double lon, double lat,
-                   double altit, int upper_limb )
+double __daylen__(int year, int month, int day, double lon, double lat, double altit, int upper_limb)
 /**********************************************************************/
 /* Note: year,month,date = calendar date, 1801-2099 only.             */
 /*       Eastern longitude positive, Western longitude negative       */
@@ -262,54 +248,53 @@ double __daylen__( int year, int month, int day, double lon, double lat,
 /*               and to zero when computing day+twilight length.      */
 /**********************************************************************/
 {
-      double  d,  /* Days since 2000 Jan 0.0 (negative before) */
-      obl_ecl,    /* Obliquity (inclination) of Earth's axis */
-      sr,         /* Solar distance, astronomical units */
-      slon,       /* True solar longitude */
-      sin_sdecl,  /* Sine of Sun's declination */
-      cos_sdecl,  /* Cosine of Sun's declination */
-      sradius,    /* Sun's apparent radius */
-      t;          /* Diurnal arc */
+    double d,      /* Days since 2000 Jan 0.0 (negative before) */
+        obl_ecl,   /* Obliquity (inclination) of Earth's axis */
+        sr,        /* Solar distance, astronomical units */
+        slon,      /* True solar longitude */
+        sin_sdecl, /* Sine of Sun's declination */
+        cos_sdecl, /* Cosine of Sun's declination */
+        sradius,   /* Sun's apparent radius */
+        t;         /* Diurnal arc */
 
-      /* Compute d of 12h local mean solar time */
-      d = days_since_2000_Jan_0(year,month,day) + 0.5 - lon/360.0;
+    /* Compute d of 12h local mean solar time */
+    d = days_since_2000_Jan_0(year, month, day) + 0.5 - lon / 360.0;
 
-      /* Compute obliquity of ecliptic (inclination of Earth's axis) */
-      obl_ecl = 23.4393 - 3.563E-7 * d;
+    /* Compute obliquity of ecliptic (inclination of Earth's axis) */
+    obl_ecl = 23.4393 - 3.563E-7 * d;
 
-      /* Compute Sun's position */
-      sunpos( d, &slon, &sr );
+    /* Compute Sun's position */
+    sunpos(d, &slon, &sr);
 
-      /* Compute sine and cosine of Sun's declination */
-      sin_sdecl = sind(obl_ecl) * sind(slon);
-      cos_sdecl = sqrt( 1.0 - sin_sdecl * sin_sdecl );
+    /* Compute sine and cosine of Sun's declination */
+    sin_sdecl = sind(obl_ecl) * sind(slon);
+    cos_sdecl = sqrt(1.0 - sin_sdecl * sin_sdecl);
 
-      /* Compute the Sun's apparent radius, degrees */
-      sradius = 0.2666 / sr;
+    /* Compute the Sun's apparent radius, degrees */
+    sradius = 0.2666 / sr;
 
-      /* Do correction to upper limb, if necessary */
-      if ( upper_limb )
-            altit -= sradius;
+    /* Do correction to upper limb, if necessary */
+    if (upper_limb)
+        altit -= sradius;
 
-      /* Compute the diurnal arc that the Sun traverses to reach */
-      /* the specified altitide altit: */
-      {
-            double cost;
-            cost = ( sind(altit) - sind(lat) * sin_sdecl ) /
-                  ( cosd(lat) * cos_sdecl );
-            if ( cost >= 1.0 )
-                  t = 0.0;                      /* Sun always below altit */
-            else if ( cost <= -1.0 )
-                  t = 24.0;                     /* Sun always above altit */
-            else  t = (2.0/15.0) * acosd(cost); /* The diurnal arc, hours */
-      }
-      return t;
-}  /* __daylen__ */
-
+    /* Compute the diurnal arc that the Sun traverses to reach */
+    /* the specified altitide altit: */
+    {
+        double cost;
+        cost = (sind(altit) - sind(lat) * sin_sdecl) / (cosd(lat) * cos_sdecl);
+        if (cost >= 1.0)
+            t = 0.0; /* Sun always below altit */
+        else if (cost <= -1.0)
+            t = 24.0; /* Sun always above altit */
+        else
+            t = (2.0 / 15.0) * acosd(cost); /* The diurnal arc, hours */
+    }
+    return t;
+} /* __daylen__ */
 
 /* This function computes the Sun's position at any instant */
 
-void sunpos( double d, double *lon, double *r )
+void sunpos(double d, double *lon, double *r)
 /******************************************************/
 /* Computes the Sun's ecliptic longitude and distance */
 /* at an instant given in d, number of days since     */
@@ -317,54 +302,53 @@ void sunpos( double d, double *lon, double *r )
 /* computed, since it's always very near 0.           */
 /******************************************************/
 {
-      double M,         /* Mean anomaly of the Sun */
-             w,         /* Mean longitude of perihelion */
-                        /* Note: Sun's mean longitude = M + w */
-             e,         /* Eccentricity of Earth's orbit */
-             E,         /* Eccentric anomaly */
-             x, y,      /* x, y coordinates in orbit */
-             v;         /* True anomaly */
+    double M, /* Mean anomaly of the Sun */
+        w,    /* Mean longitude of perihelion */
+              /* Note: Sun's mean longitude = M + w */
+        e,    /* Eccentricity of Earth's orbit */
+        E,    /* Eccentric anomaly */
+        x, y, /* x, y coordinates in orbit */
+        v;    /* True anomaly */
 
-      /* Compute mean elements */
-      M = revolution( 356.0470 + 0.9856002585 * d );
-      w = 282.9404 + 4.70935E-5 * d;
-      e = 0.016709 - 1.151E-9 * d;
+    /* Compute mean elements */
+    M = revolution(356.0470 + 0.9856002585 * d);
+    w = 282.9404 + 4.70935E-5 * d;
+    e = 0.016709 - 1.151E-9 * d;
 
-      /* Compute true longitude and radius vector */
-      E = M + e * RADEG * sind(M) * ( 1.0 + e * cosd(M) );
-            x = cosd(E) - e;
-      y = sqrt( 1.0 - e*e ) * sind(E);
-      *r = sqrt( x*x + y*y );              /* Solar distance */
-      v = atan2d( y, x );                  /* True anomaly */
-      *lon = v + w;                        /* True solar longitude */
-      if ( *lon >= 360.0 )
-            *lon -= 360.0;                   /* Make it 0..360 degrees */
+    /* Compute true longitude and radius vector */
+    E = M + e * RADEG * sind(M) * (1.0 + e * cosd(M));
+    x = cosd(E) - e;
+    y = sqrt(1.0 - e * e) * sind(E);
+    *r = sqrt(x * x + y * y); /* Solar distance */
+    v = atan2d(y, x);         /* True anomaly */
+    *lon = v + w;             /* True solar longitude */
+    if (*lon >= 360.0)
+        *lon -= 360.0; /* Make it 0..360 degrees */
 }
 
-void sun_RA_dec( double d, double *RA, double *dec, double *r )
+void sun_RA_dec(double d, double *RA, double *dec, double *r)
 {
-      double lon, obl_ecl, x, y, z;
+    double lon, obl_ecl, x, y, z;
 
-      /* Compute Sun's ecliptical coordinates */
-      sunpos( d, &lon, r );
+    /* Compute Sun's ecliptical coordinates */
+    sunpos(d, &lon, r);
 
-      /* Compute ecliptic rectangular coordinates (z=0) */
-      x = *r * cosd(lon);
-      y = *r * sind(lon);
+    /* Compute ecliptic rectangular coordinates (z=0) */
+    x = *r * cosd(lon);
+    y = *r * sind(lon);
 
-      /* Compute obliquity of ecliptic (inclination of Earth's axis) */
-      obl_ecl = 23.4393 - 3.563E-7 * d;
+    /* Compute obliquity of ecliptic (inclination of Earth's axis) */
+    obl_ecl = 23.4393 - 3.563E-7 * d;
 
-      /* Convert to equatorial rectangular coordinates - x is uchanged */
-      z = y * sind(obl_ecl);
-      y = y * cosd(obl_ecl);
+    /* Convert to equatorial rectangular coordinates - x is uchanged */
+    z = y * sind(obl_ecl);
+    y = y * cosd(obl_ecl);
 
-      /* Convert to spherical coordinates */
-      *RA = atan2d( y, x );
-      *dec = atan2d( z, sqrt(x*x + y*y) );
+    /* Convert to spherical coordinates */
+    *RA = atan2d(y, x);
+    *dec = atan2d(z, sqrt(x * x + y * y));
 
-}  /* sun_RA_dec */
-
+} /* sun_RA_dec */
 
 /******************************************************************/
 /* This function reduces any angle to within the first revolution */
@@ -372,24 +356,23 @@ void sun_RA_dec( double d, double *RA, double *dec, double *r )
 /* result is >= 0.0 and < 360.0                                   */
 /******************************************************************/
 
-#define INV360    ( 1.0 / 360.0 )
+#define INV360 (1.0 / 360.0)
 
-double revolution( double x )
+double revolution(double x)
 /*****************************************/
 /* Reduce angle to within 0..360 degrees */
 /*****************************************/
 {
-      return( x - 360.0 * floor( x * INV360 ) );
-}  /* revolution */
+    return (x - 360.0 * floor(x * INV360));
+} /* revolution */
 
-double rev180( double x )
+double rev180(double x)
 /*********************************************/
 /* Reduce angle to within +180..+180 degrees */
 /*********************************************/
 {
-      return( x - 360.0 * floor( x * INV360 + 0.5 ) );
-}  /* revolution */
-
+    return (x - 360.0 * floor(x * INV360 + 0.5));
+} /* revolution */
 
 /*******************************************************************/
 /* This function computes GMST0, the Greenwhich Mean Sidereal Time */
@@ -417,42 +400,40 @@ double rev180( double x )
 /*                                                                 */
 /*******************************************************************/
 
-double GMST0( double d )
+double GMST0(double d)
 {
-      double sidtim0;
-      /* Sidtime at 0h UT = L (Sun's mean longitude) + 180.0 degr  */
-      /* L = M + w, as defined in sunpos().  Since I'm too lazy to */
-      /* add these numbers, I'll let the C compiler do it for me.  */
-      /* Any decent C compiler will add the constants at compile   */
-      /* time, imposing no runtime or code overhead.               */
-      sidtim0 = revolution( ( 180.0 + 356.0470 + 282.9404 ) +
-                          ( 0.9856002585 + 4.70935E-5 ) * d );
-      return sidtim0;
-}  /* GMST0 */
+    double sidtim0;
+    /* Sidtime at 0h UT = L (Sun's mean longitude) + 180.0 degr  */
+    /* L = M + w, as defined in sunpos().  Since I'm too lazy to */
+    /* add these numbers, I'll let the C compiler do it for me.  */
+    /* Any decent C compiler will add the constants at compile   */
+    /* time, imposing no runtime or code overhead.               */
+    sidtim0 = revolution((180.0 + 356.0470 + 282.9404) + (0.9856002585 + 4.70935E-5) * d);
+    return sidtim0;
+} /* GMST0 */
 
+} // namespace suncalc
 
-}  // namespace suncalc
+Logger &SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
 
-Logger& SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
+SolarTimeSpec::~SolarTimeSpec(){};
+SunriseTimeSpec::~SunriseTimeSpec(){};
+SunsetTimeSpec::~SunsetTimeSpec(){};
+SolarNoonTimeSpec::~SolarNoonTimeSpec(){};
 
-SolarTimeSpec::~SolarTimeSpec() {};
-SunriseTimeSpec::~SunriseTimeSpec() {};
-SunsetTimeSpec::~SunsetTimeSpec() {};
-SolarNoonTimeSpec::~SolarNoonTimeSpec() {};
-
-void SunriseTimeSpec::exportXml(ticpp::Element* pConfig)
+void SunriseTimeSpec::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "sunrise");
     SolarTimeSpec::exportXml(pConfig);
 }
 
-void SunsetTimeSpec::exportXml(ticpp::Element* pConfig)
+void SunsetTimeSpec::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "sunset");
     SolarTimeSpec::exportXml(pConfig);
 }
 
-void SolarNoonTimeSpec::exportXml(ticpp::Element* pConfig)
+void SolarNoonTimeSpec::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("type", "noon");
     SolarTimeSpec::exportXml(pConfig);
@@ -470,68 +451,69 @@ double SunsetTimeSpec::computeTime(double rise, double set) const
 
 double SolarNoonTimeSpec::computeTime(double rise, double set) const
 {
-    return (rise+set)/2.0;
+    return (rise + set) / 2.0;
 }
 
 void SolarTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	TimeSpec::getDay(current, mday, mon, year, wdays);
+    TimeSpec::getDay(current, mday, mon, year, wdays);
 
-	DateTime currentDate(&current);
-	currentDate.setYear(year);
-	currentDate.setMonth(mon);
-	currentDate.setDay(mday);
-	int min, hour;
-	getTime(currentDate.getDay(), currentDate.getMonth(), currentDate.getYear(), min, hour);
-	DateTime solarTime(currentDate);
-	solarTime.setHour(hour);
-	solarTime.setMinute(min);
-	if (solarTime < currentDate)
-	{
-		// Solar time has already been reached for the current day. Let's move
-		// to the next day that complies with constraints.
-		solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
-	}
-	mday = solarTime.getDay();
-	mon = solarTime.getMonth();
-	year = solarTime.getYear();
+    DateTime currentDate(&current);
+    currentDate.setYear(year);
+    currentDate.setMonth(mon);
+    currentDate.setDay(mday);
+    int min, hour;
+    getTime(currentDate.getDay(), currentDate.getMonth(), currentDate.getYear(), min, hour);
+    DateTime solarTime(currentDate);
+    solarTime.setHour(hour);
+    solarTime.setMinute(min);
+    if (solarTime < currentDate)
+    {
+        // Solar time has already been reached for the current day. Let's move
+        // to the next day that complies with constraints.
+        solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
+    }
+    mday = solarTime.getDay();
+    mon = solarTime.getMonth();
+    year = solarTime.getYear();
 }
 
 void SolarTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
-	TimeSpec::getTime(mday, mon, year, min, hour);
+    TimeSpec::getTime(mday, mon, year, min, hour);
 
-    LocationInfo* params = Services::instance()->getLocationInfo();
+    LocationInfo *params = Services::instance()->getLocationInfo();
     double lon, lat;
     params->getCoord(&lon, &lat);
 
-	// Get sunrise/sunset in GMT.
-    logger_m.infoStream() << "sun_rise_set date " << year+1900<< "-" << mon+1 << "-" << mday << endlog;
+    // Get sunrise/sunset in GMT.
+    logger_m.infoStream() << "sun_rise_set date " << year + 1900 << "-" << mon + 1 << "-" << mday << endlog;
     double rise, set;
-    int rs = suncalc::sun_rise_set( year+1900, mon+1, mday, lon, lat, &rise, &set );
+    int rs = suncalc::sun_rise_set(year + 1900, mon + 1, mday, lon, lat, &rise, &set);
 
     if (rs == 0)
     {
-		long tzOffset = params->getGmtOffset();
+        long tzOffset = params->getGmtOffset();
         double res = computeTime(rise, set);
-        min = minutes(res + minutes((double)tzOffset/3600));
-        hour = hours(res + (double)tzOffset/3600);
+        min = minutes(res + minutes((double)tzOffset / 3600));
+        hour = hours(res + (double)tzOffset / 3600);
 
-		// At this point, min and hour are expressed with DST off. Fix local
-		// time.
-		struct tm dateTime;
-		dateTime.tm_year = year;
-		dateTime.tm_mon = mon;
-		dateTime.tm_mday = mday;
-		dateTime.tm_hour = hour;
-		dateTime.tm_min = min;
-		dateTime.tm_sec = 0;
-		dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
-		mktime(&dateTime);
-		hour = dateTime.tm_hour;
-		min = dateTime.tm_min;
+        // At this point, min and hour are expressed with DST off. Fix local
+        // time.
+        struct tm dateTime;
+        dateTime.tm_year = year;
+        dateTime.tm_mon = mon;
+        dateTime.tm_mday = mday;
+        dateTime.tm_hour = hour;
+        dateTime.tm_min = min;
+        dateTime.tm_sec = 0;
+        dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is
+                               // going to fix that.
+        mktime(&dateTime);
+        hour = dateTime.tm_hour;
+        min = dateTime.tm_min;
 
-        logger_m.infoStream() << "sun_rise_set returned " << hour<< ":" <<min << endlog;
+        logger_m.infoStream() << "sun_rise_set returned " << hour << ":" << min << endlog;
     }
     else
     {
@@ -541,21 +523,21 @@ void SolarTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) co
     }
 }
 
+Logger &SolarInfo::logger_m(Logger::getInstance("SolarInfo"));
 
-Logger& SolarInfo::logger_m(Logger::getInstance("SolarInfo"));
-
-SolarInfo::SolarInfo(struct tm * timeinfo) : rs_m(0), year_m(timeinfo->tm_year), mon_m(timeinfo->tm_mon), mday_m(timeinfo->tm_mday)
+SolarInfo::SolarInfo(struct tm *timeinfo)
+    : rs_m(0), year_m(timeinfo->tm_year), mon_m(timeinfo->tm_mon), mday_m(timeinfo->tm_mday)
 {
-    LocationInfo* params = Services::instance()->getLocationInfo();
+    LocationInfo *params = Services::instance()->getLocationInfo();
     double lon, lat;
     params->getCoord(&lon, &lat);
     tz_offset_m = params->getGmtOffset();
 
-    logger_m.infoStream() << "SolarInfo date " << year_m+1900<< "-" <<mon_m+1 << "-" << mday_m << endlog;
-    rs_m  = suncalc::sun_rise_set( year_m+1900, mon_m+1, mday_m, lon, lat, &rise_m, &set_m );
+    logger_m.infoStream() << "SolarInfo date " << year_m + 1900 << "-" << mon_m + 1 << "-" << mday_m << endlog;
+    rs_m = suncalc::sun_rise_set(year_m + 1900, mon_m + 1, mday_m, lon, lat, &rise_m, &set_m);
 }
 
-SolarInfo::~SolarInfo() {};
+SolarInfo::~SolarInfo(){};
 
 bool SolarInfo::getSunrise(int *min, int *hour)
 {
@@ -569,35 +551,36 @@ bool SolarInfo::getSunset(int *min, int *hour)
 
 bool SolarInfo::getNoon(int *min, int *hour)
 {
-    return get((rise_m+set_m)/2.0, min, hour);
+    return get((rise_m + set_m) / 2.0, min, hour);
 }
 
 bool SolarInfo::get(double res, int *min, int *hour)
 {
     if (rs_m == 0)
     {
-        *min = minutes(res + minutes((double)tz_offset_m/3600));
-        *hour = hours(res + (double)tz_offset_m/3600);
+        *min = minutes(res + minutes((double)tz_offset_m / 3600));
+        *hour = hours(res + (double)tz_offset_m / 3600);
         if (*min < 0 || *hour < 0)
         {
             *min = 0;
             *hour = 0;
         }
 
-		// At this point, min and hour are expressed with DST off. Fix local
-		// time.
-		struct tm dateTime;
-		dateTime.tm_year = year_m;
-		dateTime.tm_mon = mon_m;
-		dateTime.tm_mday = mday_m;
-		dateTime.tm_hour = *hour;
-		dateTime.tm_min = *min;
-		dateTime.tm_sec = 0;
-		dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
-		mktime(&dateTime);
-		*hour = dateTime.tm_hour;
-		*min = dateTime.tm_min;
-        logger_m.infoStream() << "returned " << *hour<< ":" << *min << endlog;
+        // At this point, min and hour are expressed with DST off. Fix local
+        // time.
+        struct tm dateTime;
+        dateTime.tm_year = year_m;
+        dateTime.tm_mon = mon_m;
+        dateTime.tm_mday = mday_m;
+        dateTime.tm_hour = *hour;
+        dateTime.tm_min = *min;
+        dateTime.tm_sec = 0;
+        dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is
+                               // going to fix that.
+        mktime(&dateTime);
+        *hour = dateTime.tm_hour;
+        *min = dateTime.tm_min;
+        logger_m.infoStream() << "returned " << *hour << ":" << *min << endlog;
     }
     else
     {
@@ -607,13 +590,13 @@ bool SolarInfo::get(double res, int *min, int *hour)
     return true;
 }
 
-void LocationInfo::importXml(ticpp::Element* pConfig)
+void LocationInfo::importXml(ticpp::Element *pConfig)
 {
     pConfig->GetAttributeOrDefault("lon", &lon_m, 0);
     pConfig->GetAttributeOrDefault("lat", &lat_m, 0);
 }
 
-void LocationInfo::exportXml(ticpp::Element* pConfig)
+void LocationInfo::exportXml(ticpp::Element *pConfig)
 {
     pConfig->SetAttribute("lon", lon_m);
     pConfig->SetAttribute("lat", lat_m);
@@ -638,11 +621,11 @@ void LocationInfo::exportXml(ticpp::Element* pConfig)
 
 LocationInfo::LocationInfo() : lon_m(0), lat_m(0)
 {
-	// Get any time as reference and compute the broken-down GMT time.
-	// Then reverse the computation by interpreting the broken-down time as
-	// local time. The result is the 
-	time_t ref = 0;
-	gmtOffset_m = -mktime(gmtime(&ref));
+    // Get any time as reference and compute the broken-down GMT time.
+    // Then reverse the computation by interpreting the broken-down time as
+    // local time. The result is the
+    time_t ref = 0;
+    gmtOffset_m = -mktime(gmtime(&ref));
 }
 
 long LocationInfo::getGmtOffset()
