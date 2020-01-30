@@ -2283,7 +2283,7 @@ bool TimeCounterCondition::evaluate()
         reschedule(0);
     }
 
-    if ((lastVal_m == false && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m || lastTime_m == 0))
+    if ((!lastVal_m && lastTime_m > 0 && (now-lastTime_m) > resetDelay_m || lastTime_m == 0))
     {
         counter_m = 0;
         lastTime_m = 0;
