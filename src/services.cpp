@@ -28,10 +28,8 @@ Services::Services() : xmlServer_m(0), persistentStorage_m(0)
 Services::~Services()
 {
     stop();
-    if (xmlServer_m)
-        delete xmlServer_m;
-    if (persistentStorage_m)
-        delete persistentStorage_m;
+    delete xmlServer_m;
+    delete persistentStorage_m;
     IOPortManager::reset();
 }
 
@@ -57,8 +55,7 @@ void Services::stop()
 
 void Services::createDefault()
 {
-    if (xmlServer_m)
-        delete xmlServer_m;
+    delete xmlServer_m;
     xmlServer_m = new XmlInetServer(1028);
 }
 
@@ -73,8 +70,7 @@ void Services::importXml(ticpp::Element* pConfig)
     ticpp::Element* pXmlServer = pConfig->FirstChildElement("xmlserver", false);
     if (pXmlServer)
     {
-        if (xmlServer_m)
-            delete xmlServer_m;
+        delete xmlServer_m;
         xmlServer_m = XmlServer::create(pXmlServer);
     }
     ticpp::Element* pKnxConnection = pConfig->FirstChildElement("knxconnection", false);
@@ -89,8 +85,7 @@ void Services::importXml(ticpp::Element* pConfig)
     ticpp::Element* pPersistence = pConfig->FirstChildElement("persistence", false);
     if (pPersistence)
     {
-        if (persistentStorage_m)
-            delete persistentStorage_m;
+        delete persistentStorage_m;
         persistentStorage_m = PersistentStorage::create(pPersistence);
     }
     ticpp::Element* pIOPorts = pConfig->FirstChildElement("ioports", false);

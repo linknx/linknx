@@ -703,10 +703,8 @@ PeriodicTask::PeriodicTask(ChangeListener* cl)
 PeriodicTask::~PeriodicTask()
 {
     Services::instance()->getTimerManager()->removeTask(this);
-    if (at_m)
-        delete at_m;
-    if (until_m)
-        delete until_m;
+    delete at_m;
+    delete until_m;
 }
 
 void PeriodicTask::onTimer(time_t time)

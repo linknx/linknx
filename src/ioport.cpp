@@ -889,8 +889,7 @@ RxCondition::~RxCondition()
         port->removeListener(this);
     if (regexFlag_m)
         regfree(&regex_m);
-    if (pmatch_m)
-        delete pmatch_m;
+    delete pmatch_m;
     std::vector<Object*>::iterator it;
     for (it=objects_m.begin(); it!=objects_m.end(); it++)
         if (*it)

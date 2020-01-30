@@ -691,8 +691,7 @@ SetValueAction::~SetValueAction()
 {
     if (object_m)
         object_m->decRefCount();
-    if (value_m)
-        delete value_m;
+    delete value_m;
 }
 
 void SetValueAction::importXml(ticpp::Element* pConfig)
@@ -1008,8 +1007,7 @@ CycleOnOffAction::~CycleOnOffAction()
 {
     if (object_m)
         object_m->decRefCount();
-    if (stopCondition_m)
-        delete stopCondition_m;
+    delete stopCondition_m;
 }
 
 void CycleOnOffAction::importXml(ticpp::Element* pConfig)
@@ -1036,8 +1034,7 @@ void CycleOnOffAction::importXml(ticpp::Element* pConfig)
     ticpp::Element* pStopCondition = pConfig->FirstChildElement("stopcondition", false);
     if (pStopCondition)
     {
-        if (stopCondition_m)
-            delete stopCondition_m;
+        delete stopCondition_m;
         stopCondition_m = Condition::create(pStopCondition, this);
     }
 
@@ -1195,8 +1192,7 @@ ConditionalAction::ConditionalAction()
 ConditionalAction::~ConditionalAction()
 {
     Stop();
-    if (condition_m)
-        delete condition_m;
+    delete condition_m;
     while (!actionsList_m.empty())
     {
         delete actionsList_m.front();
@@ -1720,8 +1716,7 @@ NotCondition::NotCondition(ChangeListener* cl) : condition_m(0), cl_m(cl)
 
 NotCondition::~NotCondition()
 {
-    if (condition_m)
-        delete condition_m;
+    delete condition_m;
 }
 
 bool NotCondition::evaluate()
@@ -1761,8 +1756,7 @@ ObjectCondition::ObjectCondition(ChangeListener* cl) : object_m(0), value_m(0), 
 
 ObjectCondition::~ObjectCondition()
 {
-    if (value_m)
-        delete value_m;
+    delete value_m;
     if (object_m && cl_m)
         object_m->removeChangeListener(cl_m);
     if (object_m)
@@ -2010,8 +2004,7 @@ ObjectThresholdCondition::ObjectThresholdCondition(ChangeListener* cl) : ObjectC
 
 ObjectThresholdCondition::~ObjectThresholdCondition()
 {
-    if (condition_m)
-        delete condition_m;
+    delete condition_m;
 }
 
 bool ObjectThresholdCondition::evaluate()
@@ -2147,8 +2140,7 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception("Timer can't define <at> and <every> elements simultaneously");
     if (at)
     {
-        if (at_m)
-            delete at_m;
+        delete at_m;
         at_m = TimeSpec::create(at, this);
     }
     else if (every)
@@ -2170,8 +2162,7 @@ void TimerCondition::importXml(ticpp::Element* pConfig)
     }
     else if (until)
     {
-        if (until_m)
-            delete until_m;
+        delete until_m;
         until_m = TimeSpec::create(until, this);
 //        until_m.importXml(until);
         during_m = -1;
@@ -2250,8 +2241,7 @@ TimeCounterCondition::TimeCounterCondition(ChangeListener* cl) : condition_m(0),
 
 TimeCounterCondition::~TimeCounterCondition()
 {
-    if (condition_m)
-        delete condition_m;
+    delete condition_m;
 }
 
 bool TimeCounterCondition::evaluate()
