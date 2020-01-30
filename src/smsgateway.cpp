@@ -48,8 +48,8 @@ void SmsGateway::importXml(ticpp::Element* pConfig)
         throw ticpp::Exception(msg.str());
 #endif
     }
-	else if(type == "freemobile")
-	{
+    else if(type == "freemobile")
+    {
 		type_m = FreeMobile;
         pConfig->GetAttribute("user", &user_m);
         pConfig->GetAttribute("pass", &pass_m);
@@ -82,12 +82,12 @@ void SmsGateway::exportXml(ticpp::Element* pConfig)
         if (!from_m.empty())
             pConfig->SetAttribute("from", from_m);
     }
-	else if (type_m == FreeMobile)
-	{
-		pConfig->SetAttribute("type", "freemobile");
-		pConfig->SetAttribute("user", user_m);
-		pConfig->SetAttribute("pass", pass_m);
-	}
+    else if (type_m == FreeMobile)
+    {
+        pConfig->SetAttribute("type", "freemobile");
+        pConfig->SetAttribute("user", user_m);
+        pConfig->SetAttribute("pass", pass_m);
+    }
 }
 
 void SmsGateway::sendSmsThroughREST(const std::string &baseUrl, const std::map<std::string, std::string> &parameters)
@@ -151,15 +151,15 @@ void SmsGateway::sendSms(std::string &id, std::string &value)
 
 		sendSmsThroughREST("http://api.clickatell.com/http/sendmsg", parameters);
     }
-	else if (type_m == FreeMobile)
-	{
-		std::map<std::string, std::string> parameters;
-		parameters["user"] = user_m;
-		parameters["pass"] = pass_m;
-		parameters["msg"] = value;
+    else if (type_m == FreeMobile)
+    {
+        std::map<std::string, std::string> parameters;
+        parameters["user"] = user_m;
+        parameters["pass"] = pass_m;
+        parameters["msg"] = value;
 
-		sendSmsThroughREST("https://smsapi.free-mobile.fr/sendmsg", parameters);
-	}
+        sendSmsThroughREST("https://smsapi.free-mobile.fr/sendmsg", parameters);
+    }
     else
         logger_m.errorStream() << "Unable to send SMS, gateway not set." << endlog;
 }
