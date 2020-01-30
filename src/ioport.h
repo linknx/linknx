@@ -55,8 +55,8 @@ public:
             delete instance_m;
         instance_m = 0;
     };
-    void addPort(IOPort* conn);
-    void removePort(IOPort* conn);
+    void addPort(IOPort* port);
+    void removePort(IOPort* port);
 
     IOPort* getPort(const std::string& id);
 

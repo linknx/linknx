@@ -213,7 +213,7 @@ public:
     virtual ~PeriodicTask();
 
     virtual void onTimer(time_t time);
-    virtual void reschedule(time_t from);
+    virtual void reschedule(time_t now);
     virtual time_t getExecTime() { return nextExecTime_m; };
     virtual void statusXml(ticpp::Element* pStatus);
 
@@ -234,7 +234,7 @@ protected:
     static Logger& logger_m;
 
 private:
-	time_t goToNextDayAndFindNext(const DateTime &curent, TimeSpec *next);
+	time_t goToNextDayAndFindNext(const DateTime &current, TimeSpec *next);
 };
 
 class FixedTimeTask : public TimerTask
@@ -244,7 +244,7 @@ public:
     virtual ~FixedTimeTask();
 
     virtual void onTimer(time_t time) = 0;
-    virtual void reschedule(time_t from);
+    virtual void reschedule(time_t now);
     virtual time_t getExecTime() { return execTime_m; };
     virtual void statusXml(ticpp::Element* pStatus);
 
@@ -304,8 +304,8 @@ public:
     virtual ~ExceptionDays();
 
     void clear();
-    void addDay(DaySpec* date);
-    void removeDay(DaySpec* date);
+    void addDay(DaySpec* day);
+    void removeDay(DaySpec* day);
 
     void importXml(ticpp::Element* pConfig);
     void exportXml(ticpp::Element* pConfig);
