@@ -80,7 +80,8 @@ void KnxConnection::write(eibaddr_t gad, uint8_t *buf, int len)
             logger_m.errorStream() << "Write request failed (gad=" << Object::WriteGroupAddr(gad)
                                    << ", buf, len=" << len << ")" << endlog;
         }
-        else
+
+        if (len != -1)
         {
             logger_m.debugStream() << "Write request sent" << endlog;
         }

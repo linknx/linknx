@@ -199,19 +199,23 @@ Rule::~Rule()
 
 ActionList &Rule::getActions(ActionList::TriggerType trigger)
 {
-    switch (trigger)
-    {
-    case ActionList::OnTrue:
+    if (trigger == ActionList::OnTrue) {
         return actionsOnTrue_m;
-    case ActionList::IfTrue:
-        return actionsIfTrue_m;
-    case ActionList::OnFalse:
-        return actionsOnFalse_m;
-    case ActionList::IfFalse:
-        return actionsIfFalse_m;
-    default:
-        throw "Invalid trigger type.";
     }
+
+    if (trigger == ActionList::IfTrue) {
+        return actionsIfTrue_m;
+    }
+
+    if (trigger == ActionList::OnFalse) {
+        return actionsOnFalse_m;
+    }
+
+    if (trigger == ActionList::IfFalse) {
+        return actionsIfFalse_m;
+    }
+
+    throw "Invalid trigger type.";
 }
 
 void Rule::addAction(Action *action, ActionList::TriggerType trigger)
@@ -449,7 +453,8 @@ void Rule::evaluate()
             if (!prevValue_m)
                 executeActions(actionsOnTrue_m);
         }
-        else
+
+        if (!curValue)
         {
             executeActions(actionsIfFalse_m);
             if (prevValue_m)
@@ -486,44 +491,43 @@ Action *Action::create(const std::string &type)
 {
     if (type == "dim-up")
         return new DimUpAction();
-    else if (type == "set-value")
+    if (type == "set-value")
         return new SetValueAction();
-    else if (type == "copy-value")
+    if (type == "copy-value")
         return new CopyValueAction();
-    else if (type == "toggle-value")
+    if (type == "toggle-value")
         return new ToggleValueAction();
-    else if (type == "set-string")
+    if (type == "set-string")
         return new SetStringAction();
-    else if (type == "send-read-request")
+    if (type == "send-read-request")
         return new SendReadRequestAction();
-    else if (type == "cycle-on-off")
+    if (type == "cycle-on-off")
         return new CycleOnOffAction();
-    else if (type == "repeat")
+    if (type == "repeat")
         return new RepeatListAction();
-    else if (type == "conditional")
+    if (type == "conditional")
         return new ConditionalAction();
-    else if (type == "send-sms")
+    if (type == "send-sms")
         return new SendSmsAction();
-    else if (type == "send-email")
+    if (type == "send-email")
         return new SendEmailAction();
-    else if (type == "shell-cmd")
+    if (type == "shell-cmd")
         return new ShellCommandAction();
-    else if (type == "ioport-tx")
+    if (type == "ioport-tx")
         return new TxAction();
 #ifdef HAVE_LUA
-    else if (type == "script")
+    if (type == "script")
         return new LuaScriptAction();
 #endif
-    else if (type == "start-actionlist")
+    if (type == "start-actionlist")
         return new StartActionlistAction();
-    else if (type == "cancel")
+    if (type == "cancel")
         return new CancelAction();
-    else if (type == "set-rule-active")
+    if (type == "set-rule-active")
         return new SetRuleActiveAction();
-    else if (type == "formula")
+    if (type == "formula")
         return new FormulaAction();
-    else
-        return 0;
+    return NULL;
 }
 
 Action *Action::create(ticpp::Element *pConfig)
@@ -1598,32 +1602,31 @@ Condition *Condition::create(const std::string &type, ChangeListener *cl)
 {
     if (type == "and")
         return new AndCondition(cl);
-    else if (type == "or")
+    if (type == "or")
         return new OrCondition(cl);
-    else if (type == "not")
+    if (type == "not")
         return new NotCondition(cl);
-    else if (type == "object")
+    if (type == "object")
         return new ObjectCondition(cl);
-    else if (type == "timer")
+    if (type == "timer")
         return new TimerCondition(cl);
-    else if (type == "object-compare")
+    if (type == "object-compare")
         return new ObjectComparisonCondition(cl);
-    else if (type == "object-src")
+    if (type == "object-src")
         return new ObjectSourceCondition(cl);
-    else if (type == "threshold")
+    if (type == "threshold")
         return new ObjectThresholdCondition(cl);
-    else if (type == "time-counter")
+    if (type == "time-counter")
         return new TimeCounterCondition(cl);
-    else if (type == "ioport-rx")
+    if (type == "ioport-rx")
         return new RxCondition(cl);
-    else if (type == "ioport-connect")
+    if (type == "ioport-connect")
         return new ConnectCondition(cl);
 #ifdef HAVE_LUA
-    else if (type == "script")
+    if (type == "script")
         return new LuaCondition(cl);
 #endif
-    else
-        return 0;
+    return NULL;
 }
 
 Condition *Condition::create(ticpp::Element *pConfig, ChangeListener *cl)
@@ -1842,7 +1845,8 @@ void ObjectCondition::importXml(ticpp::Element *pConfig)
         value_m = object_m->createObjectValue(value);
         logger_m.infoStream() << "ObjectCondition: configured value_m='" << value_m->toString() << "'" << endlog;
     }
-    else
+
+    if (value == "")
     {
         logger_m.infoStream() << "ObjectCondition: configured, no value specified" << endlog;
     }
@@ -2263,7 +2267,8 @@ void TimerCondition::exportXml(ticpp::Element *pConfig)
         until_m->exportXml(&pUntil);
         pConfig->LinkEndChild(&pUntil);
     }
-    else if (during_m != 0)
+
+    if (during_m != 0)
     {
         ticpp::Element pDuring("during");
         pDuring.SetText(RuleServer::formatDuration(during_m));
@@ -2410,15 +2415,19 @@ void ActionList::cancel()
 
 std::string ActionList::getTriggerTypeToString(TriggerType trigger)
 {
-    switch (trigger)
-    {
-    case ActionList::IfTrue:
+    if (trigger == ActionList::IfTrue) {
         return "if-true";
-    case ActionList::OnTrue:
+    }
+
+    if (trigger == ActionList::OnTrue) {
         return "on-true";
-    case ActionList::IfFalse:
+    }
+
+    if (trigger == ActionList::IfFalse) {
         return "if-false";
-    case ActionList::OnFalse:
+    }
+
+    if (trigger == ActionList::OnFalse) {
         return "on-false";
     }
 }

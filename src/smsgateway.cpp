@@ -84,7 +84,7 @@ void SmsGateway::exportXml(ticpp::Element *pConfig)
         if (!from_m.empty())
             pConfig->SetAttribute("from", from_m);
     }
-    else if (type_m == FreeMobile)
+    if (type_m == FreeMobile)
     {
         pConfig->SetAttribute("type", "freemobile");
         pConfig->SetAttribute("user", user_m);
@@ -154,7 +154,8 @@ void SmsGateway::sendSms(std::string &id, std::string &value)
 
         sendSmsThroughREST("http://api.clickatell.com/http/sendmsg", parameters);
     }
-    else if (type_m == FreeMobile)
+
+    if (type_m == FreeMobile)
     {
         std::map<std::string, std::string> parameters;
         parameters["user"] = user_m;
@@ -163,6 +164,9 @@ void SmsGateway::sendSms(std::string &id, std::string &value)
 
         sendSmsThroughREST("https://smsapi.free-mobile.fr/sendmsg", parameters);
     }
-    else
+
+    if ((type_m != Clickatell) && (type_m != FreeMobile))
+    {
         logger_m.errorStream() << "Unable to send SMS, gateway not set." << endlog;
+    }
 }

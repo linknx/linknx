@@ -132,12 +132,11 @@ IOPort *IOPort::create(const std::string &type)
 {
     if (type == "" || type == "udp")
         return new UdpIOPort();
-    else if (type == "tcp")
+    if (type == "tcp")
         return new TcpClientIOPort();
-    else if (type == "serial")
+    if (type == "serial")
         return new SerialIOPort();
-    else
-        return 0;
+    return NULL;
 }
 
 IOPort *IOPort::create(ticpp::Element *pConfig)
@@ -352,11 +351,13 @@ TcpClientIOPort::Socket::Socket(TcpClientIOPort *ioport) : ioport_m(ioport), soc
         sockfd_m = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd_m >= 0)
         {
-            if (pth_connect(sockfd_m, (const struct sockaddr *)&ioport->addr_m, sizeof(ioport_m->addr_m)) < 0)
+            int connect = pth_connect(sockfd_m, (const struct sockaddr *)&ioport->addr_m, sizeof(ioport_m->addr_m));
+            if (connect < 0)
             {
                 logger_m.errorStream() << "Unable to connect to server for ioport " << ioport->getID() << endlog;
             }
-            else
+
+            if (connect >= 0)
             {
                 ioport->onConnect();
             }

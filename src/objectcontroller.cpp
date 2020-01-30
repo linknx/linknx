@@ -2080,19 +2080,22 @@ HeatingModeObjectValue::HeatingModeObjectValue(const std::string &value)
 
 std::string HeatingModeObjectValue::toString()
 {
-    switch (value_m)
-    {
-    case 0:
+    if (value_m == 0) {
         return "auto";
-    case 1:
-        return "comfort";
-    case 2:
-        return "standby";
-    case 3:
-        return "night";
-    case 4:
-        return "frost";
     }
+
+    if (value_m == 1) {
+        return "comfort";
+    }
+
+    if (value_m == 2) {
+        return "standby";
+    }
+
+    if (value_m == 3) {
+        return "night";
+    }
+
     return "frost";
 }
 

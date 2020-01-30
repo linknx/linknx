@@ -35,11 +35,13 @@ LuaMain *LuaMain::instance_m;
 
 LuaMain::LuaMain()
 {
-    if (pth_mutex_init(&mutex_m))
+    int init = pth_mutex_init(&mutex_m);
+    if (init)
     {
         Logger::getInstance("LuaMain").debugStream() << "Lua Mutex Initialized" << endlog;
     }
-    else
+
+    if (!init)
     {
         Logger::getInstance("LuaMain").errorStream() << "Error initializing Lua Mutex" << endlog;
     }
