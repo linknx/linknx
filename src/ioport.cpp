@@ -179,8 +179,7 @@ bool IOPort::removeListener(IOPortListener *l)
 {
     if (rxThread_m)
         return (rxThread_m->removeListener(l));
-    else
-        return false;
+    return false;
 }
 
 void IOPort::addConnectListener(ConnectCondition *c)
@@ -283,9 +282,7 @@ void UdpIOPort::importXml(ticpp::Element* pConfig)
     }
     else {
         logger_m.errorStream() << "Unable to create  socket for ioport " << getID() << endlog;
-    }    
-    
-   
+    }
     logger_m.infoStream() << "UdpIOPort configured for host " << host_m << " and port " << port_m << endlog;
 }
 
@@ -310,9 +307,7 @@ int UdpIOPort::send(const uint8_t* buf, int len)
         if (nbytes == len) {
             return nbytes;
         }
-        else {
-            logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
-        }
+        logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
     }
     return -1;
 }
@@ -356,14 +351,14 @@ TcpClientIOPort::Socket::Socket(TcpClientIOPort *ioport)
         if (sockfd_m >= 0) {
             if (pth_connect(sockfd_m, (const struct sockaddr *)&ioport->addr_m, sizeof (ioport_m->addr_m)) < 0) {
                 logger_m.errorStream() << "Unable to connect to server for ioport " << ioport->getID() << endlog;
-            } else { 
-        	ioport->onConnect(); 
+            } else {
+                ioport->onConnect();
     	    }
         }
         else {
             logger_m.errorStream() << "Unable to create  socket for ioport " << ioport_m->getID() << endlog;
         }
-    }    
+    }
 
     // Keep socket?
     if (ioport->permanent_m)
@@ -432,9 +427,7 @@ int TcpClientIOPort::send(const uint8_t* buf, int len)
         if (nbytes == len) {
             return nbytes;
         }
-        else {
-            logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
-        }
+        logger_m.errorStream() << "Error while sending data for ioport " << getID() << endlog;
     }
     return -1;
 }
@@ -454,10 +447,8 @@ int TcpClientIOPort::get(uint8_t* buf, int len, pth_event_t stop)
                 logger_m.debugStream() << "Received '" << msg << "' on ioport " << getID() << endlog;
                 return i;
             }
-            else {
-                if (pth_event_status (stop) == PTH_STATUS_OCCURRED)
-                    retry = false;
-            }
+            if (pth_event_status (stop) == PTH_STATUS_OCCURRED)
+                retry = false;
         }
         else {
             struct timeval tv;
@@ -622,7 +613,7 @@ void SerialIOPort::importXml(ticpp::Element* pConfig)
     }
     else {
         logger_m.errorStream() << "Unable to open device '" << dev_m << "' for ioport " << getID() << endlog;
-    }    
+    }
 }
 
 void SerialIOPort::exportXml(ticpp::Element* pConfig)
@@ -734,9 +725,7 @@ int SerialIOPort::send(const uint8_t* buf, int len)
         if (nbytes == len) {
             return nbytes;
         }
-        else {
-            logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
-        }
+        logger_m.errorStream() << "Unable to send to socket for ioport " << getID() << endlog;
     }
     return -1;
 }

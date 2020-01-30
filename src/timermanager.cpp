@@ -86,10 +86,7 @@ bool DateTime::tryIncreaseClosestGreaterFreeField(FieldType current)
 		increaseField(current, false);
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 int DateTime::increaseField(FieldType fieldId, bool fixes)
@@ -126,7 +123,7 @@ DateTime::ProjectionResult DateTime::projectOnActualCalendar()
 {
 	tm time;
 	getTime(&time);
-	
+
 	DateTime projected(&time);
 	bool isChanged = false;
 	bool hasFreeField = false;
@@ -145,10 +142,7 @@ DateTime::ProjectionResult DateTime::projectOnActualCalendar()
 				{
 					return Projection_Changed;
 				}
-				else
-				{
-					return hasFreeField ? Projection_Failed : Projection_Impossible;
-				}
+				return hasFreeField ? Projection_Failed : Projection_Impossible;
 			}
 		}
 		hasFreeField |= isFieldFree(fieldId);
@@ -188,10 +182,7 @@ bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, Fi
 		{
 			return true;
 		}
-		else
-		{
-			if (!this->tryIncreaseClosestGreaterFreeField(Day)) return false;
-		}
+		if (!this->tryIncreaseClosestGreaterFreeField(Day)) return false;
 	}
 
 	return false;
@@ -249,10 +240,7 @@ bool DateTime::isCompatibleWithWeekDays() const
 		int wd = (time.tm_wday + 6) % 7;
 		return (weekdays_m & (1 << wd)) != 0;
 	}
-	else
-	{
-		return true;
-	}
+	return true;
 }
 
 bool DateTime::operator>(const DateTime &other) const
@@ -374,8 +362,7 @@ TimeSpec* TimeSpec::create(const std::string& type, ChangeListener* cl)
         return new SunsetTimeSpec();
     if (type == "noon")
         return new SolarNoonTimeSpec();
-    else
-        return new TimeSpec();
+    return new TimeSpec();
 }
 
 TimeSpec* TimeSpec::create(ticpp::Element* pConfig, ChangeListener* cl)
@@ -924,10 +911,7 @@ time_t PeriodicTask::findNext(time_t start, TimeSpec* next)
 	{
 		return findNext(nextExecTime, next);
 	}
-	else
-	{
-		return nextExecTimeWithOffset;
-	}
+	return nextExecTimeWithOffset;
 }
 
 time_t PeriodicTask::goToNextDayAndFindNext(const DateTime &current, TimeSpec* next)

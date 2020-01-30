@@ -2279,10 +2279,7 @@ bool TimeCounterCondition::evaluate()
         lastTime_m = 0;
         return false;
     }
-    else
-    {
-        return (counter_m >= threshold_m);
-    }
+    return (counter_m >= threshold_m);
 }
 
 void TimeCounterCondition::onTimer(time_t time)
@@ -2386,20 +2383,17 @@ ActionList::TriggerType ActionList::parseTriggerType(const std::string &trigger)
 	{
 		return ActionList::IfTrue;
 	}
-	else if (trigger == "on-true")
+	if (trigger == "on-true")
 	{
 		return ActionList::OnTrue;
 	}
-	else if (trigger == "if-false")
+	if (trigger == "if-false")
 	{
 		return ActionList::IfFalse;
 	}
-	else if (trigger == "on-false")
+	if (trigger == "on-false")
 	{
 		return ActionList::OnFalse;
 	}
-	else
-	{
-		throw "Invalid trigger type.";
-	}
+	throw "Invalid trigger type.";
 }

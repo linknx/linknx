@@ -42,157 +42,157 @@ Object* Object::create(const std::string& type)
 {
     if (type == "" || type == "EIS1" || type == "1.001")
         return new SwitchingSwitchObject();
-    else if (type.compare(0, 2, "1.") == 0)
-    {    
+    if (type.compare(0, 2, "1.") == 0)
+    {
         if (type == "1.002")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<2> >();
-        else if (type == "1.003")
+        if (type == "1.003")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<3> >();
-        else if (type == "1.004")
+        if (type == "1.004")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<4> >();
-        else if (type == "1.005")
+        if (type == "1.005")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<5> >();
-        else if (type == "1.006")
+        if (type == "1.006")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<6> >();
-        else if (type == "1.007")
+        if (type == "1.007")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<7> >();
-        else if (type == "1.008")
+        if (type == "1.008")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<8> >();
-        else if (type == "1.009")
+        if (type == "1.009")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<9> >();
-        else if (type == "1.010")
+        if (type == "1.010")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<10> >();
-        else if (type == "1.011")
+        if (type == "1.011")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<11> >();
-        else if (type == "1.012")
+        if (type == "1.012")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<12> >();
-        else if (type == "1.013")
+        if (type == "1.013")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<13> >();
-        else if (type == "1.014")
+        if (type == "1.014")
             return new SwitchingObjectImpl<SwitchingImplObjectValue<14> >();
-        else return 0;
+        return 0;
     }
-    else if (type.compare(0, 2, "2.") == 0)
+    if (type.compare(0, 2, "2.") == 0)
     {
         if (type == "2.xxx")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<0> >();
-        else if (type == "2.001")
+        if (type == "2.001")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<1> >();
-        else if (type == "2.002")
+        if (type == "2.002")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<2> >();
-        else if (type == "2.003")
+        if (type == "2.003")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<3> >();
-        else if (type == "2.004")
+        if (type == "2.004")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<4> >();
-        else if (type == "2.005")
+        if (type == "2.005")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<5> >();
-        else if (type == "2.006")
+        if (type == "2.006")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<6> >();
-        else if (type == "2.007")
+        if (type == "2.007")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<7> >();
-        else if (type == "2.008")
+        if (type == "2.008")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<8> >();
-        else if (type == "2.009")
+        if (type == "2.009")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<9> >();
-        else if (type == "2.010")
+        if (type == "2.010")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<10> >();
-        else if (type == "2.011")
+        if (type == "2.011")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<11> >();
-        else if (type == "2.012")
+        if (type == "2.012")
             return new SwitchingControlObject<SwitchingControlImplObjectValue<12> >();
-        else return 0;
+        return 0;
     }
-    else if (type == "EIS2" || type == "3.007")
+    if (type == "EIS2" || type == "3.007")
         return new DimmingObject();
-    else if (type == "3.008")
+    if (type == "3.008")
         return new BlindsObject();
-    else if (type == "4.001")
+    if (type == "4.001")
         return new AsciiCharObject();
-    else if (type == "4.002")
+    if (type == "4.002")
         return new Latin1CharObject();
-    else if (type == "EIS3" || type == "10.001")
+    if (type == "EIS3" || type == "10.001")
         return new TimeObject();
-    else if (type == "EIS4" || type == "11.001")
+    if (type == "EIS4" || type == "11.001")
         return new DateObject();
-    else if (type == "EIS5" || type == "9.xxx")
+    if (type == "EIS5" || type == "9.xxx")
         return new ValueObjectImpl<ValueImplObjectValue<0> >();
-    else if (type.compare(0, 2, "9.") == 0)
+    if (type.compare(0, 2, "9.") == 0)
     {    
         if (type == "9.001")
             return new ValueObjectImpl<ValueImplObjectValue<1> >();
-        else if (type == "9.002")
+        if (type == "9.002")
             return new ValueObjectImpl<ValueImplObjectValue<2> >();
-        else if (type == "9.003")
+        if (type == "9.003")
             return new ValueObjectImpl<ValueImplObjectValue<3> >();
-        else if (type == "9.004")
+        if (type == "9.004")
             return new ValueObjectImpl<ValueImplObjectValue<4> >();
-        else if (type == "9.005")
+        if (type == "9.005")
             return new ValueObjectImpl<ValueImplObjectValue<5> >();
-        else if (type == "9.006")
+        if (type == "9.006")
             return new ValueObjectImpl<ValueImplObjectValue<6> >();
-        else if (type == "9.007")
+        if (type == "9.007")
             return new ValueObjectImpl<ValueImplObjectValue<7> >();
-        else if (type == "9.008")
+        if (type == "9.008")
             return new ValueObjectImpl<ValueImplObjectValue<8> >();
-        else if (type == "9.010")
+        if (type == "9.010")
             return new ValueObjectImpl<ValueImplObjectValue<10> >();
-        else if (type == "9.011")
+        if (type == "9.011")
             return new ValueObjectImpl<ValueImplObjectValue<11> >();
-        else if (type == "9.020")
+        if (type == "9.020")
             return new ValueObjectImpl<ValueImplObjectValue<20> >();
-        else if (type == "9.021")
+        if (type == "9.021")
             return new ValueObjectImpl<ValueImplObjectValue<21> >();
-        else if (type == "9.022")
+        if (type == "9.022")
             return new ValueObjectImpl<ValueImplObjectValue<22> >();
-        else if (type == "9.023")
+        if (type == "9.023")
             return new ValueObjectImpl<ValueImplObjectValue<23> >();
-        else if (type == "9.024")
+        if (type == "9.024")
             return new ValueObjectImpl<ValueImplObjectValue<24> >();
-        else if (type == "9.025")
+        if (type == "9.025")
             return new ValueObjectImpl<ValueImplObjectValue<25> >();
-        else if (type == "9.026")
+        if (type == "9.026")
             return new ValueObjectImpl<ValueImplObjectValue<26> >();
-        else if (type == "9.027")
+        if (type == "9.027")
             return new ValueObjectImpl<ValueImplObjectValue<27> >();
-        else if (type == "9.028")
+        if (type == "9.028")
             return new ValueObjectImpl<ValueImplObjectValue<28> >();
-        else return 0;
+        return 0;
     }
-    else if (type == "14.xxx")
+    if (type == "14.xxx")
         return new ValueObject32();
-    else if (type == "EIS6" || type == "5.xxx")
+    if (type == "EIS6" || type == "5.xxx")
         return new U8Object();
-    else if (type == "5.001")
+    if (type == "5.001")
         return new ScalingObject();
-    else if (type == "5.003")
+    if (type == "5.003")
         return new AngleObject();
-    else if (type == "5.010")
+    if (type == "5.010")
         return new U8CountObject();
-    else if (type == "heat-mode" || type == "20.102")
+    if (type == "heat-mode" || type == "20.102")
         return new HeatingModeObject();
-    else if (type == "EIS10" || type == "7.xxx")
+    if (type == "EIS10" || type == "7.xxx")
         return new U16Object();
-    else if (type == "EIS11" || type == "12.xxx")
+    if (type == "EIS11" || type == "12.xxx")
         return new U32Object();
-    else if (type == "EIS14" || type == "6.xxx")
+    if (type == "EIS14" || type == "6.xxx")
         return new S8Object();
-    else if (type == "8.xxx")
+    if (type == "8.xxx")
         return new S16Object();
-    else if (type == "13.xxx")
+    if (type == "13.xxx")
         return new S32Object();
 #ifdef STL_STREAM_SUPPORT_INT64
-    else if (type == "29.xxx")
+    if (type == "29.xxx")
         return new S64Object();
 #endif
-    else if (type == "16.001")
+    if (type == "16.001")
         return new String14Object();
-    else if (type == "EIS15" || type == "16.000")
+    if (type == "EIS15" || type == "16.000")
         return new String14AsciiObject();
-    else if (type == "28.001")
+    if (type == "28.001")
         return new StringObject();
-    else if (type == "232.600")
+    if (type == "232.600")
         return new RGBObject();
-    else if (type == "251.600")
+    if (type == "251.600")
         return new RGBWObject();
     else
         return 0;
@@ -617,10 +617,9 @@ int SwitchingObjectValue::compare(ObjectValue* value)
     logger_m.infoStream() << "SwitchingObjectValue: Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
     if (value_m == val->value_m)
         return 0;
-    else if (value_m)
+    if (value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool SwitchingObjectValue::set(bool value)
@@ -721,16 +720,15 @@ int SwitchingControlObjectValue::compare(ObjectValue* value)
     logger_m.infoStream() << "SwitchingControlObjectValue: Compare value_m='" << value_m << "' : control_m='" << control_m << "' with value='" << val->value_m << "' : control='" << val->control_m << "'" << endlog;
     if (!control_m && !val->control_m)
         return 0;
-    else if (control_m && !val->control_m)
+    if (control_m && !val->control_m)
         return 1;
-    else if (!control_m && val->control_m)
+    if (!control_m && val->control_m)
         return -1;
-    else if (value_m == val->value_m)
+    if (value_m == val->value_m)
         return 0;
-    else if (value_m)
+    if (value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool SwitchingControlObjectValue::set(bool value, bool control)
@@ -798,8 +796,7 @@ int StepDirObjectValue::compare(ObjectValue* value)
             return 0;
         if (stepcode_m > val->stepcode_m) // bigger stepcode => smaller steps
             return direction_m ? -1 : 1;
-        else
-            return direction_m ? 1 : -1;
+        return direction_m ? 1 : -1;
     }
     return direction_m ? 1 : -1;
 }
@@ -1562,8 +1559,7 @@ int ValueObjectValue::compare(ObjectValue* value)
         return 0;
     if (value_m > val->value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool ValueObjectValue::set(ObjectValue* value)
@@ -1820,8 +1816,7 @@ int UIntObjectValue::compare(ObjectValue* value)
         return 0;
     if (value_m > val->value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool UIntObjectValue::set(ObjectValue* value)
@@ -2462,8 +2457,7 @@ int IntObjectValue::compare(ObjectValue* value)
         return 0;
     if (value_m > val->value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool IntObjectValue::set(ObjectValue* value)
@@ -2744,8 +2738,7 @@ int S64ObjectValue::compare(ObjectValue* value)
         return 0;
     if (value_m > val->value_m)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 bool S64ObjectValue::set(ObjectValue* value)
@@ -2871,8 +2864,7 @@ int StringObjectValue::compare(ObjectValue* value)
         return 0;
     if (value_m < val->value_m)
         return -1;
-    else
-        return 1;
+    return 1;
 }
 
 bool StringObjectValue::set(ObjectValue* value)
