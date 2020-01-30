@@ -103,20 +103,20 @@ static struct argp_option options[] =
 static error_t
 parse_opt (int key, char *arg, struct argp_state *state)
 {
-    struct arguments *arguments = (struct arguments *) state->input;
+    struct arguments *arguments = static_cast<struct arguments *>(state->input);
     switch (key)
     {
     case 'c':
-        arguments->configfile = (char *) (arg ? arg : "/var/lib/linknx/linknx.xml");
+        arguments->configfile = const_cast<char *>(arg ? arg : "/var/lib/linknx/linknx.xml");
         break;
     case 'w':
-        arguments->writeconfig = (char *) (arg ? arg : "");
+        arguments->writeconfig = const_cast<char *>(arg ? arg : "");
         break;
     case 'p':
         arguments->pidfile = arg;
         break;
     case 'd':
-        arguments->daemon = (char *) (arg ? arg : "/dev/null");
+        arguments->daemon = const_cast<char *>(arg ? arg : "/dev/null");
         break;
     default:
         return ARGP_ERR_UNKNOWN;

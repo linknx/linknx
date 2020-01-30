@@ -275,7 +275,7 @@ void UdpIOPort::importXml(ticpp::Element* pConfig)
         addr.sin_family = AF_INET;
         addr.sin_port = htons(rxport_m);
         addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        if (bind(sockfd_m, (struct sockaddr *)&addr,sizeof(addr)) < 0) /* error */
+        if (bind(sockfd_m, reinterpret_cast<struct sockaddr *>(&addr),sizeof(addr)) < 0) /* error */
         {
             logger_m.errorStream() << "Unable to bind socket for ioport " << getID() << endlog;
         }
@@ -995,7 +995,7 @@ void RxCondition::onDataReceived(const uint8_t* buf, unsigned int len)
                     Object* obj = objects_m[i];
                     regmatch_t match = pmatch_m[i];
                     logger_m.debugStream() << "subgroup: " << i << " '" << match.rm_so << ":" << match.rm_eo << "'" << endlog;
-                    if ((match.rm_so != (size_t)-1) && (obj)) {
+                    if ((match.rm_so != static_cast<size_t>(-1)) && (obj)) {
                         std::string newValue(rx.c_str(), match.rm_so, match.rm_eo - match.rm_so);
                         logger_m.debugStream() << "RxCondition: new value " << newValue << " found in regex for object " << obj->getID() << endlog;
 

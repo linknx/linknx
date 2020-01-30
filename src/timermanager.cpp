@@ -57,7 +57,7 @@ void DateTime::setField(FieldType field, int value, bool fixesIfChanged)
 		fields_m[field] = value;
 		if (field != Minute)
 		{
-			resetFieldIfFree((FieldType)(field + 1), true);
+			resetFieldIfFree(static_cast<FieldType>(field + 1), true);
 		}
 	}
 }
@@ -78,7 +78,7 @@ bool DateTime::tryIncreaseClosestGreaterFreeField(FieldType current)
 	// year.
 	while (!isFieldFree(current) && current > Invalid)
 	{
-		current = (FieldType)(current - 1);
+		current = static_cast<FieldType>(current - 1);
 	}
 
 	if (current != Invalid)
@@ -127,7 +127,7 @@ DateTime::ProjectionResult DateTime::projectOnActualCalendar()
 	DateTime projected(&time);
 	bool isChanged = false;
 	bool hasFreeField = false;
-	for (FieldType fieldId = Year; fieldId <= Minute; fieldId = (FieldType)(fieldId + 1))
+	for (FieldType fieldId = Year; fieldId <= Minute; fieldId = static_cast<FieldType>(fieldId + 1))
 	{
 		if (getField(fieldId) != projected.getField(fieldId))
 		{
@@ -194,7 +194,7 @@ bool DateTime::tryResolveUnprojected(const DateTime &current, FieldType from, Fi
 bool DateTime::tryResolveWithoutWeekdays(const DateTime &current, FieldType from, FieldType to)
 {
 	// Nothing to do if target is already after current.
-	for (FieldType fieldId = Year; fieldId < from; fieldId = (FieldType)(fieldId + 1))
+	for (FieldType fieldId = Year; fieldId < from; fieldId = static_cast<FieldType>(fieldId + 1))
 	{
 		int targetField = this->getField(fieldId);
 		int currentField = current.getField(fieldId);
@@ -204,7 +204,7 @@ bool DateTime::tryResolveWithoutWeekdays(const DateTime &current, FieldType from
 
 	// So far, target's fields are equal to current. Let's see how it goes
 	// with the remaining fields.
-	for (FieldType fieldId = from; fieldId <= to; fieldId = (FieldType)(fieldId + 1))
+	for (FieldType fieldId = from; fieldId <= to; fieldId = static_cast<FieldType>(fieldId + 1))
 	{
 		int currentField = current.getField(fieldId);
 		int targetField = this->getField(fieldId);
@@ -262,7 +262,7 @@ void DateTime::resetFieldIfFree(FieldType field, bool recurses)
 	}
 	if (recurses && field != Minute)
 	{
-		resetFieldIfFree((FieldType)(field + 1), true);
+		resetFieldIfFree(static_cast<FieldType>(field + 1), true);
 	}
 }
 

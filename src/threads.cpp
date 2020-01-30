@@ -22,7 +22,7 @@
 void *
 Thread::ThreadWrapper (void *arg)
 {
-    Thread *t = (Thread *) arg;
+    Thread *t = static_cast<Thread *>(arg);
     t->Run (&t->should_stop);
     if (!t->joinable)
         t->tid = 0;

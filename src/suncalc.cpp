@@ -431,7 +431,7 @@ double GMST0( double d )
 }  /* GMST0 */
 
 
-}
+}  // namespace suncalc
 
 Logger& SolarTimeSpec::logger_m(Logger::getInstance("SolarTimeSpec"));
 

@@ -664,7 +664,7 @@ void SwitchingObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void SwitchingObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, (uint8_t)((isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0)) };
+    uint8_t buf[2] = { 0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getBoolObjectValue() ? 1 : 0)) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
@@ -870,7 +870,7 @@ void StepDirObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 
 void StepDirObject::doSend(bool isWrite)
 {
-    uint8_t buf[2] = { 0, (uint8_t)((isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07)) };
+    uint8_t buf[2] = { 0, static_cast<uint8_t>((isWrite ? 0x80 : 0x40) | (getDirection() ? 8 : 0) | (getStepCode() & 0x07)) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 2);
 }
 
@@ -1237,7 +1237,7 @@ void TimeObject::setTime(time_t time)
 
 void TimeObject::doSend(bool isWrite)
 {
-    uint8_t buf[5] = { 0, (uint8_t)(isWrite ? 0x80 : 0x40), (uint8_t)(((wday_m<<5) & 0xE0) | (hour_m & 0x1F)), (uint8_t)min_m, (uint8_t)sec_m };
+    uint8_t buf[5] = { 0, static_cast<uint8_t>(isWrite ? 0x80 : 0x40), static_cast<uint8_t>(((wday_m<<5) & 0xE0) | (hour_m & 0x1F)), static_cast<uint8_t>(min_m), static_cast<uint8_t>(sec_m) };
     Services::instance()->getKnxConnection()->write(getGad(), buf, 5);
 }
 
@@ -1578,7 +1578,7 @@ bool ValueObjectValue::set(ObjectValue* value)
 double ValueObjectValue::roundToKnxPrecision(double value)
 {
     int ex = 0;
-    int m = (int)rint(value * 100);
+    int m = static_cast<int>(rint(value * 100));
     if (m < 0)
     {
         m = -m;
@@ -1597,13 +1597,13 @@ double ValueObjectValue::roundToKnxPrecision(double value)
             ex++;
         }
     }
-    return ((double)m * (1 << ex) / 100);
+    return (static_cast<double>(m) * (1 << ex) / 100);
 }
 
 bool ValueObjectValue::set(double value)
 {
     if (precision_m != 0) {
-        int div = (int) (value/precision_m + (value >= 0 ? 0.5 : -0.5));
+        int div = static_cast<int>(value/precision_m + (value >= 0 ? 0.5 : -0.5));
         value = div*precision_m;
         logger_m.debugStream() << "ValueObject: rounded value "<< value << endlog;
     }
@@ -1645,12 +1645,12 @@ void ValueObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
         return;
     }
     double newValue;
-    int d1 = ((unsigned char) buf[2]) * 256 + (unsigned char) buf[3];
+    int d1 = (static_cast<unsigned char>(buf[2])) * 256 + static_cast<unsigned char>(buf[3]);
     int m = d1 & 0x7ff;
     if (d1 & 0x8000)
         m |= ~0x7ff;
     int ex = (d1 & 0x7800) >> 11;
-    newValue = ((double)m * (1 << ex) / 100);
+    newValue = (static_cast<double>(m) * (1 << ex) / 100);
     if (set(newValue) || forceUpdate())
     {
         onUpdate();
@@ -1662,7 +1662,7 @@ void ValueObject::doSend(bool isWrite)
 	BufferBuilder builder(4, ValueObject::logger_m);
 	builder << 0 << (isWrite ? 0x80 : 0x40) << 0 << 0;
     int ex = 0;
-    int m = (int)rint(getFloatValue() * 100);
+    int m = static_cast<int>(rint(getFloatValue() * 100));
     if (m < 0)
     {
         m = -m;
@@ -1940,7 +1940,7 @@ ScalingObjectValue::ScalingObjectValue(const std::string& value)
         msg << "ScalingObjectValue: Bad value: '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
-    value_m = (int)(fvalue * 255 / 100);
+    value_m = static_cast<int>(fvalue * 255 / 100);
 }
 
 std::string ScalingObjectValue::toString()
@@ -1985,7 +1985,7 @@ AngleObjectValue::AngleObjectValue(const std::string& value)
         msg << "AngleObjectValue: Bad value: '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
-    value_m = ((int)(fvalue * 256 / 360)) % 256;
+    value_m = (static_cast<int>(fvalue * 256 / 360)) % 256;
 }
 
 std::string AngleObjectValue::toString()
@@ -2083,7 +2083,7 @@ Latin1CharObjectValue::Latin1CharObjectValue(const std::string& value)
         msg << "Latin1CharObjectValue: Bad value: '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
-    value_m = (int)chvalue;
+    value_m = static_cast<int>(chvalue);
 }
 
 std::string Latin1CharObjectValue::toString()
@@ -2127,7 +2127,7 @@ AsciiCharObjectValue::AsciiCharObjectValue(const std::string& value)
         msg << "AsciiCharObjectValue: Bad value: '" << value << "'" << std::endl;
         throw ticpp::Exception(msg.str());
     }
-    value_m = (int)chvalue;
+    value_m = static_cast<int>(chvalue);
 }
 
 std::string AsciiCharObjectValue::toString()
@@ -2794,7 +2794,7 @@ void S64Object::setValue(const std::string& value)
 void S64Object::doWrite(const uint8_t* buf, int len, eibaddr_t src)
 {
     int64_t newValue;
-    newValue = ((int64_t)buf[2]<<56) | ((int64_t)buf[3]<<48) | ((int64_t)buf[4]<<40) | ((int64_t)buf[5]<<32) | (buf[6]<<24) | (buf[7]<<16) | (buf[8]<<8) | buf[9];
+    newValue = (static_cast<int64_t>(buf[2])<<56) | (static_cast<int64_t>(buf[3])<<48) | (static_cast<int64_t>(buf[4])<<40) | (static_cast<int64_t>(buf[5])<<32) | (buf[6]<<24) | (buf[7]<<16) | (buf[8]<<8) | buf[9];
     if (forceUpdate() || newValue != value_m)
     {
         value_m = newValue;

@@ -93,7 +93,7 @@ XmlInetServer::XmlInetServer (int port)
 
     setsockopt (fd_m, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof (reuse));
 
-    if (bind (fd_m, (struct sockaddr *) &addr, sizeof (addr)) == -1)
+    if (bind (fd_m, reinterpret_cast<struct sockaddr *>(&addr), sizeof (addr)) == -1)
     {
         std::stringstream msg;
         msg << "XmlServer: Unable to register server on TCP port " << port << ". Server is probably already started or was not cleanly stopped." << std::endl;
@@ -128,7 +128,7 @@ XmlUnixServer::XmlUnixServer (const char *path)
         throw ticpp::Exception("XmlServer: Unable to create UNIX socket");
 
     unlink (path);
-    if (bind (fd_m, (struct sockaddr *) &addr, sizeof (addr)) == -1)
+    if (bind (fd_m, reinterpret_cast<struct sockaddr *>(&addr), sizeof (addr)) == -1)
     {
         std::stringstream msg;
         msg << "XmlServer: Unable to register server on UNIX path " << path << std::endl;
