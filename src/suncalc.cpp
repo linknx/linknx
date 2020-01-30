@@ -24,12 +24,12 @@
 
 #include "suncalc.h"
 #include "services.h"
-#include <stdio.h>
+#include <cstdio>
 #include <cmath>
-#include <time.h>
-#include <stdlib.h>
+#include <ctime>
+#include <cstdlib>
 #include <getopt.h>
-#include <string.h>
+#include <cstring>
 
 namespace suncalc
 {
