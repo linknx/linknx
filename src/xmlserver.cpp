@@ -49,7 +49,7 @@ bool
 XmlServer::deregister (ClientConnection * con)
 {
     connections_m.remove(con);
-    return 1;
+    return true;
 }
 
 XmlServer* XmlServer::create(ticpp::Element* pConfig)
