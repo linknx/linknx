@@ -39,6 +39,7 @@ class PeriodicTaskTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testFindNextHourDstSunrise );
     CPPUNIT_TEST( testNegativeMinutes );
     CPPUNIT_TEST( testSunriseSpecificDay );
+    CPPUNIT_TEST( testFindNextSunsetWithMonthChange );
 //    CPPUNIT_TEST(  );
     
     CPPUNIT_TEST_SUITE_END();
@@ -788,6 +789,34 @@ public:
         CPPUNIT_ASSERT_EQUAL(8, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(10, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(118, timeinfo->tm_year);
+    }
+
+    void testFindNextSunsetWithMonthChange()
+    {
+        time_t next;
+        struct tm * timeinfo;
+        struct tm curtimeinfo;
+        time_t curtimeref;
+		Services::instance()->getLocationInfo()->setCoord(4.84, 45.76); // Near Lyon, France.
+        curtimeinfo.tm_hour = 21; // 21:00:00, after sunset for the current day.
+        curtimeinfo.tm_min = 0;
+        curtimeinfo.tm_sec = 0;
+        curtimeinfo.tm_mday = 31;
+        curtimeinfo.tm_mon = 2; // March
+        curtimeinfo.tm_year = 120; // 2020
+        curtimeinfo.tm_isdst = -1;
+        curtimeref = mktime(&curtimeinfo);
+        SunsetTimeSpec ts1;
+
+        next = task_m->callFindNext(curtimeref, &ts1);
+
+        CPPUNIT_ASSERT(next != 0);
+        timeinfo = localtime(&next);
+        CPPUNIT_ASSERT_EQUAL(58, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(19, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
+        CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mon);
+        CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year);
     }
 
     void testFindNextHourDstSunrise()
