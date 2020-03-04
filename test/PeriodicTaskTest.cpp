@@ -812,8 +812,8 @@ public:
 
         CPPUNIT_ASSERT(next != 0);
         timeinfo = localtime(&next);
-        CPPUNIT_ASSERT_EQUAL(58, timeinfo->tm_min);
-        CPPUNIT_ASSERT_EQUAL(19, timeinfo->tm_hour);
+        CPPUNIT_ASSERT_EQUAL(9, timeinfo->tm_min);
+        CPPUNIT_ASSERT_EQUAL(20, timeinfo->tm_hour);
         CPPUNIT_ASSERT_EQUAL(1, timeinfo->tm_mday);
         CPPUNIT_ASSERT_EQUAL(3, timeinfo->tm_mon);
         CPPUNIT_ASSERT_EQUAL(120, timeinfo->tm_year);

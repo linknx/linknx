@@ -491,6 +491,7 @@ void SolarTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, in
 		// Solar time has already been reached for the current day. Let's move
 		// to the next day that complies with constraints.
 		solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
+        solarTime.tryResolve(currentDate, DateTime::Year, DateTime::Day);
 	}
 	mday = solarTime.getDay();
 	mon = solarTime.getMonth();
