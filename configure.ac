@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(linknx, 0.0.1.37, cyrille.github@youplaboum.fr)
+AC_INIT(linknx, 0.0.1.38, cyrille.github@youplaboum.fr)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -10,6 +10,7 @@ PKG_CONFIG=`which pkg-config`
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
+AM_ICONV
 AC_CHECK_PTHSEM(2.0.4,yes,yes,no)
 AC_CHECK_HEADER(argp.h,,[AC_MSG_ERROR([argp_parse not found])])
 AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
@@ -144,8 +145,11 @@ if test x"$WITH_CPPUNIT" != xno; then
       AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-    ])
+      AM_CONDITIONAL([CPPUNIT], true)
+    ],[AM_CONDITIONAL([CPPUNIT], false)])
   fi
+else
+  AM_CONDITIONAL([CPPUNIT], false)
 fi
 
 dnl #########################################################################

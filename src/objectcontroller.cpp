@@ -2925,7 +2925,7 @@ std::string StringObjectValue::transcode(const std::string &source, const std::s
 	iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
 	char cSource[source.size()];
 	memcpy(cSource, source.c_str(), source.size() + 1);
-	char *sourceStart = &cSource[0];
+	ICONV_CONST char *sourceStart = &cSource[0];
 	size_t sourceLength = source.size();
 	const size_t targetLength = source.size() * 5; // Should be pretty enough even in worst cases.
 	char targetChars[targetLength];
