@@ -475,61 +475,64 @@ double SolarNoonTimeSpec::computeTime(double rise, double set) const
 
 void SolarTimeSpec::getDay(const tm &current, int &mday, int &mon, int &year, int &wdays) const
 {
-	TimeSpec::getDay(current, mday, mon, year, wdays);
+    TimeSpec::getDay(current, mday, mon, year, wdays);
 
-	DateTime currentDate(&current);
-	currentDate.setYear(year);
-	currentDate.setMonth(mon);
-	currentDate.setDay(mday);
-	int min, hour;
-	getTime(currentDate.getDay(), currentDate.getMonth(), currentDate.getYear(), min, hour);
-	DateTime solarTime(currentDate);
-	solarTime.setHour(hour);
-	solarTime.setMinute(min);
-	if (solarTime < currentDate)
-	{
-		// Solar time has already been reached for the current day. Let's move
-		// to the next day that complies with constraints.
-		solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
-	}
-	mday = solarTime.getDay();
-	mon = solarTime.getMonth();
-	year = solarTime.getYear();
+    DateTime currentDate(&current);
+    currentDate.setYear(year);
+    currentDate.setMonth(mon);
+    currentDate.setDay(mday);
+    int min, hour;
+    getTime(currentDate.getDay(), currentDate.getMonth(), currentDate.getYear(), min, hour);
+    DateTime solarTime(currentDate);
+    solarTime.setHour(hour);
+    solarTime.setMinute(min);
+    if (solarTime < currentDate)
+    {
+        // Solar time has already been reached for the current day. Let's move
+        // to the next day that complies with constraints.
+        solarTime.tryIncreaseClosestGreaterFreeField(DateTime::Day);
+
+        // Fixes #47: avoids selecting the day after end of month (32nd of March, for instance) by reprojecting it onto the actual calendar.
+        solarTime.tryResolve(currentDate, DateTime::Year, DateTime::Day);
+    }
+    mday = solarTime.getDay();
+    mon = solarTime.getMonth();
+    year = solarTime.getYear();
 }
 
 void SolarTimeSpec::getTime(int mday, int mon, int year, int &min, int &hour) const
 {
-	TimeSpec::getTime(mday, mon, year, min, hour);
+    TimeSpec::getTime(mday, mon, year, min, hour);
 
     LocationInfo* params = Services::instance()->getLocationInfo();
     double lon, lat;
     params->getCoord(&lon, &lat);
 
-	// Get sunrise/sunset in GMT.
+    // Get sunrise/sunset in GMT.
     logger_m.infoStream() << "sun_rise_set date " << year+1900<< "-" << mon+1 << "-" << mday << endlog;
     double rise, set;
     int rs = suncalc::sun_rise_set( year+1900, mon+1, mday, lon, lat, &rise, &set );
 
     if (rs == 0)
     {
-		long tzOffset = params->getGmtOffset();
+        long tzOffset = params->getGmtOffset();
         double res = computeTime(rise, set);
         min = minutes(res + minutes((double)tzOffset/3600));
         hour = hours(res + (double)tzOffset/3600);
 
-		// At this point, min and hour are expressed with DST off. Fix local
-		// time.
-		struct tm dateTime;
-		dateTime.tm_year = year;
-		dateTime.tm_mon = mon;
-		dateTime.tm_mday = mday;
-		dateTime.tm_hour = hour;
-		dateTime.tm_min = min;
-		dateTime.tm_sec = 0;
-		dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
-		mktime(&dateTime);
-		hour = dateTime.tm_hour;
-		min = dateTime.tm_min;
+        // At this point, min and hour are expressed with DST off. Fix local
+        // time.
+        struct tm dateTime;
+        dateTime.tm_year = year;
+        dateTime.tm_mon = mon;
+        dateTime.tm_mday = mday;
+        dateTime.tm_hour = hour;
+        dateTime.tm_min = min;
+        dateTime.tm_sec = 0;
+        dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
+        mktime(&dateTime);
+        hour = dateTime.tm_hour;
+        min = dateTime.tm_min;
 
         logger_m.infoStream() << "sun_rise_set returned " << hour<< ":" <<min << endlog;
     }
@@ -584,19 +587,19 @@ bool SolarInfo::get(double res, int *min, int *hour)
             *hour = 0;
         }
 
-		// At this point, min and hour are expressed with DST off. Fix local
-		// time.
-		struct tm dateTime;
-		dateTime.tm_year = year_m;
-		dateTime.tm_mon = mon_m;
-		dateTime.tm_mday = mday_m;
-		dateTime.tm_hour = *hour;
-		dateTime.tm_min = *min;
-		dateTime.tm_sec = 0;
-		dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
-		mktime(&dateTime);
-		*hour = dateTime.tm_hour;
-		*min = dateTime.tm_min;
+        // At this point, min and hour are expressed with DST off. Fix local
+        // time.
+        struct tm dateTime;
+        dateTime.tm_year = year_m;
+        dateTime.tm_mon = mon_m;
+        dateTime.tm_mday = mday_m;
+        dateTime.tm_hour = *hour;
+        dateTime.tm_min = *min;
+        dateTime.tm_sec = 0;
+        dateTime.tm_isdst = 0; // 0 because by definition, the time is currently expressed as if DST was off. mktime is going to fix that.
+        mktime(&dateTime);
+        *hour = dateTime.tm_hour;
+        *min = dateTime.tm_min;
         logger_m.infoStream() << "returned " << *hour<< ":" << *min << endlog;
     }
     else
@@ -638,11 +641,11 @@ void LocationInfo::exportXml(ticpp::Element* pConfig)
 
 LocationInfo::LocationInfo() : lon_m(0), lat_m(0)
 {
-	// Get any time as reference and compute the broken-down GMT time.
-	// Then reverse the computation by interpreting the broken-down time as
-	// local time. The result is the 
-	time_t ref = 0;
-	gmtOffset_m = -mktime(gmtime(&ref));
+    // Get any time as reference and compute the broken-down GMT time.
+    // Then reverse the computation by interpreting the broken-down time as
+    // local time. The result is the 
+    time_t ref = 0;
+    gmtOffset_m = -mktime(gmtime(&ref));
 }
 
 long LocationInfo::getGmtOffset()

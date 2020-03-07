@@ -2387,6 +2387,8 @@ std::string ActionList::getTriggerTypeToString(TriggerType trigger)
 			return "if-false";
 		case ActionList::OnFalse:
 			return "on-false";
+		default:
+			throw ticpp::Exception("Unsupported trigger type.");
 	}
 }
 
