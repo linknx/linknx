@@ -23,14 +23,14 @@ autoreconf --install
 should suffice. Then, run configure and make install as for other versions.
 
 ## Downloads
-### Latest stable release (0.0.1.37)
+### Latest stable release (0.0.1.38)
 This is the latest version as of today. Unless you know what you are doing, you should use this version. Download a zip
+of it [here](https://github.com/linknx/linknx/archive/0.0.1.38.zip).
+Fixes issue #47.
+
+### Old stable release (0.0.1.37)
+This is the previous version known as being stable for production. Download a zip
 of it [here](https://github.com/linknx/linknx/archive/0.0.1.37.zip).
 Implements a redesigned computation of next occurrences for periodic tasks. This redesign was initiated by a problem reported and worked around in Pull Request 37. The rework itself was implemented with Pull Request 39. 
-
-### Old stable release (0.0.1.36)
-This is the previous version known as being stable for production. Download a zip
-of it [here](https://github.com/linknx/linknx/archive/0.0.1.36.zip).
-Fixes issue 33.
 
 For a list of all releases, visit [this page](https://github.com/linknx/linknx/releases).
