@@ -27,6 +27,18 @@ matrix:
           env:
             - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" 
 
+        - os: linux
+          addons:
+              apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
+                  packages:
+                      - g++-9
+                      - libcppunit-dev
+                      - gettext
+          env:
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9" 
+
 before_install:
     - eval "${MATRIX_EVAL}"
 
