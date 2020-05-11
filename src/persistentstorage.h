@@ -106,8 +106,6 @@ public:
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
 private:
-    struct si_persist_m;
-    struct si_log_m;
 
     std::string host_m;
     int port_m;

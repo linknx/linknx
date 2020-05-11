@@ -272,14 +272,14 @@ Logger& InfluxdbPersistentStorage::logger_m(Logger::getInstance("InfluxdbPersist
 InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig)
 {
     host_m = pConfig->GetAttribute("host");
-    port_m = std::stoi(pConfig->GetAttribute("port"));
+    port_m = std::stoi(pConfig->GetAttribute("port")); // FIXME: error safety
     user_m = pConfig->GetAttribute("user");
     pass_m = pConfig->GetAttribute("pass");
     db_m = pConfig->GetAttribute("db");
     logdb_m = pConfig->GetAttribute("logdb");
 
     influxdb_cpp::server_info si_persist_m(host_m, port_m, db_m, user_m, pass_m);
-    influxdb_cpp::server_info si_log_m(host_m, port_m, logdb_m, user_m, pass_m);
+    
 
     std::string resp;
     influxdb_cpp::create_db(resp, "linknx", si_persist_m);
@@ -304,12 +304,14 @@ void InfluxdbPersistentStorage::write(const std::string& id, const std::string& 
 {
     logger_m.infoStream() << "Writing persistence '" << value << "' for object '" << id << "'" << endlog;
 
+    influxdb_cpp::server_info si(host_m, port_m, db_m, user_m, pass_m);
+
     std::string resp;
-    influxdb_cpp::builder()
+    auto &m = influxdb_cpp::builder()
             .meas("linknx")
-            .tag("ga", id)
-            .tag("value", value)
-            .post_http(si_persist_m, &resp);
+            .tag("ga", id);
+    auto &f = m.field("val", value);
+    f.post_http(si, &resp);
 
     logger_m.infoStream() << "Wrote '" << value << "' for object '" << id << "' returned: " << resp << endlog;
 }
@@ -320,7 +322,9 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
     std::stringstream query_s;
     query_s << "SELECT `value` FROM `" << id;
 
-    influxdb_cpp::query(resp, "show databases", si_persist_m);
+    influxdb_cpp::server_info si(host_m, port_m, db_m, user_m, pass_m);
+
+    influxdb_cpp::query(resp, "show databases", si);
 
     logger_m.infoStream() << "Reading '" << value << "' for object '" << id << "' InfluxDB resp=" << resp << endlog;
     
@@ -331,12 +335,14 @@ void InfluxdbPersistentStorage::writelog(const std::string& id, const std::strin
 {
     logger_m.infoStream() << "Writing log '" << value << "' for object '" << id << "'" << endlog;
 
+    influxdb_cpp::server_info si(host_m, port_m, logdb_m, user_m, pass_m);
+
     std::string resp;
-    influxdb_cpp::builder()
+    auto &m = influxdb_cpp::builder()
             .meas("linknxlog")
-            .tag("ga", id)
-            .tag("value", value)
-            .post_http(si_log_m, &resp);
+            .tag("ga", id);
+    auto &f = m.field("val", value);
+    f.post_http(si, &resp);
 
     logger_m.infoStream() << "Wrote log '" << value << "' for object '" << id << "' returned: " << resp << endlog;
 }
