@@ -65,6 +65,7 @@ if test "$mysql" != "no"; then
     AC_DEFINE(HAVE_MYSQL,,[mysql is available])
 fi
 
+AC_DEFINE(HAVE_INFLUXDB,,[influxdb is available])
 
 dnl #########################################################################
 dnl Check if using libesmtp

@@ -406,6 +406,10 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     ticpp::Element mysql("mysql");
                     features.LinkEndChild(&mysql);
 #endif
+#ifdef HAVE_INFLUXDB
+                    ticpp::Element influxdb("influxdb");
+                    features.LinkEndChild(&influxdb);
+#endif
 #ifdef HAVE_LUA
                     ticpp::Element lua("lua");
                     features.LinkEndChild(&lua);

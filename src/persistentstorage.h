@@ -29,6 +29,10 @@
 #include <mysql/mysql.h>
 #endif
 
+#ifdef HAVE_INFLUXDB
+#include "influxdb.hpp"
+#endif
+
 class PersistentStorage
 {
 public:
@@ -61,7 +65,7 @@ protected:
     static Logger& logger_m;
 };
 
-#ifdef HAVE_MYSQL
+#ifdef HAVE_INFLUXDB
 class MysqlPersistentStorage : public PersistentStorage
 {
 public:
@@ -77,6 +81,7 @@ private:
     MYSQL con_m;
 
     std::string host_m;
+    int port_m;
     std::string user_m;
     std::string pass_m;
     std::string db_m;
@@ -88,4 +93,30 @@ protected:
 };
 #endif // HAVE_MYSQL
 
+#ifdef HAVE_INFLUXDB
+class InfluxdbPersistentStorage : public PersistentStorage
+{
+public:
+    InfluxdbPersistentStorage(ticpp::Element* pConfig);
+    virtual ~InfluxdbPersistentStorage();
+
+    virtual void exportXml(ticpp::Element* pConfig);
+
+    virtual void write(const std::string& id, const std::string& value);
+    virtual std::string read(const std::string& id, const std::string& defval="");
+    virtual void writelog(const std::string& id, const std::string& value);
+private:
+    struct si_persist_m;
+    struct si_log_m;
+
+    std::string host_m;
+    int port_m;
+    std::string user_m;
+    std::string pass_m;
+    std::string db_m;
+    std::string logdb_m;
+protected:
+    static Logger& logger_m;
+};
+#endif // HAVE_INFLUXDB
 #endif
