@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h>
 
 PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
 {
@@ -292,6 +293,45 @@ InfluxdbPersistentStorage::~InfluxdbPersistentStorage()
 {
 }
 
+int InfluxdbPersistentStorage::http_request(const std::string& querystring, const std::string& db)
+{
+            std::stringstream request;
+            struct sockaddr_in addr;
+            int sockfd, ret_code = -9, len = 0;
+
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(port_m);
+            if((addr.sin_addr.s_addr = inet_addr(host_m.c_str())) == INADDR_NONE) return -1;
+
+            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2;
+
+            if(connect(sockfd, (struct sockaddr*)(&addr), sizeof(addr)) < 0) {
+                ret_code = -3;
+                goto END;
+            }
+
+            request << "POST /write?db=" << db << " HTTP/1.1\r\nHost: " << host_m << "\r\n" << 
+            "User-Agent: LinKNX\r\n" << "Accept: */*\r\n" << "Content-Length: " << querystring.length() << "\r\n" <<
+            "Content-Type: text/plain" << "\r\n\r\n" << querystring;
+
+            len = ::write(sockfd, request.str().c_str(), request.str().length());
+            if (len < request.str().length()) {
+                ret_code = -4;
+                goto END;
+            }
+
+            char buf[256];
+            ::read(sockfd, &buf, 256);
+
+            logger_m.infoStream() << "influx request '" << request.str() << "' returned '" << buf << "'" << endlog;
+            ret_code = 0;
+
+        END:
+            closesocket(sockfd);
+            return ret_code;
+
+    }
+
 void InfluxdbPersistentStorage::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "influxdb");
@@ -335,15 +375,12 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
 
 void InfluxdbPersistentStorage::writelog(const std::string& id, const std::string& value)
 {
-    logger_m.infoStream() << "Writing value '" << value << "' for switching object '" << id << "'" << endlog;
-    influxdb_cpp::server_info si(host_m, port_m, logdb_m, user_m, pass_m);
+    logger_m.infoStream() << "Writing value '" << value << "' for object '" << id << "'" << endlog;
 
-    std::string resp;
-    auto &m = influxdb_cpp::builder()
-            .meas(id);
-    auto &f = m.field("val", value);
-    int ret = f.post_http(si, &resp);
+    std::stringstream querystring;
 
-    logger_m.infoStream() << "Wrote log '" << value << "' for object '" << id << "' returned: " << ret << " response: " << resp << endlog;
+    querystring << id << " " << "val=" << value;
+
+    http_request(querystring.str(), logdb_m);
 }
 #endif // HAVE_INFLUXDB

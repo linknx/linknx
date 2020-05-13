@@ -89,6 +89,7 @@ private:
     std::string table_m;
     std::string logtable_m;
     std::string charset_m;
+
 protected:
     static Logger& logger_m;
 };
@@ -114,6 +115,8 @@ private:
     std::string pass_m;
     std::string db_m;
     std::string logdb_m;
+    
+    int http_request(const std::string& querystring, const std::string& db);
 protected:
     static Logger& logger_m;
 };
