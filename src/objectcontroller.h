@@ -45,6 +45,7 @@ class ObjectValue
 public:
     virtual ~ObjectValue() {};
     virtual std::string toString() = 0;
+    virtual std::string toLogString() { return toString(); };
     virtual bool equals(ObjectValue* value) = 0;
     virtual int compare(ObjectValue* value) = 0;
     virtual bool set(ObjectValue* value) = 0;
@@ -110,6 +111,7 @@ public:
     virtual ObjectValue* get();
     virtual std::string getValue() { return get()->toString(); };
     virtual double getFloatValue() { return get()->toNumber(); };
+    virtual std::string getLogValue() { return get()->toLogString(); };
     virtual std::string getType() = 0;
 
     virtual void importXml(ticpp::Element* pConfig);
@@ -241,9 +243,11 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
     virtual std::string getType() { return "1.001"; };
     virtual std::string getValueString(bool value) { return value ? "on" : "off"; };
+    virtual std::string getLogString(bool value) { return value ? "t" : "f"; };
 protected:
     SwitchingObjectValue() : value_m(false) {};
     virtual bool set(bool value);
@@ -736,6 +740,7 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
 protected:
     virtual bool set(ObjectValue* value);
@@ -772,6 +777,7 @@ public:
     U8ObjectValue(const std::string& value);
     virtual ~U8ObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString();
 protected:
     U8ObjectValue(uint32_t value) : UIntObjectValue(value) {};
     U8ObjectValue() {};
@@ -802,6 +808,7 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getType() { return "5.xxx"; };
     virtual std::string toString() { return U8ObjectValue::toString(); };
+    virtual std::string toLogString() { return U8ObjectValue::toLogString(); };
 protected:
     virtual bool set(ObjectValue* value) { return U8ObjectValue::set(value); };
     virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
@@ -839,6 +846,7 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getType() { return "5.001"; };
     virtual std::string toString() { return ScalingObjectValue::toString(); };
+    virtual std::string toLogString() { return ScalingObjectValue::toLogString(); };
 protected:
     virtual bool set(ObjectValue* value) { return ScalingObjectValue::set(value); };
     virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
@@ -990,6 +998,7 @@ public:
     U32ObjectValue(const std::string& value);
     virtual ~U32ObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString();
 protected:
     U32ObjectValue(uint32_t value) : UIntObjectValue(value) {};
     U32ObjectValue() {};
@@ -1054,6 +1063,7 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
 protected:
     virtual bool set(ObjectValue* value);
@@ -1090,6 +1100,7 @@ public:
     S8ObjectValue(const std::string& value);
     virtual ~S8ObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString();
 protected:
     S8ObjectValue(int32_t value) : IntObjectValue(value) {};
     S8ObjectValue() {};
@@ -1107,6 +1118,7 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
     virtual std::string toString() { return S8ObjectValue::toString(); };
+    virtual std::string toLogString() { return S8ObjectValue::toLogString(); };
 protected:
     virtual bool set(ObjectValue* value) { return S8ObjectValue::set(value); };
     virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
@@ -1121,6 +1133,7 @@ public:
     S16ObjectValue(const std::string& value);
     virtual ~S16ObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString();
 protected:
     S16ObjectValue(int32_t value) : IntObjectValue(value) {};
     S16ObjectValue() {};
@@ -1138,6 +1151,7 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
     virtual std::string toString() { return S16ObjectValue::toString(); };
+    virtual std::string toLogString() { return S16ObjectValue::toLogString(); };
 protected:
     virtual bool set(ObjectValue* value) { return S16ObjectValue::set(value); };
     virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
@@ -1152,6 +1166,7 @@ public:
     S32ObjectValue(const std::string& value);
     virtual ~S32ObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString();
 protected:
     S32ObjectValue(int32_t value) : IntObjectValue(value) {};
     S32ObjectValue() {};
@@ -1169,6 +1184,7 @@ public:
     virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
     virtual void doSend(bool isWrite);
     virtual std::string toString() { return S32ObjectValue::toString(); };
+    virtual std::string toLogString() { return S32ObjectValue::toLogString(); };
 protected:
     virtual bool set(ObjectValue* value) { return S32ObjectValue::set(value); };
     virtual bool setInt(int32_t value) { if (value_m != value) { value_m = value; return true; } return false; };
@@ -1186,6 +1202,7 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
 protected:
     virtual bool set(ObjectValue* value);
@@ -1393,3 +1410,4 @@ private:
 };
 
 #endif
+

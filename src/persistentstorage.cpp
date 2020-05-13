@@ -18,10 +18,12 @@
 */
 
 #include "persistentstorage.h"
+#include "objectcontroller.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include <typeinfo>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -324,7 +326,7 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
 
     influxdb_cpp::server_info si(host_m, port_m, db_m, user_m, pass_m);
 
-    influxdb_cpp::query(resp, "show databases", si);
+    influxdb_cpp::query(resp, query_s.str(), si);
 
     logger_m.infoStream() << "Reading '" << value << "' for object '" << id << "' InfluxDB resp=" << resp << endlog;
     
@@ -333,17 +335,15 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
 
 void InfluxdbPersistentStorage::writelog(const std::string& id, const std::string& value)
 {
-    logger_m.infoStream() << "Writing log '" << value << "' for object '" << id << "'" << endlog;
-
+    logger_m.infoStream() << "Writing value '" << value << "' for switching object '" << id << "'" << endlog;
     influxdb_cpp::server_info si(host_m, port_m, logdb_m, user_m, pass_m);
 
     std::string resp;
     auto &m = influxdb_cpp::builder()
-            .meas("linknxlog")
-            .tag("ga", id);
+            .meas(id);
     auto &f = m.field("val", value);
-    f.post_http(si, &resp);
+    int ret = f.post_http(si, &resp);
 
-    logger_m.infoStream() << "Wrote log '" << value << "' for object '" << id << "' returned: " << resp << endlog;
+    logger_m.infoStream() << "Wrote log '" << value << "' for object '" << id << "' returned: " << ret << " response: " << resp << endlog;
 }
 #endif // HAVE_INFLUXDB

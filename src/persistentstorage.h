@@ -24,6 +24,7 @@
 #include "config.h"
 #include "logger.h"
 #include "ticpp.h"
+#include "objectcontroller.h"
 
 #ifdef HAVE_MYSQL
 #include <mysql/mysql.h>

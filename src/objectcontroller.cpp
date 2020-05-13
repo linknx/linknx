@@ -481,7 +481,7 @@ void Object::onUpdate()
             if (persist_m)
                 persistence->write(id_m, getValue());
             if (writeLog_m)
-                persistence->writelog(id_m, getValue());
+                persistence->writelog(id_m, getLogValue());
         }
     }
 }
@@ -586,6 +586,11 @@ std::string SwitchingObjectValue::toString()
 {
     return getValueString(value_m);
 }
+
+std::string SwitchingObjectValue::toLogString()
+{
+    return getLogString(value_m);
+};
 
 double SwitchingObjectValue::toNumber()
 {
@@ -1787,6 +1792,13 @@ std::string UIntObjectValue::toString()
     return out.str();
 }
 
+std::string UIntObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
+
 double UIntObjectValue::toNumber()
 {
     return value_m;
@@ -1908,6 +1920,13 @@ std::string U8ObjectValue::toString()
 {
     std::ostringstream out;
     out << value_m;
+    return out.str();
+}
+
+std::string U8ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
     return out.str();
 }
 
@@ -2242,6 +2261,13 @@ std::string U32ObjectValue::toString()
     return out.str();
 }
 
+std::string U32ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
+
 Logger& U32Object::logger_m(Logger::getInstance("U32Object"));
 
 U32Object::U32Object()
@@ -2429,6 +2455,13 @@ std::string IntObjectValue::toString()
     return out.str();
 }
 
+std::string IntObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
+
 double IntObjectValue::toNumber()
 {
     return value_m;
@@ -2527,6 +2560,13 @@ std::string S8ObjectValue::toString()
     return out.str();
 }
 
+std::string S8ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
+
 Logger& S8Object::logger_m(Logger::getInstance("S8Object"));
 
 S8Object::S8Object()
@@ -2592,6 +2632,13 @@ std::string S16ObjectValue::toString()
     return out.str();
 }
 
+std::string S16ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
+
 Logger& S16Object::logger_m(Logger::getInstance("S16Object"));
 
 S16Object::S16Object()
@@ -2649,6 +2696,13 @@ std::string S32ObjectValue::toString()
 {
     std::ostringstream out;
     out << value_m;
+    return out.str();
+}
+
+std::string S32ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
     return out.str();
 }
 
@@ -2711,6 +2765,12 @@ std::string S64ObjectValue::toString()
     return out.str();
 }
 
+std::string S64ObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << value_m << "i";
+    return out.str();
+}
 double S64ObjectValue::toNumber()
 {
     return value_m;
