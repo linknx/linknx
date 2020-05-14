@@ -51,7 +51,7 @@ public:
 class FilePersistentStorage : public PersistentStorage
 {
 public:
-    FilePersistentStorage(std::string &path, std::string &logPath);
+    FilePersistentStorage(ticpp::Element* pConfig);
     virtual ~FilePersistentStorage() {};
 
     virtual void exportXml(ticpp::Element* pConfig);
@@ -59,10 +59,9 @@ public:
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
-private:
-    std::string path_m;
     std::string logPath_m;
 protected:
+    std::string path_m;
     static Logger& logger_m;
 };
 
@@ -96,27 +95,26 @@ protected:
 #endif // HAVE_MYSQL
 
 #ifdef HAVE_INFLUXDB
-class InfluxdbPersistentStorage : public PersistentStorage
+enum InfluxdbOperation_t
+{
+    INFLUXDB_WRITE = 0,
+    INFLUXDB_QUERY
+};
+
+class InfluxdbPersistentStorage : public FilePersistentStorage
 {
 public:
     InfluxdbPersistentStorage(ticpp::Element* pConfig);
     virtual ~InfluxdbPersistentStorage();
-
     virtual void exportXml(ticpp::Element* pConfig);
-
-    virtual void write(const std::string& id, const std::string& value);
-    virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
 private:
-
     std::string host_m;
     int port_m;
     std::string user_m;
     std::string pass_m;
     std::string db_m;
-    std::string logdb_m;
-    
-    int http_request(const std::string& querystring, const std::string& db);
+    int http_request(InfluxdbOperation_t oper, const std::string& querystring, const std::string& db, std::string &response);
 protected:
     static Logger& logger_m;
 };

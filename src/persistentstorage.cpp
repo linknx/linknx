@@ -34,9 +34,7 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
     std::string type = pConfig->GetAttribute("type");
     if (type == "file")
     {
-        std::string path = pConfig->GetAttributeOrDefault("path", "/var/lib/linknx/persist");
-        std::string logPath = pConfig->GetAttribute("logpath");
-        return new FilePersistentStorage(path, logPath);
+        return new FilePersistentStorage(pConfig);
     }
 #ifdef HAVE_MYSQL
     else if (type == "mysql")
@@ -64,8 +62,11 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
 
 Logger& FilePersistentStorage::logger_m(Logger::getInstance("FilePersistentStorage"));
 
-FilePersistentStorage::FilePersistentStorage(std::string &path, std::string &logPath) : path_m(path), logPath_m(logPath)
+FilePersistentStorage::FilePersistentStorage(ticpp::Element* pConfig)
 {
+    path_m = pConfig->GetAttributeOrDefault("path", "/var/lib/linknx/persist");
+    logPath_m = pConfig->GetAttribute("logPath");
+
     int  len = path_m.size();
     if (len > 0 && path_m[len-1] != '/')
         path_m.push_back('/');
@@ -272,32 +273,32 @@ void MysqlPersistentStorage::writelog(const std::string& id, const std::string& 
 #ifdef HAVE_INFLUXDB
 Logger& InfluxdbPersistentStorage::logger_m(Logger::getInstance("InfluxdbPersistentStorage"));
 
-InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig)
+InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig) : FilePersistentStorage(pConfig)
 {
     host_m = pConfig->GetAttribute("host");
     port_m = std::stoi(pConfig->GetAttribute("port")); // FIXME: error safety
     user_m = pConfig->GetAttribute("user");
     pass_m = pConfig->GetAttribute("pass");
     db_m = pConfig->GetAttribute("db");
-    logdb_m = pConfig->GetAttribute("logdb");
+    pConfig->SetAttribute("path", path_m);
 
-    influxdb_cpp::server_info si_persist_m(host_m, port_m, db_m, user_m, pass_m);
-    
-
-    std::string resp;
-    influxdb_cpp::create_db(resp, "linknx", si_persist_m);
-    logger_m.infoStream() << "Created influx db: "<< resp << endlog;
+    std::string response;
+    std::stringstream query_s;
+    query_s << "q=CREATE DATABASE \"" << db_m << "\"";
+    http_request(INFLUXDB_QUERY, query_s.str(), "", response);
+    logger_m.debugStream() << "Created influx db" << endlog;
 }
 
 InfluxdbPersistentStorage::~InfluxdbPersistentStorage()
 {
 }
 
-int InfluxdbPersistentStorage::http_request(const std::string& querystring, const std::string& db)
+int InfluxdbPersistentStorage::http_request(InfluxdbOperation_t oper, const std::string& querystring, const std::string& db, std::string &response)
 {
             std::stringstream request;
             struct sockaddr_in addr;
-            int sockfd, ret_code = -9, len = 0;
+            int sockfd, ret_code = -9, len = -1;
+            long arg;
 
             addr.sin_family = AF_INET;
             addr.sin_port = htons(port_m);
@@ -310,9 +311,9 @@ int InfluxdbPersistentStorage::http_request(const std::string& querystring, cons
                 goto END;
             }
 
-            request << "POST /write?db=" << db << " HTTP/1.1\r\nHost: " << host_m << "\r\n" << 
-            "User-Agent: LinKNX\r\n" << "Accept: */*\r\n" << "Content-Length: " << querystring.length() << "\r\n" <<
-            "Content-Type: text/plain" << "\r\n\r\n" << querystring;
+            request << "POST /" << (oper == INFLUXDB_WRITE ? "write" : "query") << (db.size() ? "?db=" : "") << db << " HTTP/1.1\r\nHost: " << host_m << "\r\n" << 
+            "User-Agent: LinKNX\r\n" << "Accept: text/plain\r\n" << "Content-Length: " << querystring.length() << "\r\n" <<
+            "Content-Type: application/x-www-form-urlencoded" << "\r\n\r\n" << querystring;
 
             len = ::write(sockfd, request.str().c_str(), request.str().length());
             if (len < request.str().length()) {
@@ -320,10 +321,18 @@ int InfluxdbPersistentStorage::http_request(const std::string& querystring, cons
                 goto END;
             }
 
-            char buf[256];
-            ::read(sockfd, &buf, 256);
+            char buf[1024];
 
-            logger_m.infoStream() << "influx request '" << request.str() << "' returned '" << buf << "'" << endlog;
+            len = ::read(sockfd, buf, 1024);
+            if (len < 0) {
+                ret_code = -5;
+                goto END;
+            }
+
+            response.resize(len);
+            response.append(buf);
+
+            logger_m.debugStream() << "influx request '" << request.str() << "' returned " << len << " bytes: '" << response << "'" << endlog;
             ret_code = 0;
 
         END:
@@ -339,48 +348,18 @@ void InfluxdbPersistentStorage::exportXml(ticpp::Element* pConfig)
     pConfig->SetAttribute("user", user_m);
     pConfig->SetAttribute("pass", pass_m);
     pConfig->SetAttribute("db", db_m);
-    pConfig->SetAttribute("logdb", logdb_m);
-}
-
-void InfluxdbPersistentStorage::write(const std::string& id, const std::string& value)
-{
-    logger_m.infoStream() << "Writing persistence '" << value << "' for object '" << id << "'" << endlog;
-
-    influxdb_cpp::server_info si(host_m, port_m, db_m, user_m, pass_m);
-
-    std::string resp;
-    auto &m = influxdb_cpp::builder()
-            .meas("linknx")
-            .tag("ga", id);
-    auto &f = m.field("val", value);
-    f.post_http(si, &resp);
-
-    logger_m.infoStream() << "Wrote '" << value << "' for object '" << id << "' returned: " << resp << endlog;
-}
-
-std::string InfluxdbPersistentStorage::read(const std::string& id, const std::string& defval)
-{
-    std::string value, resp;
-    std::stringstream query_s;
-    query_s << "SELECT `value` FROM `" << id;
-
-    influxdb_cpp::server_info si(host_m, port_m, db_m, user_m, pass_m);
-
-    influxdb_cpp::query(resp, query_s.str(), si);
-
-    logger_m.infoStream() << "Reading '" << value << "' for object '" << id << "' InfluxDB resp=" << resp << endlog;
-    
-    return value;
+    pConfig->SetAttribute("path", path_m);
 }
 
 void InfluxdbPersistentStorage::writelog(const std::string& id, const std::string& value)
 {
-    logger_m.infoStream() << "Writing value '" << value << "' for object '" << id << "'" << endlog;
+    logger_m.debugStream() << "Writing value '" << value << "' for object '" << id << "'" << endlog;
 
-    std::stringstream querystring;
+    std::string response;
+    std::stringstream query_s;
 
-    querystring << id << " " << "val=" << value;
+    query_s << id << " " << "val=" << value;
 
-    http_request(querystring.str(), logdb_m);
+    http_request(INFLUXDB_WRITE, query_s.str(), db_m, response);
 }
 #endif // HAVE_INFLUXDB
