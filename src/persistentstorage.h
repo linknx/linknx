@@ -30,10 +30,6 @@
 #include <mysql/mysql.h>
 #endif
 
-#ifdef HAVE_INFLUXDB
-#include "influxdb.hpp"
-#endif
-
 class PersistentStorage
 {
 public:
@@ -79,7 +75,6 @@ public:
     virtual void writelog(const std::string& id, const std::string& value);
 private:
     MYSQL con_m;
-
     std::string host_m;
     int port_m;
     std::string user_m;
