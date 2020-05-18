@@ -61,7 +61,7 @@ protected:
     static Logger& logger_m;
 };
 
-#ifdef HAVE_INFLUXDB
+#ifdef HAVE_MYSQL
 class MysqlPersistentStorage : public PersistentStorage
 {
 public:
