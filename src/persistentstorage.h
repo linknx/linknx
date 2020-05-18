@@ -30,6 +30,13 @@
 #include <mysql/mysql.h>
 #endif
 
+#ifdef HAVE_INFLUXDB
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#endif
+
 class PersistentStorage
 {
 public:

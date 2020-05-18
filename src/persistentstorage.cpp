@@ -336,7 +336,7 @@ int InfluxdbPersistentStorage::http_request(InfluxdbOperation_t oper, const std:
             ret_code = 0;
 
         END:
-            closesocket(sockfd);
+            close(sockfd);
             return ret_code;
 
     }
