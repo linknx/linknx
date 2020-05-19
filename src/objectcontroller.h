@@ -579,6 +579,7 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
     virtual void setPrecision(std::string precision);
     virtual std::string getPrecision();
@@ -832,6 +833,7 @@ public:
     ScalingObjectValue(const std::string& value);
     virtual ~ScalingObjectValue() {};
     virtual std::string toString();
+    virtual std::string toLogString() { return ScalingObjectValue::toString(); };
 protected:
     ScalingObjectValue(uint32_t value) : U8ObjectValue(value) {};
 };

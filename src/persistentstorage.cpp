@@ -360,6 +360,9 @@ void InfluxdbPersistentStorage::writelog(const std::string& id, const std::strin
 
     query_s << id << " " << "val=" << value;
 
-    http_request(INFLUXDB_WRITE, query_s.str(), db_m, response);
+    int ret = http_request(INFLUXDB_WRITE, query_s.str(), db_m, response);
+
+    if (ret)
+        logger_m.errorStream() << "Influxdb write failed. Error " << ret << endlog;
 }
 #endif // HAVE_INFLUXDB

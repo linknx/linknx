@@ -1534,6 +1534,13 @@ std::string ValueObjectValue::toString()
     return out.str();
 }
 
+std::string ValueObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << std::setprecision(2) << std::fixed << value_m;
+    return out.str();
+}
+
 double ValueObjectValue::toNumber()
 {
     return value_m;
