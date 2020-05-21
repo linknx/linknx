@@ -303,6 +303,10 @@ bool InfluxdbPersistentStorage::curl_request(InfluxdbOperation_t oper, const std
 	{
 		std::stringstream url;
         url << uri_m << "/" << (oper == INFLUXDB_WRITE ? "write" : "query") << "?db=" << db_m;
+        if (!user_m.empty() && !pass_m.empty())
+        {
+            url << "&u=" << user_m << "&p=" << pass_m;
+        }
         const char *field_data = query.c_str();
 		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, field_data);
