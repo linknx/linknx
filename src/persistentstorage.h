@@ -31,10 +31,7 @@
 #endif
 
 #ifdef HAVE_INFLUXDB
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
+#include <curl/curl.h>
 #endif
 
 class PersistentStorage
@@ -111,12 +108,11 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
     virtual void writelog(const std::string& id, const std::string& value);
 private:
-    std::string host_m;
-    int port_m;
+    std::string uri_m;
     std::string user_m;
     std::string pass_m;
     std::string db_m;
-    int http_request(InfluxdbOperation_t oper, const std::string& querystring, const std::string& db, std::string &response);
+    bool curl_request(InfluxdbOperation_t oper, const std::string& querystring);
 protected:
     static Logger& logger_m;
 };

@@ -27,7 +27,6 @@
 
 #include <sys/types.h>
 #include <dirent.h>
-#include <unistd.h>
 
 PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
 {
@@ -275,76 +274,59 @@ Logger& InfluxdbPersistentStorage::logger_m(Logger::getInstance("InfluxdbPersist
 
 InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig) : FilePersistentStorage(pConfig)
 {
-    host_m = pConfig->GetAttribute("host");
-    port_m = std::stoi(pConfig->GetAttribute("port")); // FIXME: error safety
+    uri_m = pConfig->GetAttribute("uri");
     user_m = pConfig->GetAttribute("user");
     pass_m = pConfig->GetAttribute("pass");
     db_m = pConfig->GetAttribute("db");
     pConfig->SetAttribute("path", path_m);
 
-    std::string response;
     std::stringstream query_s;
+    bool ret;
+
     query_s << "q=CREATE DATABASE \"" << db_m << "\"";
-    http_request(INFLUXDB_QUERY, query_s.str(), "", response);
-    logger_m.debugStream() << "Created influx db" << endlog;
+    ret = curl_request(INFLUXDB_QUERY, query_s.str());
+    if (ret)
+        logger_m.debugStream() << "Created influx db '" << db_m << endlog;
 }
 
 InfluxdbPersistentStorage::~InfluxdbPersistentStorage()
 {
 }
 
-int InfluxdbPersistentStorage::http_request(InfluxdbOperation_t oper, const std::string& querystring, const std::string& db, std::string &response)
+bool InfluxdbPersistentStorage::curl_request(InfluxdbOperation_t oper, const std::string& query)
 {
-            std::stringstream request;
-            struct sockaddr_in addr;
-            int sockfd, ret_code = -9, len = -1;
-            long arg;
-
-            addr.sin_family = AF_INET;
-            addr.sin_port = htons(port_m);
-            if((addr.sin_addr.s_addr = inet_addr(host_m.c_str())) == INADDR_NONE) return -1;
-
-            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -2;
-
-            if(connect(sockfd, (struct sockaddr*)(&addr), sizeof(addr)) < 0) {
-                ret_code = -3;
-                goto END;
-            }
-
-            request << "POST /" << (oper == INFLUXDB_WRITE ? "write" : "query") << (db.size() ? "?db=" : "") << db << " HTTP/1.1\r\nHost: " << host_m << "\r\n" << 
-            "User-Agent: LinKNX\r\n" << "Accept: text/plain\r\n" << "Content-Length: " << querystring.length() << "\r\n" <<
-            "Content-Type: application/x-www-form-urlencoded" << "\r\n\r\n" << querystring;
-
-            len = ::write(sockfd, request.str().c_str(), request.str().length());
-            if (len < request.str().length()) {
-                ret_code = -4;
-                goto END;
-            }
-
-            char buf[1024];
-
-            len = ::read(sockfd, buf, 1024);
-            if (len < 0) {
-                ret_code = -5;
-                goto END;
-            }
-
-            response.resize(len);
-            response.append(buf);
-
-            logger_m.debugStream() << "influx request '" << request.str() << "' returned " << len << " bytes: '" << response << "'" << endlog;
-            ret_code = 0;
-
-        END:
-            close(sockfd);
-            return ret_code;
-
-    }
+    bool ret = false;
+    CURL *curl;
+	CURLcode res;
+	curl = curl_easy_init();
+	if(curl)
+	{
+		std::stringstream url;
+        url << uri_m << "/" << (oper == INFLUXDB_WRITE ? "write" : "query") << "?db=" << db_m;
+        const char *field_data = query.c_str();
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, field_data);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "LinKNX");
+		res = curl_easy_perform(curl);
+		if (res == CURLE_OK) {
+            long response_code;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+            if (response_code / 100 == 2)
+                ret = true;
+            else
+                logger_m.warnStream() << "request to " << uri_m <<  " returned HTTP " << response_code << endlog;
+        } else {
+			logger_m.warnStream() << "request to " << uri_m <<  " failed: " << curl_easy_strerror(res) << endlog;
+        }
+		curl_easy_cleanup(curl);
+	}
+    return ret;
+}
 
 void InfluxdbPersistentStorage::exportXml(ticpp::Element* pConfig)
 {
     pConfig->SetAttribute("type", "influxdb");
-    pConfig->SetAttribute("host", host_m);
+    pConfig->SetAttribute("uri", uri_m);
     pConfig->SetAttribute("user", user_m);
     pConfig->SetAttribute("pass", pass_m);
     pConfig->SetAttribute("db", db_m);
@@ -355,14 +337,10 @@ void InfluxdbPersistentStorage::writelog(const std::string& id, const std::strin
 {
     logger_m.debugStream() << "Writing value '" << value << "' for object '" << id << "'" << endlog;
 
-    std::string response;
-    std::stringstream query_s;
+    std::stringstream query_s(std::ios_base::out|std::ios_base::binary);;
 
     query_s << id << " " << "val=" << value;
 
-    int ret = http_request(INFLUXDB_WRITE, query_s.str(), db_m, response);
-
-    if (ret)
-        logger_m.errorStream() << "Influxdb write failed. Error " << ret << endlog;
+    curl_request(INFLUXDB_WRITE, query_s.str());
 }
 #endif // HAVE_INFLUXDB
