@@ -65,8 +65,6 @@ if test "$mysql" != "no"; then
     AC_DEFINE(HAVE_MYSQL,,[mysql is available])
 fi
 
-AC_DEFINE(HAVE_INFLUXDB,,[influxdb is available])
-
 dnl #########################################################################
 dnl Check if using libesmtp
 dnl #########################################################################
@@ -216,6 +214,23 @@ if test x"$WITH_LUA" != xno ; then
     ])
   ])
 fi
+
+dnl #########################################################################
+dnl Check if using influxdb
+dnl #########################################################################
+
+AC_ARG_WITH(influxdb, AC_HELP_STRING([--with-influxdb],[Enable InfluxDB logging and persistence]),
+[WITH_INFLUXDB=$withval],[WITH_INFLUXDB=auto])
+
+AS_IF([test "x$with_influxdb" != "xno"], [
+AC_DEFINE(HAVE_INFLUXDB, [1], [Build with InfluxDB support])
+AC_MSG_NOTICE([using jsoncpp library for InfluxDB])
+AC_ARG_WITH([jsoncpp-lib-path],
+  [AS_HELP_STRING([--with-jsoncpp-lib-path], [location of the JSONcpp libraries])],
+  [JSONCPP_LIBS="-L$withval -ljsoncpp"],
+  [JSONCPP_LIBS='-ljsoncpp'])
+AC_SUBST([JSONCPP_LIBS])
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

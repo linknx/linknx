@@ -32,6 +32,7 @@
 
 #ifdef HAVE_INFLUXDB
 #include <curl/curl.h>
+#include <json/json.h>
 #endif
 
 class PersistentStorage
@@ -60,8 +61,8 @@ public:
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
     std::string logPath_m;
-protected:
     std::string path_m;
+protected:
     static Logger& logger_m;
 };
 
@@ -100,19 +101,22 @@ enum InfluxdbOperation_t
     INFLUXDB_QUERY
 };
 
-class InfluxdbPersistentStorage : public FilePersistentStorage
+class InfluxdbPersistentStorage : public PersistentStorage
 {
 public:
     InfluxdbPersistentStorage(ticpp::Element* pConfig);
     virtual ~InfluxdbPersistentStorage();
     virtual void exportXml(ticpp::Element* pConfig);
+    virtual void write(const std::string& id, const std::string& value);
+    virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
 private:
     std::string uri_m;
     std::string user_m;
     std::string pass_m;
     std::string db_m;
-    bool curl_request(InfluxdbOperation_t oper, const std::string& querystring);
+    std::string persist_db_m;
+    bool curl_request(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
 protected:
     static Logger& logger_m;
 };
