@@ -117,6 +117,7 @@ private:
     std::string db_m;
     std::string persist_db_m;
     bool curl_request(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
+    bool create_db(const std::string &db, std::string &result);
 protected:
     static Logger& logger_m;
 };

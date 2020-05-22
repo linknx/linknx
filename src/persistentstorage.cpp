@@ -272,6 +272,25 @@ void MysqlPersistentStorage::writelog(const std::string& id, const std::string& 
 #ifdef HAVE_INFLUXDB
 Logger& InfluxdbPersistentStorage::logger_m(Logger::getInstance("InfluxdbPersistentStorage"));
 
+bool _exists_in_array(const Json::Value &json, const std::string &key)
+{
+    bool ret = false;
+    assert(json.isArray());
+    for (int i = 0; i != json.size(); i++)
+    {
+        if (json[i][0].asString() == key)
+            ret = true;
+    }
+    return ret;
+}
+
+bool InfluxdbPersistentStorage::create_db(const std::string &db, std::string &result)
+{
+    std::string query = "q=CREATE DATABASE ";
+    query.append(db);
+    return curl_request(INFLUXDB_QUERY, db, query, result);
+}
+
 InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig)
 {
     uri_m = pConfig->GetAttribute("uri");
@@ -279,6 +298,29 @@ InfluxdbPersistentStorage::InfluxdbPersistentStorage(ticpp::Element* pConfig)
     pass_m = pConfig->GetAttribute("pass");
     db_m = pConfig->GetAttribute("db");
     persist_db_m = pConfig->GetAttribute("persist_db");
+
+    std::string resp;
+
+    if (curl_request(INFLUXDB_QUERY, db_m, "q=SHOW DATABASES", resp)) {
+        Json::CharReaderBuilder builder;
+        Json::CharReader * reader = builder.newCharReader();
+        Json::Value root, val;
+        std::string errors;
+
+        if(!reader->parse(resp.c_str(), resp.c_str()+resp.size(), &root, &errors)) {
+            logger_m.errorStream() << "couldn't parse JSON! Errors: " << errors << endlog;
+        } else {
+            Json::Value databases;
+            resp.clear();
+            databases = root["results"][0]["series"][0]["values"];
+            if (!_exists_in_array(databases, db_m))
+                if (!create_db(db_m, resp))
+                    logger_m.errorStream() << "couldn't create logging database: " << resp << endlog;
+            if (!_exists_in_array(databases, persist_db_m))
+                if (!create_db(persist_db_m, resp))
+                    logger_m.errorStream() << "couldn't create persistence database: " << resp << endlog;
+        }
+    }
 }
 
 InfluxdbPersistentStorage::~InfluxdbPersistentStorage()
@@ -291,7 +333,7 @@ static size_t _curl_write_cb(void *contents, size_t size, size_t nmemb, void *us
     return size * nmemb;
 }
 
-#undef INFLUXDB_EXTRA_DEBUG
+#define INFLUXDB_EXTRA_DEBUG 0
 
 bool InfluxdbPersistentStorage::curl_request(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result)
 {
@@ -309,7 +351,7 @@ bool InfluxdbPersistentStorage::curl_request(InfluxdbOperation_t oper, const std
         }
         const char *field_data = query.c_str();
 
-#ifdef INFLUXDB_EXTRA_DEBUG
+#if INFLUXDB_EXTRA_DEBUG
         logger_m.debugStream() << "requesting from " << url.str() <<  ": " << query << endlog;
 #endif
 
@@ -320,19 +362,17 @@ bool InfluxdbPersistentStorage::curl_request(InfluxdbOperation_t oper, const std
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
 
 		res = curl_easy_perform(curl);
-        std::cout << result << std::endl;
-
 		if (res == CURLE_OK) {
             long response_code;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
             if (response_code / 100 == 2)
                 ret = true;
             else
-                logger_m.warnStream() << "request to " << uri_m <<  " returned HTTP " << response_code << endlog;
+                logger_m.errorStream() << "request to " << uri_m <<  " returned HTTP " << response_code << endlog;
         } else {
-			logger_m.warnStream() << "request to " << uri_m <<  " failed: " << curl_easy_strerror(res) << endlog;
+			logger_m.errorStream() << "request to " << uri_m <<  " failed: " << curl_easy_strerror(res) << endlog;
         }
-#ifdef INFLUXDB_EXTRA_DEBUG
+#if INFLUXDB_EXTRA_DEBUG
         logger_m.debugStream() << "response from db is: " << result << endlog;
 #endif
 		curl_easy_cleanup(curl);
