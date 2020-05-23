@@ -196,6 +196,7 @@ public:
     virtual void doSend(bool isWrite);
     virtual void setBoolValue(bool value) = 0;
     virtual bool getBoolValue() = 0;
+    virtual std::string getLogValue() { return get()->toLogString(); };
 protected:
     virtual bool set(bool value) = 0;
     virtual bool set(ObjectValue* value) = 0;
@@ -343,9 +344,11 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
     virtual std::string getType() { return "2.001"; };
     virtual std::string getValueString(bool value) { return value ? "on" : "off"; };
+    virtual std::string getLogString(bool value) { return value ? "t" : "f"; };
 protected:
     SwitchingControlObjectValue() : value_m(false), control_m(false) {};
     virtual bool set(bool value, bool control);
@@ -833,7 +836,7 @@ public:
     ScalingObjectValue(const std::string& value);
     virtual ~ScalingObjectValue() {};
     virtual std::string toString();
-    virtual std::string toLogString() { return ScalingObjectValue::toString(); };
+    virtual std::string toLogString();
 protected:
     ScalingObjectValue(uint32_t value) : U8ObjectValue(value) {};
 };
@@ -901,6 +904,7 @@ public:
     virtual void setValue(const std::string& value);
     virtual std::string getType() { return "20.102"; };
     virtual std::string toString() { return HeatingModeObjectValue::toString(); };
+    virtual std::string toLogString() { return HeatingModeObjectValue::toString(); };
 protected:
     virtual bool set(ObjectValue* value) { return HeatingModeObjectValue::set(value); };
     virtual bool setInt(uint32_t value) { if (value_m != value) { value_m = value; return true; } return false; };

@@ -767,6 +767,11 @@ bool SwitchingControlObjectValue::set(double value)
     return set(value != 0.0, true);
 }
 
+std::string SwitchingControlObjectValue::toLogString()
+{
+    return getLogString(value_m);
+};
+
 bool StepDirObjectValue::equals(ObjectValue* value)
 {
     assert(value);
@@ -1979,6 +1984,13 @@ std::string ScalingObjectValue::toString()
     std::ostringstream out;
     out.precision(3);
     out << (float)value_m * 100 / 255;
+    return out.str();
+}
+
+std::string ScalingObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << std::setprecision(2) << std::fixed << (float)value_m * 100 / 255;
     return out.str();
 }
 
