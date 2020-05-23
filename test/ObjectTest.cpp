@@ -105,6 +105,7 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testStringPersist );
     CPPUNIT_TEST( testRGBWObject );
     CPPUNIT_TEST( testRGBWObjectWrite );
+    CPPUNIT_TEST( testRGBWPersist );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
 
@@ -268,7 +269,7 @@ public:
         Services::instance()->importXml(&pSvcConfig);
 
         ticpp::Element pConfig;
-        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("id", "test_sw1");
         pConfig.SetAttribute("init", "persist");
 
         Object *orig = Object::create(&pConfig);
@@ -277,14 +278,17 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "on");
+
+        SwitchingObject *sw = (SwitchingObject*) res;
+        CPPUNIT_ASSERT(res->getLogValue() == "t");
         res->setValue("off");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "off");
+        CPPUNIT_ASSERT(res2->getLogValue() == "f");
         delete res2;
     }
-
 
     void testSwitchCtrlObject()
     {
@@ -446,7 +450,7 @@ public:
         Services::instance()->importXml(&pSvcConfig);
 
         ticpp::Element pConfig;
-        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("id", "test_sw2");
         pConfig.SetAttribute("type", "2.001");
         pConfig.SetAttribute("init", "persist");
 
@@ -456,11 +460,13 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "on");
+        CPPUNIT_ASSERT(res->getLogValue() == "t");
         res->setValue("off");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "off");
+        CPPUNIT_ASSERT(res2->getLogValue() == "f");
         delete res2;
     }
 
@@ -660,16 +666,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "up");
+        CPPUNIT_ASSERT(res->getLogValue() == "up");
         res->setValue("stop");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "stop");
+        CPPUNIT_ASSERT(res2->getLogValue() == "stop");
         res2->setValue("down:3");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "down:3");
+        CPPUNIT_ASSERT(res3->getLogValue() == "down:3");
         delete res3;
     }
 
@@ -869,16 +878,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "close");
+        CPPUNIT_ASSERT(res->getLogValue() == "close");
         res->setValue("stop");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "stop");
+        CPPUNIT_ASSERT(res2->getLogValue() == "stop");
         res2->setValue("open:3");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "open:3");
+        CPPUNIT_ASSERT(res3->getLogValue() == "open:3");
         delete res3;
     }
 
@@ -1076,11 +1088,17 @@ public:
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "23:59:59");
+        CPPUNIT_ASSERT(res2->getLogValue() == "23:59:59");
         res2->setValue("now");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() != "now");
+
+        TimeObject t;
+        t.setValue(res3->getLogValue());
+        TimeObjectValue tval("now");
+        CPPUNIT_ASSERT_EQUAL(-1, t.compare(&tval));
         delete res3;
     }
 
@@ -1267,6 +1285,11 @@ public:
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() != "now");
+
+        DateObject d;
+        d.setValue(res3->getLogValue());
+        DateObjectValue dval("now");
+        CPPUNIT_ASSERT_EQUAL(0, d.compare(&dval));
         delete res3;
     }
 
@@ -1446,17 +1469,20 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "21.5");
+        CPPUNIT_ASSERT(res->getLogValue() == "21.50");
         res->setValue("3.1415");
         CPPUNIT_ASSERT_EQUAL(3.14, res->getFloatValue());
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "3.14");
+        CPPUNIT_ASSERT(res2->getLogValue() == "3.14");
         res2->setValue("-2");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-2");
+        CPPUNIT_ASSERT(res3->getLogValue() == "-2.00");
         delete res3;
     }
 
@@ -1624,16 +1650,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "255");
+        CPPUNIT_ASSERT(res->getLogValue() == "255i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("35");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "35");
+        CPPUNIT_ASSERT(res3->getLogValue() == "35i");
         delete res3;
     }
 
@@ -1780,16 +1809,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "100");
+        CPPUNIT_ASSERT(res->getLogValue() == "100.00");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0.00");
         res2->setValue("35");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "34.5");
+        CPPUNIT_ASSERT(res3->getLogValue() == "34.51");
         delete res3;
     }
 
@@ -1950,21 +1982,25 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "comfort");
+        CPPUNIT_ASSERT(res->getLogValue() == "comfort");
         res->setValue("standby");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "standby");
+        CPPUNIT_ASSERT(res2->getLogValue() == "standby");
         res2->setValue("night");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "night");
+        CPPUNIT_ASSERT(res3->getLogValue() == "night");
         res3->setValue("frost");
         delete res3;
 
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "frost");
+        CPPUNIT_ASSERT(res4->getLogValue() == "frost");
         delete res4;
     }
 
@@ -2116,16 +2152,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "65535");
+        CPPUNIT_ASSERT(res->getLogValue() == "65535i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("50000");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "50000");
+        CPPUNIT_ASSERT(res3->getLogValue() == "50000i");
         delete res3;
     }
 
@@ -2281,16 +2320,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "4294967295");
+        CPPUNIT_ASSERT(res->getLogValue() == "4294967295i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("4000000000");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "4000000000");
+        CPPUNIT_ASSERT(res3->getLogValue() == "4000000000i");
         delete res3;
     }
 
@@ -2440,16 +2482,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "127");
+        CPPUNIT_ASSERT(res->getLogValue() == "127i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("-35");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-35");
+        CPPUNIT_ASSERT(res3->getLogValue() == "-35i");
         delete res3;
     }
 
@@ -2601,16 +2646,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "32767");
+        CPPUNIT_ASSERT(res->getLogValue() == "32767i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("-32700");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-32700");
+        CPPUNIT_ASSERT(res3->getLogValue() == "-32700i");
         delete res3;
     }
 
@@ -2766,16 +2814,19 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "2000000000");
+        CPPUNIT_ASSERT(res->getLogValue() == "2000000000i");
         res->setValue("0");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "0");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
         res2->setValue("-2147483648");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "-2147483648");
+        CPPUNIT_ASSERT(res3->getLogValue() == "-2147483648i");
         delete res3;
     }
 
@@ -3096,17 +3147,20 @@ public:
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?é=+");
+        CPPUNIT_ASSERT(res2->getLogValue() == "Test \r\n ?é=+");
         res2->setValue("14  characters");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "14  characters");
+        CPPUNIT_ASSERT(res3->getLogValue() == "14  characters");
         res3->setValue("");
         delete res3;
 		return;
 
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");
+        CPPUNIT_ASSERT(res4->getLogValue() == "");
         delete res4;
     }
 
@@ -3251,21 +3305,25 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "EIB is OK");
+        CPPUNIT_ASSERT(res->getLogValue() == "EIB is OK");
         res->setValue("Test \r\n ?!=+");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?!=+");
+        CPPUNIT_ASSERT(res2->getLogValue() == "Test \r\n ?!=+");
         res2->setValue("14  characters");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "14  characters");
+        CPPUNIT_ASSERT(res3->getLogValue() == "14  characters");
         res3->setValue("");
         delete res3;
 
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");
+        CPPUNIT_ASSERT(res4->getLogValue() == "");
         delete res4;
     }
 
@@ -3404,21 +3462,25 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "EIB is OK EIB is OK");
+        CPPUNIT_ASSERT(res->getLogValue() == "EIB is OK EIB is OK");
         res->setValue("Test \r\n ?!=+");
         delete res;
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "Test \r\n ?!=+");
+        CPPUNIT_ASSERT(res2->getLogValue() == "Test \r\n ?!=+");
         res2->setValue("16    characters");
         delete res2;
 
         Object *res3 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res3->getValue() == "16    characters");
+        CPPUNIT_ASSERT(res3->getLogValue() == "16    characters");
         res3->setValue("");
         delete res3;
 
         Object *res4 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res4->getValue() == "");
+        CPPUNIT_ASSERT(res4->getLogValue() == "");
         delete res4;
     }
 
@@ -3444,7 +3506,6 @@ public:
 
     void testRGBWObjectWrite()
     {
-
         RGBWObject r1;
         r1.setValue("00000000");
         r1.addChangeListener(this);
@@ -3469,6 +3530,36 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
+    void testRGBWPersist()
+    {
+        cleanTestDir();
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_rgbw");
+        pConfig.SetAttribute("type", "251.600");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("fedcba98");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "fedcba98");
+        CPPUNIT_ASSERT(res->getLogValue() == "4275878552i");
+        res->setValue("00000000");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "00000000");
+        CPPUNIT_ASSERT(res2->getLogValue() == "0i");
+        delete res2;
+    }
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( ObjectTest );
