@@ -222,15 +222,31 @@ dnl #########################################################################
 AC_ARG_WITH(influxdb, AC_HELP_STRING([--with-influxdb],[Enable InfluxDB logging and persistence]),
 [WITH_INFLUXDB=$withval],[WITH_INFLUXDB=auto])
 
-AS_IF([test "x$with_influxdb" != "xno"], [
-AC_DEFINE(HAVE_INFLUXDB, [1], [Build with InfluxDB support])
-AC_MSG_NOTICE([using jsoncpp library for InfluxDB])
-AC_ARG_WITH([jsoncpp-lib-path],
-  [AS_HELP_STRING([--with-jsoncpp-lib-path], [location of the JSONcpp libraries])],
-  [JSONCPP_LIBS="-L$withval -ljsoncpp"],
-  [JSONCPP_LIBS='-ljsoncpp'])
-AC_SUBST([JSONCPP_LIBS])
-])
+if test x"$WITH_INFLUXDB" != xno; then
+  # try pkgconfig
+  if test x"$WITH_INFLUXDB" = xyes ; then
+    JSONCPPPC=jsoncpp
+  elif test x"$WITH_INFLUXDB" = xauto ; then
+    JSONCPPPC=jsoncpp
+  fi
+
+  if test x"$WITH_INFLUXDB" = xauto ; then
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.9.1, [
+      AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_SUBST(JSONCPP_LIBS)
+      found_jsoncpp=yes
+    ],[
+      AC_MSG_RESULT([no])
+    ])
+  else
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.9.1, [
+      AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_SUBST(JSONCPP_LIBS)
+      found_jsoncpp=yes
+    ])
+  fi
+fi
+AM_CONDITIONAL([INFLUXDB], [test x"$found_jsoncpp" = xyes])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
