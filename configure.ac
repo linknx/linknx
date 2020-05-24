@@ -231,16 +231,18 @@ if test x"$WITH_INFLUXDB" != xno; then
   fi
 
   if test x"$WITH_INFLUXDB" = xauto ; then
-    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.9.1, [
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
       AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
     ],[
       AC_MSG_RESULT([no])
     ])
   else
-    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.9.1, [
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
       AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
     ])
