@@ -21,7 +21,6 @@ jobs:
       working-directory: pthsem-2.0.8
       run: ./configure && make && sudo make install
     - name: configure
-      working-directory: ../
       run: ./configure
     - name: make
       run: make
