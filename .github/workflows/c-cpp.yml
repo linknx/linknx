@@ -20,11 +20,13 @@ jobs:
     - name: build pthsem
       working-directory: pthsem-2.0.8
       run: ./configure && make && sudo make install
+    - name: prepare build system
+      run: autoreconf --install
     - name: configure
       run: ./configure
     - name: make
       run: make
     - name: make check
       run: make check
-    - name: make distcheck
-      run: make distcheck
+    - name: make install
+      run: make install
