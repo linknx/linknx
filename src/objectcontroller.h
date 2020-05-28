@@ -496,6 +496,7 @@ public:
     virtual bool equals(ObjectValue* value);
     virtual int compare(ObjectValue* value);
     virtual std::string toString();
+    virtual std::string toLogString();
     virtual double toNumber();
     void getTimeValue(int *wday, int *hour, int *min, int *sec);
 protected:

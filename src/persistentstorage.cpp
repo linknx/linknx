@@ -397,7 +397,12 @@ void InfluxdbPersistentStorage::write(const std::string& id, const std::string& 
     std::stringstream query_s(std::ios_base::out|std::ios_base::binary);;
     std::string resp;
 
-    query_s << id << " " << "val=" << value << " 0";
+    if (value.find(':')) {
+        // it's necessary to put TimeObjectValue in quotes
+        query_s << id << " " << "val=\"" << value << "\" 0";
+    } else {
+        query_s << id << " " << "val=" << value << " 0";
+    }
 
     curl_request(INFLUXDB_WRITE, persist_db_m, query_s.str(), resp);
 }

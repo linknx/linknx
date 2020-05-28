@@ -1067,6 +1067,13 @@ std::string TimeObjectValue::toString()
     return out.str();
 }
 
+std::string TimeObjectValue::toLogString()
+{
+    std::ostringstream out;
+    out << "\"" << toString() << "\"";
+    return out.str();
+}
+
 double TimeObjectValue::toNumber()
 {
     if (hour_m == -1)
