@@ -22,6 +22,8 @@ jobs:
     - name: build pthsem
       working-directory: pthsem-2.0.8
       run: ./configure && make && sudo make install
+    - name: update libraries registry
+      run: sudo ldconfig
     - name: prepare build system
       run: autoreconf --install
     - name: configure
