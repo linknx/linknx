@@ -58,8 +58,6 @@ struct arguments arg;
 const char *argp_program_version = PACKAGE_STRING
 #ifdef HAVE_LIBCURL
     "\n- Clickatell SMS gateway enabled"
-#else
-#undef HAVE_INFLUXDB
 #endif
 #ifdef HAVE_LIBESMTP
     "\n- E-mail gateway enabled"

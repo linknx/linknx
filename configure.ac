@@ -216,23 +216,23 @@ if test x"$WITH_LUA" != xno ; then
 fi
 
 dnl #########################################################################
-dnl Check if using influxdb
+dnl Check if using jsoncpp
 dnl #########################################################################
 
-AC_ARG_WITH(influxdb, AC_HELP_STRING([--with-influxdb],[Enable InfluxDB logging and persistence]),
-[WITH_INFLUXDB=$withval],[WITH_INFLUXDB=auto])
+AC_ARG_WITH(jsoncpp, AC_HELP_STRING([--with-jsoncpp],[Enable JSONCPP for InfluxDB persistence]),
+[WITH_JSONCPP=$withval],[WITH_JSONCPP=auto])
 
-if test x"$WITH_INFLUXDB" != xno; then
+if test x"$WITH_JSONCPP" != xno; then
   # try pkgconfig
-  if test x"$WITH_INFLUXDB" = xyes ; then
+  if test x"$WITH_JSONCPP" = xyes ; then
     JSONCPPPC=jsoncpp
-  elif test x"$WITH_INFLUXDB" = xauto ; then
+  elif test x"$WITH_JSONCPP" = xauto ; then
     JSONCPPPC=jsoncpp
   fi
 
-  if test x"$WITH_INFLUXDB" = xauto ; then
+  if test x"$WITH_JSONCPP" = xauto ; then
     PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
-      AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_DEFINE([HAVE_JSONCPP], [1], [jsoncpp])
       AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
@@ -241,14 +241,16 @@ if test x"$WITH_INFLUXDB" != xno; then
     ])
   else
     PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
-      AC_DEFINE([HAVE_INFLUXDB], [1], [jsoncpp])
+      AC_DEFINE([HAVE_JSONCPP], [1], [jsoncpp])
       AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
     ])
   fi
 fi
-AM_CONDITIONAL([INFLUXDB], [test x"$found_jsoncpp" = xyes])
+AM_CONDITIONAL([JSONCPP], [test x"$found_jsoncpp" = xyes])
+
+AM_COND_IF([JSONCPP], [AC_DEFINE([HAVE_INFLUXDB], [1], [Enable InfluxDB])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
