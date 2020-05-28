@@ -36,7 +36,7 @@ jobs:
     - name: make check
       run: make check
     - name: make install
-      run: make install
+      run: sudo make install
     - uses: actions/upload-artifact@v2
       if: failure()
       with:
