@@ -680,7 +680,7 @@ static const FloatValueType FloatValueTypes[] = {
     {"9.023", -670760, 670760}, /* Kelvin Per Cent K/% */
     {"9.024", -670760, 670760}, /* Power in kW */
     {"9.025", -670760, 670760}, /* Volume Flow in l/h */
-    {"9.026", -671088.64, 670760.96}, /* Rain Amount in l/m² */
+    {"9.026", -671088.64, 670760.96}, /* Rain Amount in mm */
     {"9.027", -459.6, 670760.96}, /* Temperature in °F */
     {"9.028", 0, 670760.96}     /* (Wind) Speed in km/h */
 };

@@ -111,13 +111,13 @@ public:
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
 private:
+    bool curlRequest(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
+    bool createDB(const std::string &db, std::string &result);
     std::string uri_m;
     std::string user_m;
     std::string pass_m;
     std::string db_m;
     std::string persist_db_m;
-    bool curl_request(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
-    bool create_db(const std::string &db, std::string &result);
 protected:
     static Logger& logger_m;
 };
