@@ -24,7 +24,6 @@
 #include "config.h"
 #include "logger.h"
 #include "ticpp.h"
-#include "objectcontroller.h"
 
 #ifdef HAVE_MYSQL
 #include <mysql/mysql.h>
@@ -60,6 +59,7 @@ public:
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const std::string& value);
+private:
     std::string logPath_m;
     std::string path_m;
 protected:
