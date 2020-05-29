@@ -1088,7 +1088,7 @@ public:
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "23:59:59");
-        CPPUNIT_ASSERT(res2->getLogValue() == "23:59:59");
+        CPPUNIT_ASSERT(res2->getLogValue() == "\"23:59:59\"");
         res2->setValue("now");
         delete res2;
 
@@ -1096,7 +1096,7 @@ public:
         CPPUNIT_ASSERT(res3->getValue() != "now");
 
         TimeObject t;
-        t.setValue(res3->getLogValue());
+        t.setValue(res3->getLogValue().substr(1,8));
         TimeObjectValue tval("now");
         CPPUNIT_ASSERT_EQUAL(-1, t.compare(&tval));
         delete res3;
