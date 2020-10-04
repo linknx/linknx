@@ -109,9 +109,9 @@ std::string FilePersistentStorage::read(const std::string& id, const std::string
     return value;
 }
 
-void FilePersistentStorage::writelog(const std::string& id, const std::string& value)
+void FilePersistentStorage::writelog(const std::string &id, const ObjectValue &value)
 {
-    logger_m.infoStream() << "Writing log'" << value << "' for object '" << id << "'" << endlog;
+    logger_m.infoStream() << "Writing log'" << value.toString() << "' for object '" << id << "'" << endlog;
     std::string filename = logPath_m+id+".log";
     std::ofstream fp_out(filename.c_str(), std::ios::app);
 
@@ -123,7 +123,7 @@ void FilePersistentStorage::writelog(const std::string& id, const std::string& v
     << timeinfo->tm_hour << ":" << std::setfill('0') << std::setw(2)
     << timeinfo->tm_min << ":" << std::setfill('0') << std::setw(2)
     << timeinfo->tm_sec;
-    fp_out << " > " << value << "\n";
+    fp_out << " > " << value.toString() << "\n";
     fp_out.close(); 
 }
 
@@ -243,14 +243,14 @@ std::string MysqlPersistentStorage::read(const std::string& id, const std::strin
     return value;
 }
 
-void MysqlPersistentStorage::writelog(const std::string& id, const std::string& value)
+void MysqlPersistentStorage::writelog(const std::string &id, const ObjectValue &value)
 {
     if (logtable_m == "")
         return;
-    logger_m.infoStream() << "Writing log '" << value << "' for object '" << id << "'" << endlog;
+    logger_m.infoStream() << "Writing log '" << value.toString() << "' for object '" << id << "'" << endlog;
 
     std::stringstream sql;
-    sql << "INSERT INTO `" << logtable_m << "` (ts, object, value) VALUES (NOW(), '" << id << "', '" << value << "');";
+    sql << "INSERT INTO `" << logtable_m << "` (ts, object, value) VALUES (NOW(), '" << id << "', '" << value.toString() << "');";
 
     if (mysql_real_query(&con_m, sql.str().c_str(), sql.str().length()) != 0)
     {
