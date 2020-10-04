@@ -24,6 +24,7 @@
 #include "config.h"
 #include "logger.h"
 #include "ticpp.h"
+#include "objectcontroller.h"
 
 #ifdef HAVE_MYSQL
 #include <mysql/mysql.h>
@@ -40,7 +41,7 @@ public:
 
     virtual void write(const std::string& id, const std::string& value) = 0;
     virtual std::string read(const std::string& id, const std::string& defval="") = 0;
-    virtual void writelog(const std::string& id, const std::string& value) = 0;
+    virtual void writelog(const std::string &id, const ObjectValue &value) = 0;
 };
 
 class FilePersistentStorage : public PersistentStorage
@@ -53,7 +54,7 @@ public:
 
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
-    virtual void writelog(const std::string& id, const std::string& value);
+    virtual void writelog(const std::string& id, const ObjectValue &value);
 private:
     std::string path_m;
     std::string logPath_m;
@@ -72,7 +73,7 @@ public:
 
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
-    virtual void writelog(const std::string& id, const std::string& value);
+    virtual void writelog(const std::string& id, const ObjectValue &value);
 private:
     MYSQL con_m;
 
