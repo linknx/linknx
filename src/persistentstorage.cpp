@@ -451,15 +451,44 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
     return defval;
 }
 
-void InfluxdbPersistentStorage::writelog(const std::string& id, const std::string& value)
+void InfluxdbPersistentStorage::writelog(const std::string &id, const ObjectValue &value)
 {
-    logger_m.debugStream() << "Logging value '" << value << "' for object '" << id << "'" << endlog;
-
+    ObjectValue *objval = (ObjectValue *) &value;
+    std::stringstream influx_value;
     std::string resp;
-    std::stringstream query_s(std::ios_base::out|std::ios_base::binary);;
+    std::stringstream query_s(std::ios_base::out|std::ios_base::binary);
 
-    query_s << id << " " << "val=" << value;
+    if (dynamic_cast<SwitchingObjectValue*>(objval) ||
+        dynamic_cast<SwitchingControlObjectValue*>(objval))
+    {
+        objval->toNumber() ? (influx_value << "t") : (influx_value << "f");
+    }
+    else if (dynamic_cast<UIntObjectValue*>(objval) ||
+        dynamic_cast<U8ObjectValue*>(objval)  ||
+        dynamic_cast<U32ObjectValue*>(objval) ||
+        dynamic_cast<IntObjectValue*>(objval) ||
+        dynamic_cast<S8ObjectValue*>(objval)  ||
+        dynamic_cast<S16ObjectValue*>(objval) ||
+        dynamic_cast<S32ObjectValue*>(objval) ||
+        dynamic_cast<S64ObjectValue*>(objval))
+    {
+        influx_value << objval->toString() << "i";
+    }
+    else if (dynamic_cast<ScalingObjectValue*>(objval) ||
+             dynamic_cast<ValueObjectValue*>(objval))
+    {
+        influx_value << std::setprecision(2) << std::fixed << objval->toNumber();
+    }
+    else if (dynamic_cast<TimeObjectValue*>(objval))
+    {
+        influx_value << "\"" << objval->toString() << "\"";
+    }
+    else {
+        influx_value << objval->toString();
+    }
 
+    query_s << id << " " << "val=" << influx_value.str();
     curlRequest(INFLUXDB_WRITE, db_m, query_s.str(), resp);
 }
 #endif // HAVE_INFLUXDB
+

@@ -110,7 +110,7 @@ public:
     virtual void exportXml(ticpp::Element* pConfig);
     virtual void write(const std::string& id, const std::string& value);
     virtual std::string read(const std::string& id, const std::string& defval="");
-    virtual void writelog(const std::string& id, const std::string& value);
+    virtual void writelog(const std::string& id, const ObjectValue &value);
 private:
     bool curlRequest(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
     bool createDB(const std::string &db, std::string &result);
