@@ -56,7 +56,7 @@ before_install:
     - eval "${MATRIX_EVAL}"
 
 install:
-    - wget http://www.auto.tuwien.ac.at/~mkoegler/pth/pthsem_2.0.8.tar.gz
+    - wget https://www.auto.tuwien.ac.at/~mkoegler/pth/pthsem_2.0.8.tar.gz --no-check-certificate
     - tar -zxf pthsem_2.0.8.tar.gz
     - cd pthsem-2.0.8
     - ./configure && make && sudo make install
