@@ -481,7 +481,7 @@ void Object::onUpdate()
             if (persist_m)
                 persistence->write(id_m, getValue());
             if (writeLog_m)
-                persistence->writelog(id_m, getLogValue());
+                persistence->writelog(id_m, *get());
         }
     }
 }
@@ -582,15 +582,10 @@ void SwitchingObjectValue::init(const std::string& value)
     }
 }
 
-std::string SwitchingObjectValue::toString()
+std::string SwitchingObjectValue::toString() const
 {
     return getValueString(value_m);
 }
-
-std::string SwitchingObjectValue::toLogString()
-{
-    return getLogString(value_m);
-};
 
 double SwitchingObjectValue::toNumber()
 {
@@ -689,7 +684,7 @@ void SwitchingControlObjectValue::init(const std::string& value)
     }
 }
 
-std::string SwitchingControlObjectValue::toString()
+std::string SwitchingControlObjectValue::toString() const
 {
     if (!control_m)
         return "no control";
@@ -766,11 +761,6 @@ bool SwitchingControlObjectValue::set(double value)
         return set(false, false);
     return set(value != 0.0, true);
 }
-
-std::string SwitchingControlObjectValue::toLogString()
-{
-    return getLogString(value_m);
-};
 
 bool StepDirObjectValue::equals(ObjectValue* value)
 {
@@ -925,7 +915,7 @@ DimmingObjectValue::DimmingObjectValue(const std::string& value)
     }
 }
 
-std::string DimmingObjectValue::toString()
+std::string DimmingObjectValue::toString() const
 {
     if (stepcode_m == 0)
         return "stop";
@@ -999,7 +989,7 @@ BlindsObjectValue::BlindsObjectValue(const std::string& value)
     }
 }
 
-std::string BlindsObjectValue::toString()
+std::string BlindsObjectValue::toString() const
 {
     if (stepcode_m == 0)
         return "stop";
@@ -1055,7 +1045,7 @@ TimeObjectValue::TimeObjectValue(const std::string& value) : wday_m(-1), hour_m(
     }
 }
 
-std::string TimeObjectValue::toString()
+std::string TimeObjectValue::toString() const
 {
     if (hour_m == -1)
         return "now";
@@ -1064,13 +1054,6 @@ std::string TimeObjectValue::toString()
     << hour_m << ":" << std::setfill('0') << std::setw(2) 
     << min_m << ":" << std::setfill('0') << std::setw(2)
     << sec_m;
-    return out.str();
-}
-
-std::string TimeObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << "\"" << toString() << "\"";
     return out.str();
 }
 
@@ -1294,7 +1277,7 @@ DateObjectValue::DateObjectValue(const std::string& value) : day_m(-1), month_m(
     }
 }
 
-std::string DateObjectValue::toString()
+std::string DateObjectValue::toString() const
 {
     if (day_m == -1)
         return "now";
@@ -1538,18 +1521,11 @@ std::string ValueObjectValue::getPrecision()
     }
 }
 
-std::string ValueObjectValue::toString()
+std::string ValueObjectValue::toString() const
 {
     std::ostringstream out;
     out.precision(8);
     out << value_m;
-    return out.str();
-}
-
-std::string ValueObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << std::setprecision(2) << std::fixed << value_m;
     return out.str();
 }
 
@@ -1736,7 +1712,7 @@ ValueObject32Value::ValueObject32Value(const std::string& value)
     }
 }
 
-std::string ValueObject32Value::toString()
+std::string ValueObject32Value::toString() const
 {
     std::ostringstream out;
     out.precision(8);
@@ -1804,17 +1780,10 @@ UIntObjectValue::UIntObjectValue(const std::string& value)
     }
 }
 
-std::string UIntObjectValue::toString()
+std::string UIntObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string UIntObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -1935,17 +1904,10 @@ U8ObjectValue::U8ObjectValue(const std::string& value)
     }
 }
 
-std::string U8ObjectValue::toString()
+std::string U8ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string U8ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -1986,18 +1948,11 @@ ScalingObjectValue::ScalingObjectValue(const std::string& value)
     value_m = (int)(fvalue * 255 / 100);
 }
 
-std::string ScalingObjectValue::toString()
+std::string ScalingObjectValue::toString() const
 {
     std::ostringstream out;
     out.precision(3);
     out << (float)value_m * 100 / 255;
-    return out.str();
-}
-
-std::string ScalingObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << std::setprecision(2) << std::fixed << (float)value_m * 100 / 255;
     return out.str();
 }
 
@@ -2038,7 +1993,7 @@ AngleObjectValue::AngleObjectValue(const std::string& value)
     value_m = ((int)(fvalue * 256 / 360)) % 256;
 }
 
-std::string AngleObjectValue::toString()
+std::string AngleObjectValue::toString() const
 {
     std::ostringstream out;
     out.precision(4);
@@ -2085,7 +2040,7 @@ HeatingModeObjectValue::HeatingModeObjectValue(const std::string& value)
     }
 }
 
-std::string HeatingModeObjectValue::toString()
+std::string HeatingModeObjectValue::toString() const
 {
     switch (value_m)
     {
@@ -2136,7 +2091,7 @@ Latin1CharObjectValue::Latin1CharObjectValue(const std::string& value)
     value_m = (int)chvalue;
 }
 
-std::string Latin1CharObjectValue::toString()
+std::string Latin1CharObjectValue::toString() const
 {
     std::ostringstream out;
     out << (unsigned char)value_m;
@@ -2180,7 +2135,7 @@ AsciiCharObjectValue::AsciiCharObjectValue(const std::string& value)
     value_m = (int)chvalue;
 }
 
-std::string AsciiCharObjectValue::toString()
+std::string AsciiCharObjectValue::toString() const
 {
     std::ostringstream out;
     out << (unsigned char)value_m;
@@ -2222,7 +2177,7 @@ U16ObjectValue::U16ObjectValue(const std::string& value)
     }
 }
 
-std::string U16ObjectValue::toString()
+std::string U16ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
@@ -2280,17 +2235,10 @@ U32ObjectValue::U32ObjectValue(const std::string& value)
     }
 }
 
-std::string U32ObjectValue::toString()
+std::string U32ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string U32ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -2346,7 +2294,7 @@ RGBObjectValue::RGBObjectValue(const std::string& value)
     }
 }
 
-std::string RGBObjectValue::toString()
+std::string RGBObjectValue::toString() const
 {
     std::ostringstream out;
     out.setf(std::ios::hex, std::ios::basefield);
@@ -2408,7 +2356,7 @@ RGBWObjectValue::RGBWObjectValue(const std::string& value)
     }
 }
 
-std::string RGBWObjectValue::toString()
+std::string RGBWObjectValue::toString() const
 {
     std::ostringstream out;
     out.setf(std::ios::hex, std::ios::basefield);
@@ -2474,17 +2422,10 @@ IntObjectValue::IntObjectValue(const std::string& value)
     }
 }
 
-std::string IntObjectValue::toString()
+std::string IntObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string IntObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -2579,17 +2520,10 @@ S8ObjectValue::S8ObjectValue(const std::string& value)
     }
 }
 
-std::string S8ObjectValue::toString()
+std::string S8ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string S8ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -2651,17 +2585,10 @@ S16ObjectValue::S16ObjectValue(const std::string& value)
     }
 }
 
-std::string S16ObjectValue::toString()
+std::string S16ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string S16ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -2718,17 +2645,10 @@ S32ObjectValue::S32ObjectValue(const std::string& value)
     }
 }
 
-std::string S32ObjectValue::toString()
+std::string S32ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
-    return out.str();
-}
-
-std::string S32ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
     return out.str();
 }
 
@@ -2784,19 +2704,13 @@ S64ObjectValue::S64ObjectValue(const std::string& value)
     }
 }
 
-std::string S64ObjectValue::toString()
+std::string S64ObjectValue::toString() const
 {
     std::ostringstream out;
     out << value_m;
     return out.str();
 }
 
-std::string S64ObjectValue::toLogString()
-{
-    std::ostringstream out;
-    out << value_m << "i";
-    return out.str();
-}
 double S64ObjectValue::toNumber()
 {
     return value_m;
@@ -2910,7 +2824,7 @@ StringObjectValue::StringObjectValue(const std::string& value)
 //    logger_m.debugStream() << "StringObjectValue: Value: '" << value_m << "'" << endlog;
 }
 
-std::string StringObjectValue::toString()
+std::string StringObjectValue::toString() const
 {
     return value_m;
 }

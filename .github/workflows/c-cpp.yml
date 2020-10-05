@@ -1,0 +1,44 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
+  TZ: CET
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: sudo apt install libcppunit-dev gettext
+    - name: get pthsem
+      run: wget https://github.com/linknx/pthsem/archive/master.zip
+    - name: extract pthsem
+      run: unzip master.zip
+    - name: build pthsem
+      working-directory: pthsem-master
+      run: ./configure && make && sudo make install
+    - name: update libraries registry
+      run: sudo ldconfig
+    - name: prepare build system
+      run: autoreconf --install
+    - name: configure
+      run: ./configure
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+    - name: make install
+      run: sudo make install
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: test-suite.log
+        path: test/test-suite.log

@@ -27,11 +27,12 @@
 #ifndef EIBCLIENT_H
 #define EIBCLIENT_H
 
-#include "sys/cdefs.h"
 #include "stdint.h"
 #include <pthsem.h>
 
-__BEGIN_DECLS;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "eibloadresult.h"
 
@@ -705,5 +706,8 @@ BCU_LOAD_RESULT EIB_LoadImage (EIBConnection * con, const uint8_t * image,
  */
 int EIB_LoadImage_async (EIBConnection * con, const uint8_t * image, int len);
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
+
 #endif

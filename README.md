@@ -1,4 +1,4 @@
-# Linknx [![Build Status](https://travis-ci.org/linknx/linknx.svg?branch=master)](https://travis-ci.org/linknx/linknx)
+# Linknx ![C/C++ CI](https://github.com/linknx/linknx/workflows/C/C++%20CI/badge.svg?branch=master)
 This repository is a migration of the legacy one hosted on Sourceforge
 (:pserver:anonymous@linknx.cvs.sourceforge.net:/cvsroot/linknx)
 
