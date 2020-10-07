@@ -21,9 +21,6 @@ jobs:
             gcc-version: [6, 8, 9]
             full-options: [true, false] 
 
-    #name: format('gcc-{0} full options: {1}', ${{ matrix.gcc-version }}, ${{ matrix.full-options }}) 
-    name: format('gcc-{0} full options: {1}', 'foo', 'bar')
-
     env:
         CC: gcc-${{ matrix.gcc-version }}
         CXX: g++-${{ matrix.gcc-version }}
