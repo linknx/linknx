@@ -10,9 +10,17 @@ env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
   TZ: CET
 jobs:
-  build:
+  CI-build:
 
     runs-on: ubuntu-latest
+
+    strategy:
+        matrix:
+            gcc-version: [6, 8, 9]
+
+    env:
+        CC: gcc-${{ matrix.gcc-version }}
+        CXX: g++-${{ matrix.gcc-version }}
 
     steps:
     - uses: actions/checkout@v2
