@@ -2,7 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ master ]
+    branches:
+        - master
+        - '*'
   pull_request:
     branches: [ master ]
 
@@ -17,7 +19,10 @@ jobs:
     strategy:
         matrix:
             gcc-version: [6, 8, 9]
-            dep-libcurl: [true, false] 
+            full-options: [true, false] 
+
+    #name: format('gcc-{0} full options: {1}', ${{ matrix.gcc-version }}, ${{ matrix.full-options }}) 
+    name: format('gcc-{0} full options: {1}', 'foo', 'bar')
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -27,9 +32,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: install required dependencies
       run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext
-    - name: install libcurl
-      if: matrix.dep-libcurl
-      run: sudo apt install libcurl4-openssl-dev
+    - name: install optional dependencies
+      if: matrix.full-options
+      run: sudo apt install libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev
     - name: get pthsem
       run: wget https://github.com/linknx/pthsem/archive/master.zip
     - name: extract pthsem
@@ -42,7 +47,11 @@ jobs:
     - name: prepare build system
       run: autoreconf --install
     - name: configure
-      run: ./configure
+      if: ${{! matrix.full-options }}
+      run: ./configure --without-log4cpp --without-libcurl --without-lua --disable-smtp --without-mysql
+    - name: configure
+      if: matrix.full-options
+      run: ./configure --with-log4cpp --with-libcurl --with-lua --enable-smtp --with-mysql
     - name: make
       run: make
     - name: make check
