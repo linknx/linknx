@@ -16,8 +16,7 @@ jobs:
 
     strategy:
         matrix:
-            #gcc-version: [6, 8, 9]
-            gcc-version: [8]
+            gcc-version: [6, 8, 9]
             dep-libcurl: [true, false] 
 
     env:
