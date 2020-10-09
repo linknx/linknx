@@ -1,14 +1,10 @@
 # Linknx ![C/C++ CI](https://github.com/linknx/linknx/workflows/C/C++%20CI/badge.svg?branch=master)
-This repository is a migration of the legacy one hosted on Sourceforge
-(:pserver:anonymous@linknx.cvs.sourceforge.net:/cvsroot/linknx)
-
-The migration is aimed at simplifying the collaboration and maintenance of
-Linknx's source code in the future.
+This repository is a migration of the legacy one hosted on [Sourceforge](https://sourceforge.net/projects/linknx/) which is now deprecated.
 
 ## Documentation
-Read the [wiki pages](https://sourceforge.net/p/linknx/wiki/Main_Page/) on sourceforge before the full wiki is migrated here. Thanks for your patience!
+Read the [wiki pages](wiki) for detailed information about how to build, install, configure and run LinKNX.
 
-## How to build linknx
+## How to build LinKNX
 The best option is to download a tarball corresponding to a specific version (see links below). Then, run
 ```
 ./configure
