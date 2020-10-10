@@ -85,7 +85,7 @@ private:
     int port_m;
     std::string user_m;
     std::string pass_m;
-    std::string db_m;
+    std::string logDb_m;
     std::string table_m;
     std::string logtable_m;
     std::string charset_m;
@@ -117,8 +117,8 @@ private:
     std::string uri_m;
     std::string user_m;
     std::string pass_m;
-    std::string db_m;
-    std::string persist_db_m;
+    std::string logDb_m;
+    std::string persistenceDb_m;
 protected:
     static Logger& logger_m;
 };

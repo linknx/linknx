@@ -279,7 +279,6 @@ public:
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "on");
 
-        SwitchingObject *sw = (SwitchingObject*) res;
         res->setValue("off");
         delete res;
 
