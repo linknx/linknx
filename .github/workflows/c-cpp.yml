@@ -2,7 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ master ]
+    branches:
+        - master
+        - '*'
   pull_request:
     branches: [ master ]
 
@@ -10,14 +12,26 @@ env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
   TZ: CET
 jobs:
-  build:
+  CI-build:
 
     runs-on: ubuntu-latest
 
+    strategy:
+        matrix:
+            gcc-version: [6, 8, 9]
+            full-options: [true, false] 
+
+    env:
+        CC: gcc-${{ matrix.gcc-version }}
+        CXX: g++-${{ matrix.gcc-version }}
+
     steps:
     - uses: actions/checkout@v2
-    - name: install dependencies
-      run: sudo apt install libcppunit-dev gettext
+    - name: install required dependencies
+      run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext
+    - name: install optional dependencies
+      if: matrix.full-options
+      run: sudo apt install libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev
     - name: get pthsem
       run: wget https://github.com/linknx/pthsem/archive/master.zip
     - name: extract pthsem
@@ -30,7 +44,11 @@ jobs:
     - name: prepare build system
       run: autoreconf --install
     - name: configure
-      run: ./configure
+      if: ${{! matrix.full-options }}
+      run: ./configure --without-log4cpp --without-libcurl --without-lua --disable-smtp --without-mysql
+    - name: configure
+      if: matrix.full-options
+      run: ./configure --with-log4cpp --with-libcurl --with-lua --enable-smtp --with-mysql
     - name: make
       run: make
     - name: make check
