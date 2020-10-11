@@ -18,7 +18,9 @@ jobs:
     strategy:
         matrix:
             #gcc-version: [8, 9]
-            gcc-version: [9]
+            include:
+                - gcc-version: 8
+                - gcc-version: 9
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -32,7 +34,7 @@ jobs:
       run: sudo apt install g++-${{ matrix.gcc-version }}
       
     - name: build pthsem
-      # Build and deploy pthsem to 'installdir'
+      # Build and deploy pthsem to 'installdir'. This dir is reused later in the process.
       run: ./configure --disable-shared --prefix=/tmp/pthseminstalldir && make install
 
     - uses: actions/upload-artifact@v2
@@ -47,10 +49,12 @@ jobs:
 
     strategy:
         matrix:
-            #gcc-version: [8, 9]
-            gcc-version: [9]
-            #install-deps: ['esmtp_log4cpp_lua_mariadb_curl_jsoncpp', '', 'curl', 'jsoncpp']
-            install-deps: ['libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev']
+            #gcc-version: []
+            #install-deps: []
+            include:
+                - gcc-version: 9
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  run-tests: true
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -82,6 +86,7 @@ jobs:
     - name: make
       run: make
     - name: make check
+      if: matrix.run-tests
       run: make check
     - name: make install
       run: sudo make install
