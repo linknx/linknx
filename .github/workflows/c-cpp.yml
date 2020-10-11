@@ -17,10 +17,7 @@ jobs:
 
     strategy:
         matrix:
-            #gcc-version: [8, 9]
-            include:
-                - gcc-version: 8
-                - gcc-version: 9
+            gcc-version: [8, 9]
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -49,12 +46,20 @@ jobs:
 
     strategy:
         matrix:
-            #gcc-version: []
-            #install-deps: []
+            # Define build matrix case by case so that we don't run tests for all combinations.
             include:
                 - gcc-version: 9
                   install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
                   run-tests: true
+                - gcc-version: 9
+                  install-deps: ''
+                  run-tests: false
+                - gcc-version: 9
+                  install-deps: 'libjsoncpp-dev'
+                  run-tests: false
+                - gcc-version: 8
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  run-tests: false
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
