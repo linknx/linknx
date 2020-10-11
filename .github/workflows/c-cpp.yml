@@ -12,8 +12,11 @@ env:
   TZ: CET
 
 jobs:
+  # Job building pthsem with the different gcc versions that are later required by the linknx build
+  #
   pthsem-build:
     runs-on: ubuntu-latest
+    name: Build pthsem
 
     strategy:
         matrix:
@@ -26,19 +29,25 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+          # This the path of the repo URL on github.
           repository: linknx/pthsem
     - name: install required dependencies
       run: sudo apt install g++-${{ matrix.gcc-version }}
       
     - name: build pthsem
-      # Build and deploy pthsem to 'installdir'. This dir is reused later in the process.
+      # Build and deploy pthsem to '/tmp/pthseminstalldir'. This dir is reused later in the process
+      # so make sure to update all references to it in this file.
+      # It is important that the job for linknx deploys pthsem to the same directory because
+      # configure has hardcoded some paths in the deployed files.
+      # --disable-shared helps to pass the pthtest when configuring linknx.
       run: ./configure --disable-shared --prefix=/tmp/pthseminstalldir && make install
 
+      # Store pthsem binaries for later use by linknx build.
+      # The artifact is named after the version of gcc to make it unique.
     - uses: actions/upload-artifact@v2
       with:
           name: pthsem-gcc-${{ matrix.gcc-version }}
-          path: |
-            /tmp/pthseminstalldir/**
+          path: /tmp/pthseminstalldir/**
 
   linknx-build:
     runs-on: ubuntu-latest
@@ -48,15 +57,18 @@ jobs:
         matrix:
             # Define build matrix case by case so that we don't run tests for all combinations.
             include:
+                # Latest gcc, full deps, tests.
                 - gcc-version: 9
                   install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
                   run-tests: true
+                # Make sure code builds without any optional dep. Using latest gcc here, but any version would work.
                 - gcc-version: 9
                   install-deps: ''
                   run-tests: false
                 - gcc-version: 9
                   install-deps: 'libjsoncpp-dev'
                   run-tests: false
+                # Build with previous version of gcc, full deps. No need to test again.
                 - gcc-version: 8
                   install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
                   run-tests: false
