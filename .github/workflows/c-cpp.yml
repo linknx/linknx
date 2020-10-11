@@ -19,7 +19,12 @@ jobs:
     strategy:
         matrix:
             gcc-version: [6, 8, 9]
-            full-options: [true, false] 
+            install-libcurl: [true, false] 
+            install-libesmtp: [true, false] 
+            install-liblog4cpp: [true, false] 
+            install-liblua: [true, false] 
+            install-libmariadb: [true, false] 
+            install-libjsoncpp: [true, false] 
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -29,9 +34,55 @@ jobs:
     - uses: actions/checkout@v2
     - name: install required dependencies
       run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext
-    - name: install optional dependencies
-      if: matrix.full-options
-      run: sudo apt install libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev
+      
+      # libcurl
+    - name: install libcurl
+      if: matrix.install-libcurl
+      run: sudo apt install libcurl4-openssl-dev
+    - name: uninstall libcurl
+      if: ${{! matrix.install-libcurl }}
+      run: sudo apt remove libcurl4-openssl-dev
+
+      # libesmtp
+    - name: install libesmtp
+      if: matrix.install-libesmtp
+      run: sudo apt install libesmtp-dev
+    - name: uninstall libesmtp 
+      if: ${{! matrix.install-libesmtp }}
+      run: sudo apt remove libesmtp-dev
+
+      # liblog4cpp
+    - name: install liblog4cpp
+      if: matrix.install-liblog4cpp
+      run: sudo apt install liblog4cpp5-dev
+    - name: uninstall liblog4cpp
+      if: ${{! matrix.install-liblog4cpp5-dev }}
+      run: sudo apt remove liblog4cpp5-dev
+
+      # liblua
+    - name: install liblua
+      if: matrix.install-liblua
+      run: sudo apt install liblua5.1-0-dev
+    - name: uninstall liblua
+      if: ${{! matrix.install-liblua }}
+      run: sudo apt remove liblua5.1-0-dev
+
+      # libmariadb
+    - name: install libmariadb
+      if: matrix.install-libmariadb
+      run: sudo apt install libmariadb-dev
+    - name: uninstall libmariadb
+      if: ${{! matrix.install-libmariadb }}
+      run: sudo apt remove libmariadb-dev
+
+      # libjsoncpp
+    - name: install libjsoncpp
+      if: matrix.install-libjsoncpp
+      run: sudo apt install libjsoncpp-dev
+    - name: uninstall libjsoncpp
+      if: ${{! matrix.install-libjsoncpp }}
+      run: sudo apt remove libjsoncpp-dev
+
     - name: get pthsem
       run: wget https://github.com/linknx/pthsem/archive/master.zip
     - name: extract pthsem
