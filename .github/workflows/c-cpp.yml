@@ -4,27 +4,21 @@ on:
   push:
     branches:
         - master
-        - '*'
   pull_request:
     branches: [ master ]
 
 env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
   TZ: CET
-jobs:
-  CI-build:
 
+jobs:
+  pthsem-build:
     runs-on: ubuntu-latest
 
     strategy:
         matrix:
-            gcc-version: [6, 8, 9]
-            install-libcurl: [true, false] 
-            install-libesmtp: [true, false] 
-            install-liblog4cpp: [true, false] 
-            install-liblua: [true, false] 
-            install-libmariadb: [true, false] 
-            install-libjsoncpp: [true, false] 
+            #gcc-version: [8, 9]
+            gcc-version: [9]
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -32,74 +26,59 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+          repository: linknx/pthsem
     - name: install required dependencies
-      run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext
+      run: sudo apt install g++-${{ matrix.gcc-version }}
       
-      # libcurl
-    - name: install libcurl
-      if: matrix.install-libcurl
-      run: sudo apt install libcurl4-openssl-dev
-    - name: uninstall libcurl
-      if: ${{! matrix.install-libcurl }}
-      run: sudo apt remove libcurl4-openssl-dev
-
-      # libesmtp
-    - name: install libesmtp
-      if: matrix.install-libesmtp
-      run: sudo apt install libesmtp-dev
-    - name: uninstall libesmtp 
-      if: ${{! matrix.install-libesmtp }}
-      run: sudo apt remove libesmtp-dev
-
-      # liblog4cpp
-    - name: install liblog4cpp
-      if: matrix.install-liblog4cpp
-      run: sudo apt install liblog4cpp5-dev
-    - name: uninstall liblog4cpp
-      if: ${{! matrix.install-liblog4cpp5-dev }}
-      run: sudo apt remove liblog4cpp5-dev
-
-      # liblua
-    - name: install liblua
-      if: matrix.install-liblua
-      run: sudo apt install liblua5.1-0-dev
-    - name: uninstall liblua
-      if: ${{! matrix.install-liblua }}
-      run: sudo apt remove liblua5.1-0-dev
-
-      # libmariadb
-    - name: install libmariadb
-      if: matrix.install-libmariadb
-      run: sudo apt install libmariadb-dev
-    - name: uninstall libmariadb
-      if: ${{! matrix.install-libmariadb }}
-      run: sudo apt remove libmariadb-dev
-
-      # libjsoncpp
-    - name: install libjsoncpp
-      if: matrix.install-libjsoncpp
-      run: sudo apt install libjsoncpp-dev
-    - name: uninstall libjsoncpp
-      if: ${{! matrix.install-libjsoncpp }}
-      run: sudo apt remove libjsoncpp-dev
-
-    - name: get pthsem
-      run: wget https://github.com/linknx/pthsem/archive/master.zip
-    - name: extract pthsem
-      run: unzip master.zip
     - name: build pthsem
-      working-directory: pthsem-master
-      run: ./configure && make && sudo make install
-    - name: update libraries registry
-      run: sudo ldconfig
+      # Build and deploy pthsem to 'installdir'
+      run: ./configure --prefix=/tmp/pthseminstalldir && make install
+
+    - uses: actions/upload-artifact@v2
+      with:
+          name: pthsem-gcc-${{ matrix.gcc-version }}
+          path: |
+            /tmp/pthseminstalldir/**
+
+  linknx-build:
+    runs-on: ubuntu-latest
+    needs: pthsem-build
+
+    strategy:
+        matrix:
+            #gcc-version: [8, 9]
+            gcc-version: [9]
+            #install-deps: ['esmtp_log4cpp_lua_mariadb_curl_jsoncpp', '', 'curl', 'jsoncpp']
+            install-deps: ['libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev']
+
+    env:
+        CC: gcc-${{ matrix.gcc-version }}
+        CXX: g++-${{ matrix.gcc-version }}
+
+    steps:
+      # Retrieve pthsem artifact and install it.
+    - uses: actions/download-artifact@v2
+      with:
+          name: pthsem-gcc-${{ matrix.gcc-version }}
+          # This path must match the --with-pth option of configure
+          path: /tmp/pthseminstalldir
+
+      # Uninstall all deps first
+    - name: pre-install cleanup
+      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev
+
+    - uses: actions/checkout@v2
+    - name: install required dependencies
+      run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext ${{ matrix.install-deps }}
+      
+      # Configure LinKNX.
     - name: prepare build system
       run: autoreconf --install
-    - name: configure
-      if: ${{! matrix.full-options }}
-      run: ./configure --without-log4cpp --without-libcurl --without-lua --disable-smtp --without-mysql
-    - name: configure
-      if: matrix.full-options
-      run: ./configure --with-log4cpp --with-libcurl --with-lua --enable-smtp --with-mysql
+    - name: configure 
+      run: ./configure --with-pth=/tmp/pthseminstalldir
+
+      # Build LinKNX, test it and deploy it.
     - name: make
       run: make
     - name: make check
