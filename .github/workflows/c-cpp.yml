@@ -50,6 +50,7 @@ jobs:
           path: /tmp/pthseminstalldir/**
 
   linknx-build:
+    name: Build LinKNX
     runs-on: ubuntu-latest
     needs: pthsem-build
 
