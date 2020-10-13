@@ -4,9 +4,9 @@
 This repository is a migration of the legacy one hosted on [Sourceforge](https://sourceforge.net/projects/linknx/) which is now deprecated.
 
 ## Documentation
-Read the [wiki pages](https://github.com/linknx/linknx/wiki) for detailed information about how to build, install, configure and run LinKNX.
+Read the [wiki pages](https://github.com/linknx/linknx/wiki) for detailed information about how to build, install, configure and run linknx.
 
-## How to build LinKNX
+## How to build linknx
 The best option is to download a tarball corresponding to a specific version (see links below). Then, run
 ```
 ./configure
