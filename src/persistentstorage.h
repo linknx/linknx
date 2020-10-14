@@ -30,7 +30,7 @@
 #include <mysql/mysql.h>
 #endif
 
-#ifdef HAVE_INFLUXDB
+#ifdef SUPPORT_INFLUXDB
 #include <curl/curl.h>
 #include <json/json.h>
 #endif
@@ -95,7 +95,7 @@ protected:
 };
 #endif // HAVE_MYSQL
 
-#ifdef HAVE_INFLUXDB
+#ifdef SUPPORT_INFLUXDB
 enum InfluxdbOperation_t
 {
     INFLUXDB_WRITE = 0,
@@ -122,5 +122,5 @@ private:
 protected:
     static Logger& logger_m;
 };
-#endif // HAVE_INFLUXDB
+#endif // SUPPORT_INFLUXDB
 #endif

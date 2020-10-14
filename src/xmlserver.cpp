@@ -406,7 +406,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     ticpp::Element mysql("mysql");
                     features.LinkEndChild(&mysql);
 #endif
-#ifdef HAVE_INFLUXDB
+#ifdef SUPPORT_INFLUXDB
                     ticpp::Element influxdb("influxdb");
                     features.LinkEndChild(&influxdb);
 #endif

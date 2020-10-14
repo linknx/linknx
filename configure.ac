@@ -128,7 +128,7 @@ if test x"$WITH_CPPUNIT" != xno; then
 
   if test x"$WITH_CPPUNIT" = xauto ; then
     PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
-      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_DEFINE([HAVE_CPPUNIT], [1], [CppUnit is available])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
       found_cppunit=yes
@@ -137,7 +137,7 @@ if test x"$WITH_CPPUNIT" != xno; then
     ])
   else
     PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
-      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_DEFINE([HAVE_CPPUNIT], [1], [CppUnit is available])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
       found_cppunit=yes
@@ -166,7 +166,7 @@ if test x"$WITH_LOG4CPP" != xno; then
 
   if test x"$WITH_LOG4CPP" = xauto ; then
     PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
-      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_DEFINE([HAVE_LOG4CPP], [1], [Log4cpp is available])
       AC_SUBST(LOG4CPP_CFLAGS)
       AC_SUBST(LOG4CPP_LIBS)
     ],[
@@ -174,7 +174,7 @@ if test x"$WITH_LOG4CPP" != xno; then
     ])
   else
     PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
-      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_DEFINE([HAVE_LOG4CPP], [1], [Log4cpp is available])
       AC_SUBST(LOG4CPP_CFLAGS)
       AC_SUBST(LOG4CPP_LIBS)
     ])
@@ -232,7 +232,6 @@ if test x"$WITH_JSONCPP" != xno; then
 
   if test x"$WITH_JSONCPP" = xauto ; then
     PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
-      AC_DEFINE([HAVE_JSONCPP], [1], [jsoncpp])
       AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
@@ -241,7 +240,6 @@ if test x"$WITH_JSONCPP" != xno; then
     ])
   else
     PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
-      AC_DEFINE([HAVE_JSONCPP], [1], [jsoncpp])
       AC_SUBST(JSONCPP_CFLAGS)
       AC_SUBST(JSONCPP_LIBS)
       found_jsoncpp=yes
@@ -250,7 +248,11 @@ if test x"$WITH_JSONCPP" != xno; then
 fi
 AM_CONDITIONAL([JSONCPP], [test x"$found_jsoncpp" = xyes])
 
-AM_COND_IF([JSONCPP], [AC_DEFINE([HAVE_INFLUXDB], [1], [Enable InfluxDB])])
+if test x"$found_jsoncpp" = xyes ; then
+  if test $libcurl_cv_lib_curl_usable = yes ; then
+     AC_DEFINE([SUPPORT_INFLUXDB], [1], [Support InfluxDB if both libcurl and jsoncpp are available])
+  fi
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

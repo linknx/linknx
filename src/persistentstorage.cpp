@@ -39,12 +39,12 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
         return new MysqlPersistentStorage(pConfig);
     }
 #endif // HAVE_MYSQL
-#ifdef HAVE_INFLUXDB
+#ifdef SUPPORT_INFLUXDB
     else if (type == "influxdb")
     {
         return new InfluxdbPersistentStorage(pConfig);
     }
-#endif // HAVE_INFLUXDB
+#endif // SUPPORT_INFLUXDB
     else if (type == "")
     {
         return 0;
@@ -267,7 +267,7 @@ void MysqlPersistentStorage::writelog(const std::string &id, const ObjectValue &
 #endif // HAVE_MYSQL
 
 
-#ifdef HAVE_INFLUXDB
+#ifdef SUPPORT_INFLUXDB
 Logger& InfluxdbPersistentStorage::logger_m(Logger::getInstance("InfluxdbPersistentStorage"));
 
 bool existsInArray(const Json::Value &json, const std::string &key)
@@ -454,7 +454,9 @@ std::string InfluxdbPersistentStorage::read(const std::string& id, const std::st
 
 void InfluxdbPersistentStorage::writelog(const std::string &id, const ObjectValue &value)
 {
-    ObjectValue *objval = (ObjectValue *) &value;
+    ObjectValue *objval = const_cast<ObjectValue *>(&value);
+    // TODO some ObjectValue methods are not yet qualified as const in the API
+
     std::stringstream influx_value;
     std::string resp;
     std::stringstream query_s(std::ios_base::out|std::ios_base::binary);
@@ -489,7 +491,7 @@ void InfluxdbPersistentStorage::writelog(const std::string &id, const ObjectValu
     }
 
     query_s << id << " " << "val=" << influx_value.str();
-    curlRequest(INFLUXDB_WRITE, db_m, query_s.str(), resp);
+    curlRequest(INFLUXDB_WRITE, logDb_m, query_s.str(), resp);
 }
-#endif // HAVE_INFLUXDB
+#endif // SUPPORT_INFLUXDB
 
