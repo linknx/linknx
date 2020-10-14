@@ -1,4 +1,4 @@
-# ![linknx](/icons/linknx-wide-dark-800x275.png)
+# ![linknx](https://github.com/linknx/linknx/wiki/images/linknx-wide-dark-800x275.png)
 ![C/C++ CI](https://github.com/linknx/linknx/workflows/C/C++%20CI/badge.svg?branch=master)
 
 This repository is a migration of the legacy one hosted on [Sourceforge](https://sourceforge.net/projects/linknx/) which is now deprecated.
