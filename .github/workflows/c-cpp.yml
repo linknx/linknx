@@ -4,22 +4,23 @@ on:
   push:
     branches:
         - master
-        - '*'
   pull_request:
     branches: [ master ]
 
 env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
   TZ: CET
-jobs:
-  CI-build:
 
+jobs:
+  # Job building pthsem with the different gcc versions that are later required by the linknx build
+  #
+  pthsem-build:
     runs-on: ubuntu-latest
+    name: Build pthsem
 
     strategy:
         matrix:
-            gcc-version: [6, 8, 9]
-            full-options: [true, false] 
+            gcc-version: [8, 9]
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -27,31 +28,83 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+          # This the path of the repo URL on github.
+          repository: linknx/pthsem
     - name: install required dependencies
-      run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext
-    - name: install optional dependencies
-      if: matrix.full-options
-      run: sudo apt install libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev
-    - name: get pthsem
-      run: wget https://github.com/linknx/pthsem/archive/master.zip
-    - name: extract pthsem
-      run: unzip master.zip
+      run: sudo apt install g++-${{ matrix.gcc-version }}
+      
     - name: build pthsem
-      working-directory: pthsem-master
-      run: ./configure && make && sudo make install
-    - name: update libraries registry
-      run: sudo ldconfig
+      # Build and deploy pthsem to '/tmp/pthseminstalldir'. This dir is reused later in the process
+      # so make sure to update all references to it in this file.
+      # It is important that the job for linknx deploys pthsem to the same directory because
+      # configure has hardcoded some paths in the deployed files.
+      # --disable-shared helps to pass the pthtest when configuring linknx.
+      run: ./configure --disable-shared --prefix=/tmp/pthseminstalldir && make install
+
+      # Store pthsem binaries for later use by linknx build.
+      # The artifact is named after the version of gcc to make it unique.
+    - uses: actions/upload-artifact@v2
+      with:
+          name: pthsem-gcc-${{ matrix.gcc-version }}
+          path: /tmp/pthseminstalldir/**
+
+  linknx-build:
+    name: Build LinKNX
+    runs-on: ubuntu-latest
+    needs: pthsem-build
+
+    strategy:
+        matrix:
+            # Define build matrix case by case so that we don't run tests for all combinations.
+            include:
+                # Latest gcc, full deps, tests.
+                - gcc-version: 9
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  run-tests: true
+                # Make sure code builds without any optional dep. Using latest gcc here, but any version would work.
+                - gcc-version: 9
+                  install-deps: ''
+                  run-tests: false
+                - gcc-version: 9
+                  install-deps: 'libjsoncpp-dev'
+                  run-tests: false
+                # Build with previous version of gcc, full deps. No need to test again.
+                - gcc-version: 8
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  run-tests: false
+
+    env:
+        CC: gcc-${{ matrix.gcc-version }}
+        CXX: g++-${{ matrix.gcc-version }}
+
+    steps:
+      # Retrieve pthsem artifact and install it.
+    - uses: actions/download-artifact@v2
+      with:
+          name: pthsem-gcc-${{ matrix.gcc-version }}
+          # This path must match the --with-pth option of configure
+          path: /tmp/pthseminstalldir
+
+      # Uninstall all deps first
+    - name: pre-install cleanup
+      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev
+
+    - uses: actions/checkout@v2
+    - name: install required dependencies
+      run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext ${{ matrix.install-deps }}
+      
+      # Configure LinKNX.
     - name: prepare build system
       run: autoreconf --install
-    - name: configure
-      if: ${{! matrix.full-options }}
-      run: ./configure --without-log4cpp --without-libcurl --without-lua --disable-smtp --without-mysql
-    - name: configure
-      if: matrix.full-options
-      run: ./configure --with-log4cpp --with-libcurl --with-lua --enable-smtp --with-mysql
+    - name: configure 
+      run: ./configure --with-pth=/tmp/pthseminstalldir
+
+      # Build LinKNX, test it and deploy it.
     - name: make
       run: make
     - name: make check
+      if: matrix.run-tests
       run: make check
     - name: make install
       run: sudo make install
