@@ -330,7 +330,7 @@ InfluxdbPersistentStorage::~InfluxdbPersistentStorage()
 
 static size_t _curlWriteCB(void *contents, size_t size, size_t nmemb, void *userp)
 {
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    reinterpret_cast<std::string*>(userp)->append(reinterpret_cast<char*>(contents), size * nmemb);
     return size * nmemb;
 }
 
@@ -457,14 +457,14 @@ void InfluxdbPersistentStorage::writelog(const std::string &id, const ObjectValu
     ObjectValue *objval = const_cast<ObjectValue *>(&value);
     // TODO some ObjectValue methods are not yet qualified as const in the API
 
-    std::stringstream influx_value;
+    std::stringstream influxValue;
     std::string resp;
-    std::stringstream query_s(std::ios_base::out|std::ios_base::binary);
+    std::stringstream queryStream(std::ios_base::out|std::ios_base::binary);
 
     if (dynamic_cast<SwitchingObjectValue*>(objval) ||
         dynamic_cast<SwitchingControlObjectValue*>(objval))
     {
-        objval->toNumber() ? (influx_value << "t") : (influx_value << "f");
+        objval->toNumber() ? (influxValue << "t") : (influxValue << "f");
     }
     else if (dynamic_cast<UIntObjectValue*>(objval) ||
         dynamic_cast<U8ObjectValue*>(objval)  ||
@@ -475,23 +475,23 @@ void InfluxdbPersistentStorage::writelog(const std::string &id, const ObjectValu
         dynamic_cast<S32ObjectValue*>(objval) ||
         dynamic_cast<S64ObjectValue*>(objval))
     {
-        influx_value << objval->toString() << "i";
+        influxValue << objval->toString() << "i";
     }
     else if (dynamic_cast<ScalingObjectValue*>(objval) ||
              dynamic_cast<ValueObjectValue*>(objval))
     {
-        influx_value << std::setprecision(2) << std::fixed << objval->toNumber();
+        influxValue << std::setprecision(2) << std::fixed << objval->toNumber();
     }
     else if (dynamic_cast<TimeObjectValue*>(objval))
     {
-        influx_value << "\"" << objval->toString() << "\"";
+        influxValue << "\"" << objval->toString() << "\"";
     }
     else {
-        influx_value << objval->toString();
+        influxValue << objval->toString();
     }
 
-    query_s << id << " " << "val=" << influx_value.str();
-    curlRequest(INFLUXDB_WRITE, logDb_m, query_s.str(), resp);
+    queryStream << id << " " << "val=" << influxValue.str();
+    curlRequest(INFLUXDB_WRITE, logDb_m, queryStream.str(), resp);
 }
 #endif // SUPPORT_INFLUXDB
 
