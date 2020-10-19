@@ -30,6 +30,11 @@
 #include <mysql/mysql.h>
 #endif
 
+#ifdef SUPPORT_INFLUXDB
+#include <curl/curl.h>
+#include <json/json.h>
+#endif
+
 class PersistentStorage
 {
 public:
@@ -47,7 +52,7 @@ public:
 class FilePersistentStorage : public PersistentStorage
 {
 public:
-    FilePersistentStorage(std::string &path, std::string &logPath);
+    FilePersistentStorage(ticpp::Element* pConfig);
     virtual ~FilePersistentStorage() {};
 
     virtual void exportXml(ticpp::Element* pConfig);
@@ -56,8 +61,8 @@ public:
     virtual std::string read(const std::string& id, const std::string& defval="");
     virtual void writelog(const std::string& id, const ObjectValue &value);
 private:
-    std::string path_m;
     std::string logPath_m;
+    std::string path_m;
 protected:
     static Logger& logger_m;
 };
@@ -76,17 +81,46 @@ public:
     virtual void writelog(const std::string& id, const ObjectValue &value);
 private:
     MYSQL con_m;
-
     std::string host_m;
+    int port_m;
     std::string user_m;
     std::string pass_m;
-    std::string db_m;
+    std::string logDb_m;
     std::string table_m;
     std::string logtable_m;
     std::string charset_m;
+
 protected:
     static Logger& logger_m;
 };
 #endif // HAVE_MYSQL
 
+#ifdef SUPPORT_INFLUXDB
+enum InfluxdbOperation_t
+{
+    INFLUXDB_WRITE = 0,
+    INFLUXDB_QUERY
+};
+
+class InfluxdbPersistentStorage : public PersistentStorage
+{
+public:
+    InfluxdbPersistentStorage(ticpp::Element* pConfig);
+    virtual ~InfluxdbPersistentStorage();
+    virtual void exportXml(ticpp::Element* pConfig);
+    virtual void write(const std::string& id, const std::string& value);
+    virtual std::string read(const std::string& id, const std::string& defval="");
+    virtual void writelog(const std::string& id, const ObjectValue &value);
+private:
+    bool curlRequest(InfluxdbOperation_t oper, const std::string& db, const std::string& query, std::string& result);
+    bool createDB(const std::string &db, std::string &result);
+    std::string uri_m;
+    std::string user_m;
+    std::string pass_m;
+    std::string logDb_m;
+    std::string persistenceDb_m;
+protected:
+    static Logger& logger_m;
+};
+#endif // SUPPORT_INFLUXDB
 #endif
