@@ -25,6 +25,10 @@
 #include <iomanip>
 #include <iconv.h>
 
+#ifndef ICONV_CONST
+#define ICONV_CONST
+#endif
+
 ObjectController* ObjectController::instance_m;
 
 Logger& Object::logger_m(Logger::getInstance("Object"));
@@ -114,6 +118,8 @@ Object* Object::create(const std::string& type)
         return new TimeObject();
     else if (type == "EIS4" || type == "11.001")
         return new DateObject();
+    else if (type == "19.001")
+        return new DateTimeObject();
     else if (type == "EIS5" || type == "9.xxx")
         return new ValueObjectImpl<ValueImplObjectValue<0> >();
     else if (type.compare(0, 2, "9.") == 0)
@@ -1476,6 +1482,299 @@ void DateObject::getDate(int *day, int *month, int *year)
         *year = 1900 + year_m;
     else
         *year = 1900;
+}
+
+DateTimeObjectValue::DateTimeObjectValue(const std::string& value) : 
+  day_m(-1), month_m(-1), year_m(-1), hour_m(-1), min_m(-1), sec_m(-1)
+{
+    if (value == "now")
+        return;
+    std::istringstream val(value);
+    char s1, s2, s3, s4, s5;
+    val >> year_m >> s1 >> month_m >> s2 >> day_m >> s3 >> hour_m >> s4 >> min_m >> s5 >> sec_m;
+    wday_m = 0;
+    year_m -= 1900;
+    if ( val.fail() ||
+         val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
+         s1 != '-' || s2 != '-' || s3 != ' ' || s4 != ':' || s5 != ':' ||
+         year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31 ||
+	 hour_m < 0 || hour_m > 23 || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
+    {
+        std::stringstream msg;
+        msg << "DateTimeObjectValue: Bad value: '" << value << "'" << std::endl;
+        throw ticpp::Exception(msg.str());
+    }
+}
+
+std::string DateTimeObjectValue::toString() const
+{
+    if (day_m == -1)
+        return "now";
+    std::ostringstream out;
+    out << year_m+1900 << "-" << month_m << "-" << day_m << ' ' << hour_m << ':' << min_m << ':' << sec_m;
+    return out.str();
+}
+
+double DateTimeObjectValue::toNumber()
+{
+    if (day_m == -1)
+        return -1.0;
+    return (year_m * 400 + month_m * 31 + day_m) * 86400 +
+            hour_m * 3600 + min_m * 60 + sec_m;
+}
+
+bool DateTimeObjectValue::equals(ObjectValue* value)
+{
+    int day, month, year, wday, hour, min, sec;
+    assert(value);
+    DateTimeObjectValue* val = dynamic_cast<DateTimeObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream()  << "DateTimeObjectValue: ERROR, equals() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    // logger_m.debugStream() << "DateTimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    val->getDateTimeValue(&day, &month, &year, &wday, &hour, &min, &sec);
+    return (day_m == day) && (month_m == month) && (year_m == year) && (sec_m == sec) && (min_m == min) && (hour_m == hour);
+}
+
+int DateTimeObjectValue::compare(ObjectValue* value)
+{
+    int day, month, year, wday, hour, min, sec;
+    assert(value);
+    DateTimeObjectValue* val = dynamic_cast<DateTimeObjectValue*>(value);
+    if (val == 0)
+    {
+        logger_m.errorStream() << "DateTimeObjectValue: ERROR, compare() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+        return false;
+    }
+    // logger_m.debugStream() << "DateTimeObjectValue (id=" << getID() << "): Compare value_m='" << value_m << "' to value='" << val->value_m << "'" << endlog;
+    val->getDateTimeValue(&day, &month, &year, &wday, &hour, &min, &sec);
+
+    if (year_m > year)
+        return 1;
+    if (year_m < year)
+        return -1;
+
+    if (month_m > month)
+        return 1;
+    if (month_m < month)
+        return -1;
+
+    if (day_m > day)
+        return 1;
+    if (day_m < day)
+        return -1;
+
+    if (hour_m > hour)
+        return 1;
+    if (hour_m < hour)
+        return -1;
+
+    if (min_m > min)
+        return 1;
+    if (min_m < min)
+        return -1;
+
+    if (sec_m > sec)
+        return 1;
+    if (sec_m < sec)
+        return -1;
+
+    return 0;
+}
+
+bool DateTimeObjectValue::set(ObjectValue* value)
+{
+    int day, month, year, wday, hour, min, sec;
+    assert(value);
+    DateTimeObjectValue* val = dynamic_cast<DateTimeObjectValue*>(value);
+    if (val == 0)
+        logger_m.errorStream() << "DateTimeObjectValue: ERROR, setValue() received invalid class object (typeid=" << typeid(*value).name() << ")" << endlog;
+    else
+    {
+        val->getDateTimeValue(&day, &month, &year, &wday, &hour, &min, &sec);
+        if ( day_m != day || month_m != month || year_m != year ||
+	     wday_m != wday || hour_m != hour || min_m != min || sec_m != sec )
+        {
+            day_m = day;
+            month_m = month;
+            year_m = year;
+            wday_m = wday;
+            hour_m = hour;
+            min_m = min;
+            sec_m = sec;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DateTimeObjectValue::set(double value)
+{
+    int date, day, month, year, wday, hour, min, sec;
+    if (value < 0)
+    {
+        day = -1;
+        month = -1;
+        year = -1;
+        wday = -1;
+        hour = -1;
+        min = -1;
+        sec = -1;
+    }
+    else
+    {
+	date = value / 86400;
+	value -= date * 86400;
+
+        year = date / 400;
+        date -= date * 400;
+        month = date / 31;
+        day = date - month * 31;
+
+	wday = 0;
+
+	hour = value / 3600;
+	value -= hour * 3600;
+	min = value / 60;
+	sec = value - min * 60;
+    }
+    if ( day_m != day || month_m != month || year_m != year|| wday_m != wday ||  hour_m != hour || min_m != min || sec_m != sec )
+    {
+        day_m = day;
+        month_m = month;
+        year_m = year;
+        wday_m = wday;
+        hour_m = hour;
+        min_m = min;
+        sec_m = sec;
+        return true;
+    }
+    return false;
+}
+
+void DateTimeObjectValue::getDateTimeValue(int *day, int *month, int *year, int* wday, int *hour, int *min, int *sec)
+{
+    if (day_m == -1)
+    {
+        time_t t = time(0);
+        struct tm * timeinfo = localtime(&t);
+        *day = timeinfo->tm_mday;
+        *month = timeinfo->tm_mon+1;
+        *year = timeinfo->tm_year;
+        *wday = timeinfo->tm_wday;
+	if (*wday == 0)
+          *wday = 7;
+        *hour = timeinfo->tm_hour;
+        *min = timeinfo->tm_min;
+        *sec = timeinfo->tm_sec;
+    }
+    else
+    {
+        *day = day_m;
+        *month = month_m;
+        *year = year_m;
+        *wday = wday_m;
+        *hour = hour_m;
+        *min = min_m;
+        *sec = sec_m;
+    }
+}
+
+Logger& DateTimeObject::logger_m(Logger::getInstance("DateTimeObject"));
+
+DateTimeObject::DateTimeObject() : DateTimeObjectValue(0, 0, 0, 0, 0, 0, 0)
+{}
+
+DateTimeObject::~DateTimeObject()
+{}
+
+ObjectValue* DateTimeObject::createObjectValue(const std::string& value)
+{
+    return new DateTimeObjectValue(value);
+}
+
+void DateTimeObject::setValue(const std::string& value)
+{
+    DateTimeObjectValue val(value);
+    Object::setValue(&val);
+}
+
+void DateTimeObject::doWrite(const uint8_t* buf, int len, eibaddr_t src)
+{
+    if (len < 10)
+    {
+        logger_m.errorStream() << "Invalid packet received for DateTimeObject (too short)" << endlog;
+        return;
+    }
+    int day, month, year, wday, hour, min, sec;
+
+    year = buf[2];
+    month = buf[3];
+    day = buf[4];
+    wday = (buf[5] & 0xE0) >> 5;
+    hour = buf[5] & 0x1F;
+    min = buf[6];
+    sec = buf[7];
+
+    if (year < 90)
+        year += 100;
+    if (forceUpdate() || day != day_m || month != month_m || year != year_m ||
+        wday != wday_m || hour != hour_m || min != min_m || sec != sec_m)
+    {
+        day_m = day;
+        month_m = month;
+        year_m = year;
+        wday_m = wday;
+        hour_m = hour;
+        min_m = min;
+        sec_m = sec;
+        onUpdate();
+    }
+}
+
+void DateTimeObject::setDateTime(time_t time)
+{
+    struct tm * timeinfo = localtime(&time);
+    setDateTime(timeinfo->tm_mday, timeinfo->tm_mon+1, timeinfo->tm_year,
+      timeinfo->tm_wday, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+}
+
+// https://www.knx.org/wAssets/docs/downloads/Certification/Interworking-Datapoint-types/03_07_02-Datapoint-Types-v02.01.02-AS.pdf
+
+void DateTimeObject::doSend(bool isWrite)
+{
+	BufferBuilder builder(10, DateTimeObject::logger_m);
+	builder << 0 << (isWrite ? 0x80 : 0x40);
+	builder << year_m << month_m << day_m;
+	builder << (int)(((wday_m<<5) & 0xE0) | (hour_m & 0x1F));
+	builder << min_m << sec_m;
+	builder << 0b00100100 << 0b11000000;
+
+    Services::instance()->getKnxConnection()->write(getGad(), builder.getBuffer(), 10);
+}
+
+void DateTimeObject::setDateTime(int day, int month, int year, int wday, int hour, int min, int sec)
+{
+    if (year >= 1900)
+        year -= 1900;
+    DateTimeObjectValue val(day, month, year, wday, hour, min, sec);
+    Object::setValue(&val);
+}
+
+void DateTimeObject::getDateTime(int *day, int *month, int *year, int* wday, int* hour, int* min, int* sec)
+{
+    *day = day_m;
+    *month = month_m;
+    if (year_m < 1900)
+        *year = 1900 + year_m;
+    else
+        *year = 1900;
+    *wday = wday_m;
+    *hour = hour_m;
+    *min = min_m;
+    *sec = sec_m;
 }
 
 void ValueObjectValue::init(const std::string& value)

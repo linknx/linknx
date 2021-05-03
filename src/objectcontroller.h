@@ -566,6 +566,53 @@ protected:
     static Logger& logger_m;
 };
 
+class DateTimeObjectValue : public ObjectValue
+{
+public:
+    DateTimeObjectValue(const std::string& value);
+    virtual ~DateTimeObjectValue() {};
+    virtual bool equals(ObjectValue* value);
+    virtual int compare(ObjectValue* value);
+    virtual std::string toString() const;
+    virtual double toNumber();
+    void getDateTimeValue(int *day, int *month, int *year, int* wday, int *hour, int *min, int *sec);
+protected:
+    virtual bool set(ObjectValue* value);
+    virtual bool set(double value);
+    int day_m;
+    int month_m;
+    int year_m;
+    int wday_m;
+    int hour_m;
+    int min_m;
+    int sec_m;
+    friend class DateTimeObject;
+    DateTimeObjectValue(int day, int month, int year, int wday, int hour, int min, int sec) :
+      day_m(day), month_m(month), year_m(year), wday_m(wday), hour_m(hour), min_m(min), sec_m(sec) {};
+};
+
+class DateTimeObject : public Object, public DateTimeObjectValue
+{
+public:
+    DateTimeObject();
+    virtual ~DateTimeObject();
+
+    virtual ObjectValue* createObjectValue(const std::string& value);
+    virtual void setValue(const std::string& value);
+    virtual std::string getType() { return "19.001"; };
+
+    virtual void doWrite(const uint8_t* buf, int len, eibaddr_t src);
+    virtual void doSend(bool isWrite);
+    void setDateTime(time_t time);
+    void setDateTime(int day, int month, int year, int wday, int hour, int min, int sec);
+    void getDateTime(int* day, int* month, int* year, int* wday, int* hour, int* min, int* sec);
+protected:
+    virtual bool set(ObjectValue* value) { return DateTimeObjectValue::set(value); };
+    virtual bool set(double value) { return DateTimeObjectValue::set(value); };
+    virtual ObjectValue* getObjectValue() { return static_cast<DateTimeObjectValue*>(this); };
+    static Logger& logger_m;
+};
+
 class ValueObjectValue : public ObjectValue
 {
 public:
