@@ -7,7 +7,12 @@ on:
   pull_request:
     branches: [ master ]
 
+  # Allow manual triggers from github.
   workflow_dispatch:
+
+  schedule:
+    # At midnight every Saturday.
+    - cron: 0 0 * * 6
 
 env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
