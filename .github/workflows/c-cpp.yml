@@ -62,7 +62,7 @@ jobs:
             include:
                 # Latest gcc, full deps, tests.
                 - gcc-version: 9
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
                   run-tests: true
                 # Make sure code builds without any optional dep. Using latest gcc here, but any version would work.
                 - gcc-version: 9
@@ -73,7 +73,7 @@ jobs:
                   run-tests: false
                 # Build with previous version of gcc, full deps. No need to test again.
                 - gcc-version: 8
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
                   run-tests: false
 
     env:
