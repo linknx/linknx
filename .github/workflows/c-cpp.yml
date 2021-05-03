@@ -95,7 +95,7 @@ jobs:
 
       # Uninstall all deps first
     - name: pre-install cleanup
-      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev
+      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libmysqlclient-dev libjsoncpp-dev
 
     - uses: actions/checkout@v2
     - name: install required dependencies
