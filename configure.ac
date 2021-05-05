@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(linknx, 0.0.1.38, cyrille.github@youplaboum.fr)
+AC_INIT(linknx, 0.0.1.38, cyrille.github@defx.fr)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -40,26 +40,39 @@ else
     fi
 fi
 
-dnl check for mysql
+# Check for MySQL support detection.
+# Probe the --with-mysql or --without-mysql arguments.
+# --with-mysql value can be one of:
+# - 'yes' (default): MySQL support is wanted, mysql_config expected to be in PATH.
+# - 'no': MySQL support is not wanted, even if MySQL is present.
+# - a path: points to the root dir of MySQL, to serve when it is not in PATH.
+# This first step sets a new $mysql variable with the root path of the MySQL install
+# that will be checked for actual MySQL support later on.
 AC_ARG_WITH(mysql, AC_HELP_STRING([--with-mysql@<:@=DIR@>:@],
             [Include support for mysql]),
             mysql=$withval, mysql=yes)
+
+AC_MSG_CHECKING([for mysql])
 if test "$mysql" != "no"; then
+	# If MySQL support was not rejected. Check if MySQL is actually present.
     if test "$mysql" != "yes"; then
+		# A specific path was provided.
         AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[$mysql/bin/mysql_config],[no],[$mysql/bin])
     else
+		# No specific path was provided, lookup in PATH.
         AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[mysql_config],[no])
     fi
     if test "$MYSQL_CONFIG" != "no"; then
+		# MySQL is actually present.
         MYSQL_CFLAGS=`$MYSQL_CONFIG --cflags`
         MYSQL_LIBS=`$MYSQL_CONFIG --libs`
         AC_SUBST(MYSQL_CFLAGS)
         AC_SUBST(MYSQL_LIBS)
     else
+		# MySQL support was not found.
         mysql=no
     fi
 fi
-AC_MSG_CHECKING([for mysql])
 AC_MSG_RESULT($mysql)
 if test "$mysql" != "no"; then
     AC_DEFINE(HAVE_MYSQL,,[mysql is available])
