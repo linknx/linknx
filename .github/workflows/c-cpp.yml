@@ -7,6 +7,13 @@ on:
   pull_request:
     branches: [ master ]
 
+  # Allow manual triggers from github.
+  workflow_dispatch:
+
+  schedule:
+    # At midnight every Saturday.
+    - cron: 0 0 * * 6
+
 env:
   # Force timezone to central european or unit tests checking DST/standard time switches will fail (those switches do not occur at the same time in all timezones).
   TZ: CET
@@ -20,7 +27,7 @@ jobs:
 
     strategy:
         matrix:
-            gcc-version: [8, 9]
+            gcc-version: [9, 10]
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
@@ -59,19 +66,19 @@ jobs:
             # Define build matrix case by case so that we don't run tests for all combinations.
             include:
                 # Latest gcc, full deps, tests.
-                - gcc-version: 9
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                - gcc-version: 10
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
                   run-tests: true
                 # Make sure code builds without any optional dep. Using latest gcc here, but any version would work.
-                - gcc-version: 9
+                - gcc-version: 10
                   install-deps: ''
                   run-tests: false
-                - gcc-version: 9
+                - gcc-version: 10
                   install-deps: 'libjsoncpp-dev'
                   run-tests: false
                 # Build with previous version of gcc, full deps. No need to test again.
-                - gcc-version: 8
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                - gcc-version: 9
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
                   run-tests: false
 
     env:
@@ -88,7 +95,7 @@ jobs:
 
       # Uninstall all deps first
     - name: pre-install cleanup
-      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev
+      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libmysqlclient-dev libjsoncpp-dev
 
     - uses: actions/checkout@v2
     - name: install required dependencies
