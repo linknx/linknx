@@ -37,6 +37,11 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testDateObjectUpdate );
     CPPUNIT_TEST( testDateExportImport );
     CPPUNIT_TEST( testDatePersist );
+    CPPUNIT_TEST( testDateTimeObject );
+    CPPUNIT_TEST( testDateTimeObjectWrite );
+    CPPUNIT_TEST( testDateTimeObjectUpdate );
+    CPPUNIT_TEST( testDateTimeExportImport );
+    CPPUNIT_TEST( testDateTimePersist );
     CPPUNIT_TEST( testValueObject );
     CPPUNIT_TEST( testValueObjectWrite );
     CPPUNIT_TEST( testValueObjectUpdate );
@@ -1263,6 +1268,230 @@ public:
 
         Object *res2 = Object::create(&pConfig);
         CPPUNIT_ASSERT(res2->getValue() == "1978-6-16");
+        res2->setValue("now");
+        delete res2;
+
+        Object *res3 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res3->getValue() != "now");
+        delete res3;
+    }
+    
+    void testDateTimeObject()
+    {
+        ObjectValue* val;
+        DateTimeObject t, t2;
+        int day, month, year, wday, hour, min, sec;
+        t.setValue("2020-1-1T00:00:00");
+        CPPUNIT_ASSERT(t.getValue() == "2020-1-1T00:00:00");
+        t2.setValue("now");
+        CPPUNIT_ASSERT(t2.getValue() != "2020-1-1T00:00:00" || (sleep(2) == 0 && t2.getValue() != "2020-1-1T00:00:00"));
+
+        t.setValue("2021-5-6T17:30:05");
+        CPPUNIT_ASSERT(t.getValue() == "2021-5-6T17:30:05");
+        t2.setValue("2030-9-11T18:30:29");
+        CPPUNIT_ASSERT(t2.getValue() == "2030-9-11T18:30:29");
+
+        t.getDateTime(&day, &month, &year, &wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT_EQUAL(2021, year);
+        CPPUNIT_ASSERT_EQUAL(5, month);
+        CPPUNIT_ASSERT_EQUAL(6, day);
+        CPPUNIT_ASSERT_EQUAL(0, wday);
+        CPPUNIT_ASSERT_EQUAL(17, hour);
+        CPPUNIT_ASSERT_EQUAL(30, min);
+        CPPUNIT_ASSERT_EQUAL(5, sec);
+        t2.getDateTime(&day, &month, &year, &wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT_EQUAL(2030, year);
+        CPPUNIT_ASSERT_EQUAL(9, month);
+        CPPUNIT_ASSERT_EQUAL(11, day);
+        CPPUNIT_ASSERT_EQUAL(0, wday);
+        CPPUNIT_ASSERT_EQUAL(18, hour);
+        CPPUNIT_ASSERT_EQUAL(30, min);
+        CPPUNIT_ASSERT_EQUAL(29, sec);
+
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T24:30:00"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T23:-1:10"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T23:-1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T23:60:00"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T00:50:111"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1Tnow:10:50"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2020-1-1T0:50:11:1"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007:11:5T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("-1-10-5T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-13-5T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-0-5T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-0T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-32T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-32-1T10:0:0"), ticpp::Exception);
+        CPPUNIT_ASSERT_THROW(t.setValue("2007-10-1 10:00:00"), ticpp::Exception);
+
+        DateTimeObjectValue tval("2021-5-6T17:30:05");
+        CPPUNIT_ASSERT(t.equals(&tval));
+        CPPUNIT_ASSERT(!t2.equals(&tval));
+
+        val = t.createObjectValue("2021-5-6T17:30:05");
+        CPPUNIT_ASSERT(t.equals(val));
+        CPPUNIT_ASSERT(!t2.equals(val));
+        delete val;
+
+        DateTimeObjectValue tval2("2030-9-11T18:30:29");
+        CPPUNIT_ASSERT(!t.equals(&tval2));
+        CPPUNIT_ASSERT(t2.equals(&tval2));
+
+        val = t.createObjectValue("2030-9-11T18:30:29");
+        CPPUNIT_ASSERT(!t.equals(val));
+        CPPUNIT_ASSERT(t2.equals(val));
+        delete val;
+
+        t.setDateTime(3, 4, 2022, 1, 20, 45, 0);
+        CPPUNIT_ASSERT(t.getValue() == "2022-4-3T20:45:00");
+        t.getDateTime(&day, &month, &year, &wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT_EQUAL(2022, year);
+        CPPUNIT_ASSERT_EQUAL(4, month);
+        CPPUNIT_ASSERT_EQUAL(3, day);
+        CPPUNIT_ASSERT_EQUAL(1, wday);
+        CPPUNIT_ASSERT_EQUAL(20, hour);
+        CPPUNIT_ASSERT_EQUAL(45, min);
+        CPPUNIT_ASSERT_EQUAL(0, sec);
+
+        DateTimeObjectValue tval3("now");
+        CPPUNIT_ASSERT(tval3.toString() == "now");
+        tval3.getDateTimeValue(&day, &month, &year, &wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT(year != -1);
+        CPPUNIT_ASSERT(month != -1);
+        CPPUNIT_ASSERT(day != -1);
+        CPPUNIT_ASSERT(wday != -1);
+        CPPUNIT_ASSERT(hour != -1);
+        CPPUNIT_ASSERT(min != -1);
+        CPPUNIT_ASSERT(sec != -1);
+    }
+
+    void testDateTimeObjectWrite()
+    {
+        DateTimeObject t;
+        t.setValue("2023-5-6T22:01:00");
+        t.addChangeListener(this);
+
+        uint8_t buf[10] = {0, 0x80, 0, 1, 1, 0, 0, 0, 0, 0};
+        eibaddr_t src;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);
+
+        CPPUNIT_ASSERT(t.getValue() == "2000-1-1T00:00:00");
+        DateTimeObjectValue tval1("2000-1-1T00:00:00");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval1));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[2] = 20;
+        buf[3] = 6;
+        buf[4] = 7;
+        buf[5] = 23;
+        buf[6] = 10;
+        buf[7] = 4;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);
+        CPPUNIT_ASSERT(t.getValue() == "2020-6-7T23:10:04");
+        DateTimeObjectValue tval2("2020-6-7T23:10:04");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval2));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+      
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);
+        CPPUNIT_ASSERT(t.getValue() == "2020-6-7T23:10:04");
+        DateTimeObjectValue tval3("2020-6-7T23:10:04");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval3));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        buf[5] = 20;
+        buf[6] = 10;
+        buf[7] = 4;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);
+        CPPUNIT_ASSERT(t.getValue() == "2020-6-7T20:10:04");
+        DateTimeObjectValue tval4("2020-6-7T20:10:04");
+        CPPUNIT_ASSERT_EQUAL(0, t.compare(&tval4));
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        buf[5] = 20 | (3 << 5);
+        buf[6] = 10;
+        buf[7] = 4;
+        isOnChangeCalled_m = false;
+        t.onWrite(buf, 10, src);
+        CPPUNIT_ASSERT(t.getValue() == "2020-6-7T20:10:04");
+
+//      TODO: implement full weekday support in DateTimeObjectValue
+
+        int year, month, day, wday, hour, min, sec;
+        t.getDateTime(&day, &month, &year, &wday, &hour, &min, &sec);
+        CPPUNIT_ASSERT_EQUAL(3, wday);
+        CPPUNIT_ASSERT_EQUAL(20, hour);
+        CPPUNIT_ASSERT_EQUAL(10, min);
+        CPPUNIT_ASSERT_EQUAL(4, sec);
+    }
+
+    void testDateTimeObjectUpdate()
+    {
+        DateTimeObject t;
+        t.addChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2021-5-6T06:30:00");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2021-5-6T06:30:01");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == true);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2021-5-6T06:30:01");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+
+        t.removeChangeListener(this);
+
+        isOnChangeCalled_m = false;
+        t.setValue("2021-5-6T07:20:00");
+        CPPUNIT_ASSERT(isOnChangeCalled_m == false);
+    }
+
+    void testDateTimeExportImport()
+    {
+        DateTimeObject orig;
+        Object *res;
+        ticpp::Element pConfig;
+
+        orig.setID("test");
+        orig.exportXml(&pConfig);
+        res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(strcmp(res->getID(), orig.getID()) == 0);
+        CPPUNIT_ASSERT(dynamic_cast<DateTimeObject*>(res));
+        delete res;
+    }
+
+    void testDateTimePersist()
+    {
+        cleanTestDir();
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_time");
+        pConfig.SetAttribute("type", "19.001");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("2022-7-8T07:25:00");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "2022-7-8T07:25:00");
+        res->setValue("2022-8-9T23:59:59");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "2022-8-9T23:59:59");
         res2->setValue("now");
         delete res2;
 

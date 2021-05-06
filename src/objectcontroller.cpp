@@ -1496,7 +1496,7 @@ DateTimeObjectValue::DateTimeObjectValue(const std::string& value) :
     year_m -= 1900;
     if ( val.fail() ||
          val.peek() != std::char_traits<char>::eof() || // workaround for wrong val.eof() flag in uClibc++
-         s1 != '-' || s2 != '-' || s3 != ' ' || s4 != ':' || s5 != ':' ||
+         s1 != '-' || s2 != '-' || s3 != 'T' || s4 != ':' || s5 != ':' ||
          year_m < 0 || year_m > 255 || month_m < 1 || month_m > 12 || day_m < 1 || day_m > 31 ||
 	 hour_m < 0 || hour_m > 23 || min_m < 0 || min_m > 59 || sec_m < 0 || sec_m > 59 )
     {
@@ -1511,7 +1511,11 @@ std::string DateTimeObjectValue::toString() const
     if (day_m == -1)
         return "now";
     std::ostringstream out;
-    out << year_m+1900 << "-" << month_m << "-" << day_m << ' ' << hour_m << ':' << min_m << ':' << sec_m;
+    out << year_m+1900 << "-" << month_m << "-" << day_m << 'T'
+      << std::setfill('0') << std::setw(2) 
+      << hour_m << ":" << std::setfill('0') << std::setw(2) 
+      << min_m << ":" << std::setfill('0') << std::setw(2)
+      << sec_m;
     return out.str();
 }
 
