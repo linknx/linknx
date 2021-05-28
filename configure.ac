@@ -73,10 +73,22 @@ if test "$database" != "no"; then
         database=no
     fi
 fi
+
+# Define the HAVE_DBMS macro if either MySQL or MariaDB was selected.
+# The value of this macro is respectively 1 or 2 but should be referred to
+# using MYSQL_DBMS and MARIADB_DBMS for clarity.
 AC_MSG_CHECKING([for database management system])
 AC_MSG_RESULT($database)
+AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
+AC_DEFINE(MARIADB_DBMS,2,[Value representing the MariaDB database management system])
+if test "$database" == "mysql"; then
+	database_integral_value=1
+fi
+if test "$database" == "mariadb"; then
+	database_integral_value=2
+fi
 if test "$database" != "no"; then
-    AC_DEFINE(HAVE_DBMS,$database,[A database management system is available])
+	AC_DEFINE_UNQUOTED(HAVE_DBMS,$database_integral_value,[A database management system is available])
 fi
 
 dnl #########################################################################

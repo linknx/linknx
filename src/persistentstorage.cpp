@@ -33,12 +33,12 @@ PersistentStorage* PersistentStorage::create(ticpp::Element* pConfig)
     {
         return new FilePersistentStorage(pConfig);
     }
-#ifdef HAVE_MYSQL
+#ifdef HAVE_DBMS
     else if (type == "mysql")
     {
         return new MysqlPersistentStorage(pConfig);
     }
-#endif // HAVE_MYSQL
+#endif // HAVE_DBMS
 #ifdef SUPPORT_INFLUXDB
     else if (type == "influxdb")
     {
@@ -135,12 +135,16 @@ void FilePersistentStorage::writelog(const std::string &id, const ObjectValue &v
 }
 
 
-#ifdef HAVE_MYSQL
+#ifdef HAVE_DBMS
 Logger& MysqlPersistentStorage::logger_m(Logger::getInstance("MysqlPersistentStorage"));
 
 MysqlPersistentStorage::MysqlPersistentStorage(ticpp::Element* pConfig)
 {
+#if HAVE_DBMS == MYSQL_DBMS
+    bool reconnect = 1; // MySQL dropped support for the my_bool typedef.
+#else
     my_bool reconnect = 1;
+#endif
     host_m = pConfig->GetAttribute("host");
     user_m = pConfig->GetAttribute("user");
     pass_m = pConfig->GetAttribute("pass");
@@ -264,7 +268,7 @@ void MysqlPersistentStorage::writelog(const std::string &id, const ObjectValue &
         logger_m.errorStream() << "Error executing: '" << sql.str() << "' mySQL said: '" << mysql_error(&con_m) << "'" << endlog;
     }
 }
-#endif // HAVE_MYSQL
+#endif // HAVE_DBMS
 
 
 #ifdef SUPPORT_INFLUXDB

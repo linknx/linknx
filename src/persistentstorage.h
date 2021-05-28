@@ -26,8 +26,10 @@
 #include "ticpp.h"
 #include "objectcontroller.h"
 
-#ifdef HAVE_MYSQL
+#if HAVE_DBMS == MYSQL_DBMS
 #include <mysql/mysql.h>
+#elif HAVE_DBMS == MARIADB_DBMS
+#include <mariadb/mysql.h>
 #endif
 
 #ifdef SUPPORT_INFLUXDB
@@ -67,7 +69,7 @@ protected:
     static Logger& logger_m;
 };
 
-#ifdef HAVE_MYSQL
+#ifdef HAVE_DBMS
 class MysqlPersistentStorage : public PersistentStorage
 {
 public:
@@ -93,7 +95,7 @@ private:
 protected:
     static Logger& logger_m;
 };
-#endif // HAVE_MYSQL
+#endif // HAVE_DBMS
 
 #ifdef SUPPORT_INFLUXDB
 enum InfluxdbOperation_t

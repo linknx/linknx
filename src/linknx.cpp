@@ -56,6 +56,7 @@ struct arguments arg;
 
 /** version */
 const char *argp_program_version = PACKAGE_STRING
+
 #ifdef HAVE_LIBCURL
     "\n- Clickatell SMS gateway enabled"
 #endif
@@ -65,8 +66,10 @@ const char *argp_program_version = PACKAGE_STRING
     " (with pthread support)"
 #endif
 #endif
-#ifdef HAVE_MYSQL
+#if HAVE_DBMS == MYSQL_DBMS
     "\n- MySQL support enabled"
+#elif HAVE_DBMS == MARIADB_DBMS
+    "\n- MariaDB support enabled"
 #endif
 #ifdef SUPPORT_INFLUXDB
     "\n- InfluxDB support enabled"
