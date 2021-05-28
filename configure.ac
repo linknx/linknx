@@ -49,7 +49,7 @@ if test x"$database" != xno -a x"$database" != xmariadb -a x"$database" != xmysq
 	database = "no"
 fi
 
-AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database_path=/folder/containing/[[[mysql,mariadb]]]_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
+AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database-path=/folder/containing/[[[mysql,mariadb]]]_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
 			database_path=$withval, database_path="")
 
 if test "$database" != "no"; then
