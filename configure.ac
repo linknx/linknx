@@ -40,42 +40,43 @@ else
     fi
 fi
 
-# Check for MySQL support detection.
-# Probe the --with-mysql or --without-mysql arguments.
-# --with-mysql value can be one of:
-# - 'yes' (default): MySQL support is wanted, mysql_config expected to be in PATH.
-# - 'no': MySQL support is not wanted, even if MySQL is present.
-# - a path: points to the root dir of MySQL, to serve when it is not in PATH.
-# This first step sets a new $mysql variable with the root path of the MySQL install
-# that will be checked for actual MySQL support later on.
-AC_ARG_WITH(mysql, AC_HELP_STRING([--with-mysql@<:@=DIR@>:@],
-            [Include support for mysql]),
-            mysql=$withval, mysql=yes)
+# Check for database support.
+AC_ARG_WITH(database, AC_HELP_STRING([--with-database=[[mysql,mariadb]]],
+			[Include support for the given database management system]),
+			database=$withval, database=mariadb)
+if test x"$database" != xno -a x"$database" != xmariadb -a x"$database" != xmysql ; then
+	AC_MSG_ERROR([$database is not a valid value for --with-database])
+	database = "no"
+fi
 
-AC_MSG_CHECKING([for mysql])
-if test "$mysql" != "no"; then
-	# If MySQL support was not rejected. Check if MySQL is actually present.
-    if test "$mysql" != "yes"; then
+AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database_path=/folder/containing/[[[mysql,mariadb]]]_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
+			database_path=$withval, database_path="")
+
+if test "$database" != "no"; then
+	# If MySQL/MariaDB support was not rejected. Check if it is actually present.
+	dbms_config_utility="$database"_config
+    if test x"$database_path" != x; then
 		# A specific path was provided.
-        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[$mysql/bin/mysql_config],[no],[$mysql/bin])
+        AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$database_path/$dbms_config_utility],[no],[$database_path])
     else
 		# No specific path was provided, lookup in PATH.
-        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[mysql_config],[no])
+        AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$dbms_config_utility],[no])
     fi
-    if test "$MYSQL_CONFIG" != "no"; then
-		# MySQL is actually present.
-        MYSQL_CFLAGS=`$MYSQL_CONFIG --cflags`
-        MYSQL_LIBS=`$MYSQL_CONFIG --libs`
-        AC_SUBST(MYSQL_CFLAGS)
-        AC_SUBST(MYSQL_LIBS)
+    if test "$DBMS_CONFIG" != "no"; then
+		# MySQL/MariaDB is actually present.
+        DBMS_CFLAGS=`$DBMS_CONFIG --cflags`
+        DBMS_LIBS=`$DBMS_CONFIG --libs`
+        AC_SUBST(DBMS_CFLAGS)
+        AC_SUBST(DBMS_LIBS)
     else
-		# MySQL support was not found.
-        mysql=no
+		# DBMS support was not found.
+        database=no
     fi
 fi
-AC_MSG_RESULT($mysql)
-if test "$mysql" != "no"; then
-    AC_DEFINE(HAVE_MYSQL,,[mysql is available])
+AC_MSG_CHECKING([for database management system])
+AC_MSG_RESULT($database)
+if test "$database" != "no"; then
+    AC_DEFINE(HAVE_DBMS,$database,[A database management system is available])
 fi
 
 dnl #########################################################################
