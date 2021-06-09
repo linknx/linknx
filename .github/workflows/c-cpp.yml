@@ -101,6 +101,9 @@ jobs:
     - name: pre-install cleanup
       run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libmariadb-dev-compat libmysqlclient-dev libjsoncpp-dev
 
+    - name: apt update
+      run: sudo apt update
+
     - uses: actions/checkout@v2
     - name: install required dependencies
       run: sudo apt install g++-${{ matrix.gcc-version }} libcppunit-dev gettext ${{ matrix.install-deps }}
