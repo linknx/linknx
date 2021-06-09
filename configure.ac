@@ -88,24 +88,41 @@ if test x"$enable_smtp" != xno ; then
 	)
 fi
 
-AC_MSG_CHECKING(whether to use libesmtp)
+AC_MSG_CHECKING(whether to use libesmtp >= v1.1.x)
 if test x"$enable_smtp" != xno ; then
-	ESMTP_CFLAGS="`libesmtp-config --cflags`"
-	ESMTP_LIBS="`libesmtp-config --libs`"
-	if test x"`libesmtp-config --libs | grep pthread`" != x ; then
-		AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
-		AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
-	fi
-	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
-	if test x"$enable_smtp" = xstatic ; then
-		LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
+	PKG_CHECK_MODULES(ESMTP, libesmtp-1.0 >= 1.1.0, [
+		AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
+		AC_SUBST(ESMTP_CFLAGS)
+		AC_SUBST(ESMTP_LIBS)
+		if test x"`echo $ESMTP_LIBS | grep pthread`" != x ; then
+			AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
+			AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
+		fi
+		found_esmtp=yes
+	],[
+		AC_MSG_RESULT([no])
+	])
+fi
+if test x"$found_esmtp" = x ; then
+	AC_MSG_CHECKING(whether to use libesmtp v1.0.x)
+	if test x"$enable_smtp" != xno && test x`which libesmtp-config` != x ; then
+		ESMTP_CFLAGS="`libesmtp-config --cflags`"
+		ESMTP_LIBS="`libesmtp-config --libs`"
+		if test x"`libesmtp-config --libs | grep pthread`" != x ; then
+			AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
+			AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
+		fi
+		CFLAGS="$ESMTP_CFLAGS $CFLAGS"
+		if test x"$enable_smtp" = xstatic ; then
+			LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
+		else
+			LIBS="$ESMTP_LIBS $LIBS"
+		fi
+		AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
+		AC_MSG_RESULT([yes])
 	else
-		LIBS="$ESMTP_LIBS $LIBS"
+		AC_MSG_RESULT([no])
 	fi
-	AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
-	AC_MSG_RESULT([yes])
-else
-	AC_MSG_RESULT([no])
 fi
 AM_CONDITIONAL([USE_B64], [test x"$enable_smtp" != xno])
 
