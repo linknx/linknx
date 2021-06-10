@@ -88,6 +88,8 @@ if test x"$enable_smtp" != xno ; then
 	)
 fi
 
+# first check for the new generation of libesmtp >= v1.1.0
+# this version provides a pkgconfig file named libesmtp-1.0.pc
 AC_MSG_CHECKING(whether to use libesmtp >= v1.1.x)
 if test x"$enable_smtp" != xno ; then
 	PKG_CHECK_MODULES(ESMTP, libesmtp-1.0 >= 1.1.0, [
@@ -103,6 +105,8 @@ if test x"$enable_smtp" != xno ; then
 		AC_MSG_RESULT([no])
 	])
 fi
+# if libesmtp >= 1.1.0 is not found: fallback to check for libesmtp < v1.1.0
+# which provides no pkgconfig file but the libesmtp-config utility
 if test x"$found_esmtp" = x ; then
 	AC_MSG_CHECKING(whether to use libesmtp v1.0.x)
 	if test x"$enable_smtp" != xno && test x`which libesmtp-config` != x ; then
