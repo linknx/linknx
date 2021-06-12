@@ -67,7 +67,11 @@ jobs:
             include:
                 # Latest gcc, full deps, tests.
                 - gcc-version: 10
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
+                  run-tests: true
+                # Redo that but with MySQL this time.
+                - gcc-version: 10
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmysqlclient-dev libjsoncpp-dev'
                   run-tests: true
                 # Make sure code builds without any optional dep. Using latest gcc here, but any version would work.
                 - gcc-version: 10
@@ -78,7 +82,7 @@ jobs:
                   run-tests: false
                 # Build with previous version of gcc, full deps. No need to test again.
                 - gcc-version: 9
-                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev-compat libjsoncpp-dev'
+                  install-deps: 'libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libjsoncpp-dev'
                   run-tests: false
 
     env:
@@ -95,7 +99,10 @@ jobs:
 
       # Uninstall all deps first
     - name: pre-install cleanup
-      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libmysqlclient-dev libjsoncpp-dev
+      run: sudo apt remove libcurl4-openssl-dev libesmtp-dev liblog4cpp5-dev liblua5.1-0-dev libmariadb-dev libmariadb-dev-compat libmysqlclient-dev libjsoncpp-dev
+
+    - name: apt update
+      run: sudo apt update
 
     - uses: actions/checkout@v2
     - name: install required dependencies
