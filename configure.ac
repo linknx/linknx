@@ -43,18 +43,32 @@ fi
 # Check for database support.
 AC_ARG_WITH(database, AC_HELP_STRING([--with-database=[[mysql,mariadb]]],
 			[Include support for the given database management system]),
-			database=$withval, database=mariadb)
-if test x"$database" != xno -a x"$database" != xmariadb -a x"$database" != xmysql ; then
+			database=$withval, database=auto)
+if test x"$database" != xno -a x"$database" != xauto -a x"$database" != xmariadb -a x"$database" != xmysql ; then
 	AC_MSG_ERROR([$database is not a valid value for --with-database])
 	database = "no"
 fi
 
-AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database-path=/folder/containing/[[[mysql,mariadb]]]_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
+AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database-path=/folder/containing/mysql_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
 			database_path=$withval, database_path="")
 
-if test "$database" != "no"; then
-	# If MySQL/MariaDB support was not rejected. Check if it is actually present.
-	dbms_config_utility="$database"_config
+if test x"$database" == xauto -o x"$database" == xmariadb ; then
+    PKG_CHECK_MODULES(DBMS, mariadb, [
+      AC_DEFINE([MARIADB_DBMS], [2], [Value representing the MariaDB database management system])
+      AC_SUBST(DBMS_CFLAGS)
+      AC_SUBST(DBMS_LIBS)
+      database="mariadb"
+      database_integral_value=2
+    ],[
+      if test x"$database" == xmariadb ; then
+        AC_MSG_ERROR([$database not found])
+      fi
+    ])
+fi
+
+if test x"$database" == xauto -o x"$database" == xmysql ; then
+	# If MySQL support was not rejected. Check if it is actually present.
+	dbms_config_utility=mysql_config
     if test x"$database_path" != x; then
 		# A specific path was provided.
         AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$database_path/$dbms_config_utility],[no],[$database_path])
@@ -63,13 +77,17 @@ if test "$database" != "no"; then
         AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$dbms_config_utility],[no])
     fi
     if test "$DBMS_CONFIG" != "no"; then
-		# MySQL/MariaDB is actually present.
+		# MySQL is actually present.
         DBMS_CFLAGS=`$DBMS_CONFIG --cflags`
         DBMS_LIBS=`$DBMS_CONFIG --libs`
         AC_SUBST(DBMS_CFLAGS)
         AC_SUBST(DBMS_LIBS)
+        AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
+        database="mysql"
+        database_integral_value=1
+    elif test x"$database" == xmysql ; then
+        AC_MSG_ERROR([$database not found])
     else
-		# DBMS support was not found.
         database=no
     fi
 fi
@@ -79,14 +97,6 @@ fi
 # using MYSQL_DBMS and MARIADB_DBMS for clarity.
 AC_MSG_CHECKING([for database management system])
 AC_MSG_RESULT($database)
-AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
-AC_DEFINE(MARIADB_DBMS,2,[Value representing the MariaDB database management system])
-if test "$database" == "mysql"; then
-	database_integral_value=1
-fi
-if test "$database" == "mariadb"; then
-	database_integral_value=2
-fi
 if test "$database" != "no"; then
 	AC_DEFINE_UNQUOTED(HAVE_DBMS,$database_integral_value,[A database management system is available])
 fi
