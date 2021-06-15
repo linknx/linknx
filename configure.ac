@@ -41,6 +41,8 @@ else
 fi
 
 # Check for database support.
+AC_DEFINE([MARIADB_DBMS], [2], [Value representing the MariaDB database management system])
+AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
 AC_ARG_WITH(database, AC_HELP_STRING([--with-database=[[mysql,mariadb]]],
 			[Include support for the given database management system]),
 			database=$withval, database=auto)
@@ -54,7 +56,6 @@ AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database-path=/folder/containi
 
 if test x"$database" == xauto -o x"$database" == xmariadb ; then
     PKG_CHECK_MODULES(DBMS, mariadb, [
-      AC_DEFINE([MARIADB_DBMS], [2], [Value representing the MariaDB database management system])
       AC_SUBST(DBMS_CFLAGS)
       AC_SUBST(DBMS_LIBS)
       database="mariadb"
@@ -82,7 +83,6 @@ if test x"$database" == xauto -o x"$database" == xmysql ; then
         DBMS_LIBS=`$DBMS_CONFIG --libs`
         AC_SUBST(DBMS_CFLAGS)
         AC_SUBST(DBMS_LIBS)
-        AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
         database="mysql"
         database_integral_value=1
     elif test x"$database" == xmysql ; then
