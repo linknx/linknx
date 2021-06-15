@@ -127,3 +127,11 @@ jobs:
       with:
         name: test-suite.log
         path: test/test-suite.log
+
+      # Store build files for later inspection.
+    - uses: actions/upload-artifact@v2
+      with:
+          name: linknx-gcc-${{ matrix.gcc-version }}
+          path: ./**
+
+
