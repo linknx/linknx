@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(linknx, 0.0.1.38, cyrille.github@youplaboum.fr)
+AC_INIT(linknx, 0.0.1.38, cyrille.github@defx.fr)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
 AC_CONFIG_HEADER([config.h])
@@ -40,29 +40,65 @@ else
     fi
 fi
 
-dnl check for mysql
-AC_ARG_WITH(mysql, AC_HELP_STRING([--with-mysql@<:@=DIR@>:@],
-            [Include support for mysql]),
-            mysql=$withval, mysql=yes)
-if test "$mysql" != "no"; then
-    if test "$mysql" != "yes"; then
-        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[$mysql/bin/mysql_config],[no],[$mysql/bin])
+# Check for database support.
+AC_DEFINE([MARIADB_DBMS], [2], [Value representing the MariaDB database management system])
+AC_DEFINE(MYSQL_DBMS,1,[Value representing the MySQL database management system])
+AC_ARG_WITH(database, AC_HELP_STRING([--with-database=[[mysql,mariadb]]],
+			[Include support for the given database management system]),
+			database=$withval, database=auto)
+if test x"$database" != xno -a x"$database" != xauto -a x"$database" != xmariadb -a x"$database" != xmysql ; then
+	AC_MSG_ERROR([$database is not a valid value for --with-database])
+	database = "no"
+fi
+
+AC_ARG_WITH(database-path, AC_HELP_STRING([--with-database-path=/folder/containing/mysql_config], [Path to the utility tool providing build configuration for the selected DBMS. If not set, lookup in PATH]),
+			database_path=$withval, database_path="")
+
+if test x"$database" == xauto -o x"$database" == xmariadb ; then
+    PKG_CHECK_MODULES(DBMS, mariadb, [
+      AC_SUBST(DBMS_CFLAGS)
+      AC_SUBST(DBMS_LIBS)
+      database="mariadb"
+      database_integral_value=2
+    ],[
+      if test x"$database" == xmariadb ; then
+        AC_MSG_ERROR([$database not found])
+      fi
+    ])
+fi
+
+if test x"$database" == xauto -o x"$database" == xmysql ; then
+	# If MySQL support was not rejected. Check if it is actually present.
+	dbms_config_utility=mysql_config
+    if test x"$database_path" != x; then
+		# A specific path was provided.
+        AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$database_path/$dbms_config_utility],[no],[$database_path])
     else
-        AC_CHECK_PROG([MYSQL_CONFIG],[mysql_config],[mysql_config],[no])
+		# No specific path was provided, lookup in PATH.
+        AC_CHECK_PROG([DBMS_CONFIG],[$dbms_config_utility],[$dbms_config_utility],[no])
     fi
-    if test "$MYSQL_CONFIG" != "no"; then
-        MYSQL_CFLAGS=`$MYSQL_CONFIG --cflags`
-        MYSQL_LIBS=`$MYSQL_CONFIG --libs`
-        AC_SUBST(MYSQL_CFLAGS)
-        AC_SUBST(MYSQL_LIBS)
+    if test "$DBMS_CONFIG" != "no"; then
+		# MySQL is actually present.
+        DBMS_CFLAGS=`$DBMS_CONFIG --cflags`
+        DBMS_LIBS=`$DBMS_CONFIG --libs`
+        AC_SUBST(DBMS_CFLAGS)
+        AC_SUBST(DBMS_LIBS)
+        database="mysql"
+        database_integral_value=1
+    elif test x"$database" == xmysql ; then
+        AC_MSG_ERROR([$database not found])
     else
-        mysql=no
+        database=no
     fi
 fi
-AC_MSG_CHECKING([for mysql])
-AC_MSG_RESULT($mysql)
-if test "$mysql" != "no"; then
-    AC_DEFINE(HAVE_MYSQL,,[mysql is available])
+
+# Define the HAVE_DBMS macro if either MySQL or MariaDB was selected.
+# The value of this macro is respectively 1 or 2 but should be referred to
+# using MYSQL_DBMS and MARIADB_DBMS for clarity.
+AC_MSG_CHECKING([for database management system])
+AC_MSG_RESULT($database)
+if test "$database" != "no"; then
+	AC_DEFINE_UNQUOTED(HAVE_DBMS,$database_integral_value,[A database management system is available])
 fi
 
 dnl #########################################################################

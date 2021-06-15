@@ -402,7 +402,7 @@ void ClientConnection::Run (pth_sem_t * stop1)
                     ticpp::Element email("e-mail");
                     features.LinkEndChild(&email);
 #endif
-#ifdef HAVE_MYSQL
+#ifdef HAVE_DBMS
                     ticpp::Element mysql("mysql");
                     features.LinkEndChild(&mysql);
 #endif
