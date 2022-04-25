@@ -194,6 +194,8 @@ Object* Object::create(const std::string& type)
         return new String14Object();
     else if (type == "EIS15" || type == "16.000")
         return new String14AsciiObject();
+    else if (type == "17.001" || type == "18.001") // scenes
+        return new U8Object();
     else if (type == "28.001")
         return new StringObject();
     else if (type == "232.600")
