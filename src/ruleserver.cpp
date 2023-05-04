@@ -410,6 +410,8 @@ void Rule::statusXml(ticpp::Element* pStatus)
 
 void Rule::initialize()
 {
+    if (!isActive()) return;
+
     if(flags_m & InitEval)
         prevValue_m = condition_m->evaluate();
     else
@@ -431,7 +433,7 @@ void Rule::onChange(Object* object)
 
 void Rule::evaluate()
 {
-    if (flags_m & Active)
+    if (isActive())
     {
         logger_m.infoStream() << "Evaluate rule " << id_m << endlog;
         bool curValue = condition_m->evaluate();
@@ -453,10 +455,9 @@ void Rule::evaluate()
 
 void Rule::setActive(bool active)
 {
-    if (active)
-        flags_m |= Active;
-    else
-        flags_m &= (~Active);
+    if (isActive() == active) return;
+
+    flags_m ^= Active;
 }
 
 void Rule::cancel()
