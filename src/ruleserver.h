@@ -571,16 +571,16 @@ public:
     }
 
 protected:
-	Condition* getCondition() const { return condition_m; }
-	void setCondition(Condition* condition);
+    Condition* getCondition() const { return condition_m; }
+    void setCondition(Condition* condition);
 
 public:
-	void addAction(Action *action, ActionList::TriggerType trigger);
+    void addAction(Action *action, ActionList::TriggerType trigger);
 
 private:
-	void executeActions(ActionList &actions);
-	ActionList &getActions(ActionList::TriggerType trigger);
-	static void exportActions(ActionList &actions, ticpp::Element *pRuleConfig);
+    void executeActions(ActionList &actions);
+    ActionList &getActions(ActionList::TriggerType trigger);
+    static void exportActions(ActionList &actions, ticpp::Element *pRuleConfig);
 
 private:
     std::string id_m;
