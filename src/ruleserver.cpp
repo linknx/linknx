@@ -410,6 +410,8 @@ void Rule::statusXml(ticpp::Element* pStatus)
 
 void Rule::initialize()
 {
+    // #71 Make sure we do not execute stateless actions when
+    // rule is not active.
     if (!isActive()) return;
 
     if(flags_m & InitEval)
