@@ -101,18 +101,6 @@ public:
         isOnChangeCalled_m = true;
     }*/
 
-    void testIfTrueActionListNotExecutedOnInitIfInactive()
-    {
-        ticpp::Element ruleConfig("rule");
-        ruleConfig.SetAttribute("id", "test_rule");
-        ruleConfig.SetAttribute("active", "false");
-        ticpp::Element actionListConfig("actionlist");
-        actionListConfig.SetAttribute("type", "if-true");
-        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
-        pSvcConfig.LinkEndChild(&pPersistenceConfig);
-        Services::instance()->importXml(&pSvcConfig);
-    }
-
     void testIfTrueActionList()
     {
         CPPUNIT_ASSERT(rule_m->isActive());
