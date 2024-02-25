@@ -27,7 +27,7 @@ jobs:
 
     strategy:
         matrix:
-            gcc-version: [9, 10]
+            gcc-version: [10, 11, 12]
 
     env:
         CC: gcc-${{ matrix.gcc-version }}
