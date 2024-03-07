@@ -52,7 +52,7 @@ class TestableRule : public Rule
 {
 public:
     TestableRule() : Rule()
-       {
+    {
         setCondition(new ConstantCondition(true));
     }
 
@@ -67,9 +67,13 @@ class RuleTest : public CppUnit::TestFixture/*, public ChangeListener*/
 {
     CPPUNIT_TEST_SUITE( RuleTest );
     CPPUNIT_TEST( testIfTrueActionList );
+    CPPUNIT_TEST( testIfTrueActionListOnInactiveRule );
     CPPUNIT_TEST( testOnTrueActionList );
+    CPPUNIT_TEST( testOnTrueActionListOnInactiveRule );
     CPPUNIT_TEST( testIfFalseActionList );
+    CPPUNIT_TEST( testIfFalseActionListOnInactiveRule );
     CPPUNIT_TEST( testOnFalseActionList );
+    CPPUNIT_TEST( testOnFalseActionListOnInactiveRule );
     CPPUNIT_TEST( testIfTrueAndOnTrueActionLists );
     
     CPPUNIT_TEST_SUITE_END();
@@ -99,21 +103,39 @@ public:
 
     void testIfTrueActionList()
     {
-        testOneActionList(true, ActionList::IfTrue, 2);
+        CPPUNIT_ASSERT(rule_m->isActive());
+        testOneActionList(true, ActionList::IfTrue, 1, 2);
+    }
+
+    void testIfTrueActionListOnInactiveRule()
+    {
+        rule_m->setActive(false);
+        CPPUNIT_ASSERT(!rule_m->isActive());
+        testOneActionList(true, ActionList::IfTrue, 0, 0);
     }
 
     void testOnTrueActionList()
     {
-        testOneActionList(true, ActionList::OnTrue, 1);
+        testOneActionList(true, ActionList::OnTrue, 1, 1);
+    }
+
+    void testOnTrueActionListOnInactiveRule()
+    {
+        rule_m->setActive(false);
+        testOneActionList(true, ActionList::OnTrue, 0, 0);
     }
 
     void testIfFalseActionList()
     {
-        testOneActionList(false, ActionList::IfFalse, 2);
+        testOneActionList(false, ActionList::IfFalse, 1, 2);
     }
 
-    // TODO Does not pass because rule is initialized to false (this is the
-    // default). There is no value change, then!
+    void testIfFalseActionListOnInactiveRule()
+    {
+        rule_m->setActive(false);
+        testOneActionList(false, ActionList::IfFalse, 0, 0);
+    }
+
     void testOnFalseActionList()
     {
         // Initialize rule to true, as default value is false.
@@ -122,7 +144,19 @@ public:
         rule_m->getCondition()->setValue(true);
         rule_m->evaluate();
 
-        testOneActionList(false, ActionList::OnFalse, 1);
+        testOneActionList(false, ActionList::OnFalse, 1, 1);
+    }
+
+    void testOnFalseActionListOnInactiveRule()
+    {
+        rule_m->setActive(false);
+        // Initialize rule to true, as default value is false.
+        // Otherwise, the first evaluation below will not trigger
+        // the action.
+        rule_m->getCondition()->setValue(true);
+        rule_m->evaluate();
+
+        testOneActionList(false, ActionList::OnFalse, 0, 0);
     }
 
     /** This test is used to reproduce issue 33 */
@@ -155,7 +189,7 @@ public:
     }
 
 private:
-    void testOneActionList(bool condition, ActionList::TriggerType type, int expectedFinalCount)
+    void testOneActionList(bool condition, ActionList::TriggerType type, int expectedCounterAfterOneExec, int expectedCounterAfterSecondExec)
     {
         CounterAction *action = new CounterAction(1);
         rule_m->addAction(action, type);
@@ -167,12 +201,13 @@ private:
         // Evaluate rule to execute action.
         rule_m->evaluate();
         action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(1, action->getCounter());
+        CPPUNIT_ASSERT_EQUAL(expectedCounterAfterOneExec, action->getCounter());
 
-        // If rule is evaluated again, action is NOT executed a second time.
+        // If rule is evaluated again, action is or is not executed a second time,
+        // depending on the type of action list being exercised.
         rule_m->evaluate();
         action->waitForCompletion();
-        CPPUNIT_ASSERT_EQUAL(expectedFinalCount, action->getCounter());
+        CPPUNIT_ASSERT_EQUAL(expectedCounterAfterSecondExec, action->getCounter());
     }
 };
 

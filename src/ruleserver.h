@@ -560,6 +560,7 @@ public:
     virtual void onChange(Object* object);
 
     void evaluate();
+    bool isActive() const {return (flags_m & Active) != 0;}
     void setActive(bool active);
     void cancel();
     void initialize();
