@@ -1,12 +1,10 @@
-# Linknx [![Build Status](https://travis-ci.org/linknx/linknx.svg?branch=master)](https://travis-ci.org/linknx/linknx)
-This repository is a migration of the legacy one hosted on Sourceforge
-(:pserver:anonymous@linknx.cvs.sourceforge.net:/cvsroot/linknx)
+# ![linknx](https://github.com/linknx/linknx/wiki/images/linknx-wide-dark-512x176.png)
+![C/C++ CI](https://github.com/linknx/linknx/workflows/C/C++%20CI/badge.svg?branch=master)
 
-The migration is aimed at simplifying the collaboration and maintenance of
-Linknx's source code in the future.
+This repository is a migration of the legacy one hosted on [Sourceforge](https://sourceforge.net/projects/linknx/) which is now deprecated.
 
 ## Documentation
-Read the [wiki pages](https://sourceforge.net/p/linknx/wiki/Main_Page/) on sourceforge before the full wiki is migrated here. Thanks for your patience!
+Read the [wiki pages](https://github.com/linknx/linknx/wiki) for detailed information about how to build, install, configure and run linknx.
 
 ## How to build linknx
 The best option is to download a tarball corresponding to a specific version (see links below). Then, run
@@ -23,12 +21,12 @@ autoreconf --install
 should suffice. Then, run configure and make install as for other versions.
 
 ## Downloads
-### Latest stable release (0.0.1.38)
+### Latest stable release ([0.0.1.38](https://github.com/linknx/linknx/releases/tag/0.0.1.38))
 This is the latest version as of today. Unless you know what you are doing, you should use this version. Download a zip
 of it [here](https://github.com/linknx/linknx/archive/0.0.1.38.zip).
 Fixes issue #47.
 
-### Old stable release (0.0.1.37)
+### Old stable release ([0.0.1.37](https://github.com/linknx/linknx/releases/tag/0.0.1.37))
 This is the previous version known as being stable for production. Download a zip
 of it [here](https://github.com/linknx/linknx/archive/0.0.1.37.zip).
 Implements a redesigned computation of next occurrences for periodic tasks. This redesign was initiated by a problem reported and worked around in Pull Request 37. The rework itself was implemented with Pull Request 39. 

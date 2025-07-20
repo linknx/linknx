@@ -518,31 +518,31 @@ private:
 class ActionList : public List<Action*, true>
 {
 public:
-	enum TriggerType
-	{
-		IfTrue,
-		IfFalse,
-		OnTrue,
-		OnFalse
-	};
+    enum TriggerType
+    {
+        IfTrue,
+        IfFalse,
+        OnTrue,
+        OnFalse
+    };
 
 public:
-	ActionList(TriggerType trigger) : triggerType_m(trigger) {}
+    ActionList(TriggerType trigger) : triggerType_m(trigger) {}
 
 private:
-	ActionList(const ActionList &original);
-	ActionList *operator=(const ActionList &other);
+    ActionList(const ActionList &original);
+    ActionList *operator=(const ActionList &other);
 
 public:
-	void exportXml(ticpp::Element *pConfig);
-	std::string getTriggerTypeToString() {return getTriggerTypeToString(triggerType_m);}
-	void cancel();
+    void exportXml(ticpp::Element *pConfig);
+    std::string getTriggerTypeToString() {return getTriggerTypeToString(triggerType_m);}
+    void cancel();
 
-	static std::string getTriggerTypeToString(TriggerType trigger);
-	static TriggerType parseTriggerType(const std::string &trigger);
+    static std::string getTriggerTypeToString(TriggerType trigger);
+    static TriggerType parseTriggerType(const std::string &trigger);
 
 private:
-	TriggerType triggerType_m;
+    TriggerType triggerType_m;
 };
 
 class Rule : public ChangeListener
@@ -560,26 +560,27 @@ public:
     virtual void onChange(Object* object);
 
     void evaluate();
+    bool isActive() const {return (flags_m & Active) != 0;}
     void setActive(bool active);
     void cancel();
     void initialize();
 
-	void executeActions(ActionList::TriggerType type)
-	{
-		executeActions(getActions(type));
-	}
+    void executeActions(ActionList::TriggerType type)
+    {
+        executeActions(getActions(type));
+    }
 
 protected:
-	Condition* getCondition() const { return condition_m; }
-	void setCondition(Condition* condition);
+    Condition* getCondition() const { return condition_m; }
+    void setCondition(Condition* condition);
 
 public:
-	void addAction(Action *action, ActionList::TriggerType trigger);
+    void addAction(Action *action, ActionList::TriggerType trigger);
 
 private:
-	void executeActions(ActionList &actions);
-	ActionList &getActions(ActionList::TriggerType trigger);
-	static void exportActions(ActionList &actions, ticpp::Element *pRuleConfig);
+    void executeActions(ActionList &actions);
+    ActionList &getActions(ActionList::TriggerType trigger);
+    static void exportActions(ActionList &actions, ticpp::Element *pRuleConfig);
 
 private:
     std::string id_m;

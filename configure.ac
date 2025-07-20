@@ -65,7 +65,6 @@ if test "$mysql" != "no"; then
     AC_DEFINE(HAVE_MYSQL,,[mysql is available])
 fi
 
-
 dnl #########################################################################
 dnl Check if using libesmtp
 dnl #########################################################################
@@ -74,7 +73,6 @@ AC_ARG_ENABLE([smtp],
 	AC_HELP_STRING([--enable-smtp], [build with libesmtp email support (default=auto)]),
 	,
 	enable_smtp=auto)
-
 if test x"$enable_smtp" != xno ; then
 	AC_CHECK_HEADER([libesmtp.h],
 		if test x"$enable_smtp" = xstatic ; then
@@ -90,28 +88,47 @@ if test x"$enable_smtp" != xno ; then
 	)
 fi
 
-AC_MSG_CHECKING(whether to use libesmtp)
+# first check for the new generation of libesmtp >= v1.1.0
+# this version provides a pkgconfig file named libesmtp-1.0.pc
+AC_MSG_CHECKING(whether to use libesmtp >= v1.1.x)
 if test x"$enable_smtp" != xno ; then
-	ESMTP_CFLAGS="`libesmtp-config --cflags`"
-	ESMTP_LIBS="`libesmtp-config --libs`"
-	if test x"`libesmtp-config --libs | grep pthread`" != x ; then
-		AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
-		AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
-	fi
-	CFLAGS="$ESMTP_CFLAGS $CFLAGS"
-	if test x"$enable_smtp" = xstatic ; then
-
-		LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
+	PKG_CHECK_MODULES(ESMTP, libesmtp-1.0 >= 1.1.0, [
+		AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
+		AC_SUBST(ESMTP_CFLAGS)
+		AC_SUBST(ESMTP_LIBS)
+		if test x"`echo $ESMTP_LIBS | grep pthread`" != x ; then
+			AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
+			AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
+		fi
+		found_esmtp=yes
+	],[
+		AC_MSG_RESULT([no])
+	])
+fi
+# if libesmtp >= 1.1.0 is not found: fallback to check for libesmtp < v1.1.0
+# which provides no pkgconfig file but the libesmtp-config utility
+if test x"$found_esmtp" = x ; then
+	AC_MSG_CHECKING(whether to use libesmtp v1.0.x)
+	if test x"$enable_smtp" != xno && test x`which libesmtp-config` != x ; then
+		ESMTP_CFLAGS="`libesmtp-config --cflags`"
+		ESMTP_LIBS="`libesmtp-config --libs`"
+		if test x"`libesmtp-config --libs | grep pthread`" != x ; then
+			AC_MSG_WARN([libesmtp is compiled with pthread support. This can conflict with pth. If you observe segmentation faults at startup, try to recompile with libesmtp support disabled])
+			AC_DEFINE([HAVE_LIBESMTP_PTHREAD], [1], [libesmtp is compiled with pthread support.])
+		fi
+		CFLAGS="$ESMTP_CFLAGS $CFLAGS"
+		if test x"$enable_smtp" = xstatic ; then
+			LIBS=`echo $ESMTP_LIBS $LIBS | sed 's/-lesmtp/-Xlinker -Bstatic -lesmtp -Xlinker -Bdynamic/'`
+		else
+			LIBS="$ESMTP_LIBS $LIBS"
+		fi
+		AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
+		AC_MSG_RESULT([yes])
 	else
-		LIBS="$ESMTP_LIBS $LIBS"
+		AC_MSG_RESULT([no])
 	fi
-	AC_DEFINE([HAVE_LIBESMTP], [1], [Build with libesmtp email support.])
-	AC_MSG_RESULT([yes])
-else
-	AC_MSG_RESULT([no])
 fi
 AM_CONDITIONAL([USE_B64], [test x"$enable_smtp" != xno])
-
 
 dnl #########################################################################
 dnl Check if using cppunit
@@ -132,25 +149,23 @@ if test x"$WITH_CPPUNIT" != xno; then
 
   if test x"$WITH_CPPUNIT" = xauto ; then
     PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
-      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_DEFINE([HAVE_CPPUNIT], [1], [CppUnit is available])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-      AM_CONDITIONAL(CPPUNIT, true)
+      found_cppunit=yes
     ],[
       AC_MSG_RESULT([no])
-      AM_CONDITIONAL(CPPUNIT, false)
     ])
   else
     PKG_CHECK_MODULES(CPPUNIT, $CPPUNITPC >= 1.9.6, [
-      AC_DEFINE([HAVE_CPPUNIT], [1], [cppunit])
+      AC_DEFINE([HAVE_CPPUNIT], [1], [CppUnit is available])
       AC_SUBST(CPPUNIT_CFLAGS)
       AC_SUBST(CPPUNIT_LIBS)
-      AM_CONDITIONAL([CPPUNIT], true)
-    ],[AM_CONDITIONAL([CPPUNIT], false)])
+      found_cppunit=yes
+    ])
   fi
-else
-  AM_CONDITIONAL([CPPUNIT], false)
 fi
+AM_CONDITIONAL([CPPUNIT], [test x"$found_cppunit" = xyes])
 
 dnl #########################################################################
 dnl Check if using log4cpp
@@ -172,7 +187,7 @@ if test x"$WITH_LOG4CPP" != xno; then
 
   if test x"$WITH_LOG4CPP" = xauto ; then
     PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
-      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_DEFINE([HAVE_LOG4CPP], [1], [Log4cpp is available])
       AC_SUBST(LOG4CPP_CFLAGS)
       AC_SUBST(LOG4CPP_LIBS)
     ],[
@@ -180,7 +195,7 @@ if test x"$WITH_LOG4CPP" != xno; then
     ])
   else
     PKG_CHECK_MODULES(LOG4CPP, $LOG4CPPPC >= 1.0, [
-      AC_DEFINE([HAVE_LOG4CPP], [1], [liblog4cpp])
+      AC_DEFINE([HAVE_LOG4CPP], [1], [Log4cpp is available])
       AC_SUBST(LOG4CPP_CFLAGS)
       AC_SUBST(LOG4CPP_LIBS)
     ])
@@ -219,6 +234,45 @@ if test x"$WITH_LUA" != xno ; then
       AC_MSG_RESULT([no])
     ])
   ])
+fi
+
+dnl #########################################################################
+dnl Check if using jsoncpp
+dnl #########################################################################
+
+AC_ARG_WITH(jsoncpp, AC_HELP_STRING([--with-jsoncpp],[Enable JSONCPP for InfluxDB persistence]),
+[WITH_JSONCPP=$withval],[WITH_JSONCPP=auto])
+
+if test x"$WITH_JSONCPP" != xno; then
+  # try pkgconfig
+  if test x"$WITH_JSONCPP" = xyes ; then
+    JSONCPPPC=jsoncpp
+  elif test x"$WITH_JSONCPP" = xauto ; then
+    JSONCPPPC=jsoncpp
+  fi
+
+  if test x"$WITH_JSONCPP" = xauto ; then
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
+      AC_SUBST(JSONCPP_CFLAGS)
+      AC_SUBST(JSONCPP_LIBS)
+      found_jsoncpp=yes
+    ],[
+      AC_MSG_RESULT([no])
+    ])
+  else
+    PKG_CHECK_MODULES(JSONCPP, $JSONCPPPC >= 1.7.2, [
+      AC_SUBST(JSONCPP_CFLAGS)
+      AC_SUBST(JSONCPP_LIBS)
+      found_jsoncpp=yes
+    ])
+  fi
+fi
+AM_CONDITIONAL([JSONCPP], [test x"$found_jsoncpp" = xyes])
+
+if test x"$found_jsoncpp" = xyes ; then
+  if test $libcurl_cv_lib_curl_usable = yes ; then
+     AC_DEFINE([SUPPORT_INFLUXDB], [1], [Support InfluxDB if both libcurl and jsoncpp are available])
+  fi
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.

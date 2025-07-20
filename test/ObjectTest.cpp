@@ -105,6 +105,7 @@ class ObjectTest : public CppUnit::TestFixture, public ChangeListener
     CPPUNIT_TEST( testStringPersist );
     CPPUNIT_TEST( testRGBWObject );
     CPPUNIT_TEST( testRGBWObjectWrite );
+    CPPUNIT_TEST( testRGBWPersist );
 //    CPPUNIT_TEST(  );
 //    CPPUNIT_TEST(  );
 
@@ -268,7 +269,7 @@ public:
         Services::instance()->importXml(&pSvcConfig);
 
         ticpp::Element pConfig;
-        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("id", "test_sw1");
         pConfig.SetAttribute("init", "persist");
 
         Object *orig = Object::create(&pConfig);
@@ -277,6 +278,7 @@ public:
 
         Object *res = Object::create(&pConfig);
         CPPUNIT_ASSERT(res->getValue() == "on");
+
         res->setValue("off");
         delete res;
 
@@ -284,7 +286,6 @@ public:
         CPPUNIT_ASSERT(res2->getValue() == "off");
         delete res2;
     }
-
 
     void testSwitchCtrlObject()
     {
@@ -446,7 +447,7 @@ public:
         Services::instance()->importXml(&pSvcConfig);
 
         ticpp::Element pConfig;
-        pConfig.SetAttribute("id", "test_sw");
+        pConfig.SetAttribute("id", "test_sw2");
         pConfig.SetAttribute("type", "2.001");
         pConfig.SetAttribute("init", "persist");
 
@@ -3444,7 +3445,6 @@ public:
 
     void testRGBWObjectWrite()
     {
-
         RGBWObject r1;
         r1.setValue("00000000");
         r1.addChangeListener(this);
@@ -3469,6 +3469,34 @@ public:
         CPPUNIT_ASSERT(isOnChangeCalled_m == true);
     }
 
+    void testRGBWPersist()
+    {
+        cleanTestDir();
+        ticpp::Element pSvcConfig("services");
+        ticpp::Element pPersistenceConfig("persistence");
+        pPersistenceConfig.SetAttribute("type", "file");
+        pPersistenceConfig.SetAttribute("path", "/tmp/linknx_unittest");
+        pSvcConfig.LinkEndChild(&pPersistenceConfig);
+        Services::instance()->importXml(&pSvcConfig);
+
+        ticpp::Element pConfig;
+        pConfig.SetAttribute("id", "test_rgbw");
+        pConfig.SetAttribute("type", "251.600");
+        pConfig.SetAttribute("init", "persist");
+
+        Object *orig = Object::create(&pConfig);
+        orig->setValue("fedcba98");
+        delete orig;
+
+        Object *res = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res->getValue() == "fedcba98");
+        res->setValue("00000000");
+        delete res;
+
+        Object *res2 = Object::create(&pConfig);
+        CPPUNIT_ASSERT(res2->getValue() == "00000000");
+        delete res2;
+    }
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( ObjectTest );

@@ -180,7 +180,7 @@ if test ".$with_pth" != .no; then
                               sed -e 's/^.*\([0-9]\.[0-9]*[ab.][0-9]*\).*$/\1/'`
                 if test ".$_pth_version" = .; then
                     _pth_version=`grep '^#define PTH_VERSION_STR' $_file |\
-                                  sed -e 's;^#define[ 	]*PTH_VERSION_STR[ 	]*"\([0-9]*\.[0-9]*[.ab][0-9]*\)[ 	].*$;\1;'`
+                                  sed -e 's;^#define[ 	]*PTH_VERSION_STR[ 	]*"\([0-9]*\.[0-9]*[.ab][0-9]*\).*$;\1;'`
                 fi
                 _pth_cppflags="-I$_dir"
                 _pth_cflags="-I$_dir"

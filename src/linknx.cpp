@@ -68,6 +68,9 @@ const char *argp_program_version = PACKAGE_STRING
 #ifdef HAVE_MYSQL
     "\n- MySQL support enabled"
 #endif
+#ifdef SUPPORT_INFLUXDB
+    "\n- InfluxDB support enabled"
+#endif
 #ifdef HAVE_LUA
     "\n- LUA scripting support enabled"
 #endif
