@@ -1,8 +1,8 @@
-AC_PREREQ(2.60)
-AC_INIT(linknx, 0.0.1.38, cyrille.github@youplaboum.fr)
+AC_PREREQ([2.71])
+AC_INIT([linknx],[0.0.1.38],[cyrille.github@youplaboum.fr])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/linknx.cpp])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 PKG_CONFIG=`which pkg-config`
 
@@ -19,7 +19,15 @@ AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
 LIBCURL_CHECK_CONFIG([yes], [7.14.0])
 
 # Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS([fcntl.h stddef.h stdlib.h unistd.h])
 
 AC_CHECK_MEMBER(struct tm.tm_gmtoff,
@@ -41,8 +49,7 @@ else
 fi
 
 dnl check for mysql
-AC_ARG_WITH(mysql, AC_HELP_STRING([--with-mysql@<:@=DIR@>:@],
-            [Include support for mysql]),
+AC_ARG_WITH(mysql, AS_HELP_STRING([--with-mysql@<:@=DIR@>:@],[Include support for mysql]),
             mysql=$withval, mysql=yes)
 if test "$mysql" != "no"; then
     if test "$mysql" != "yes"; then
@@ -70,7 +77,7 @@ dnl Check if using libesmtp
 dnl #########################################################################
 
 AC_ARG_ENABLE([smtp],
-	AC_HELP_STRING([--enable-smtp], [build with libesmtp email support (default=auto)]),
+	AS_HELP_STRING([--enable-smtp],[build with libesmtp email support (default=auto)]),
 	,
 	enable_smtp=auto)
 if test x"$enable_smtp" != xno ; then
@@ -134,7 +141,7 @@ dnl #########################################################################
 dnl Check if using cppunit
 dnl #########################################################################
 
-AC_ARG_WITH(cppunit, AC_HELP_STRING([--with-cppunit],[Build CppUnit testbench for unit tests]),
+AC_ARG_WITH(cppunit, AS_HELP_STRING([--with-cppunit],[Build CppUnit testbench for unit tests]),
 [WITH_CPPUNIT=$withval],[WITH_CPPUNIT=auto])
 
 if test x"$WITH_CPPUNIT" != xno; then
@@ -172,7 +179,7 @@ dnl Check if using log4cpp
 dnl #########################################################################
 
 AC_PATH_PROG(LOG4CPP_CONFIG,log4cpp-config)
-AC_ARG_WITH(log4cpp, AC_HELP_STRING([--with-log4cpp],[Advanced logging with Log4cpp]),
+AC_ARG_WITH(log4cpp, AS_HELP_STRING([--with-log4cpp],[Advanced logging with Log4cpp]),
 [WITH_LOG4CPP=$withval],[WITH_LOG4CPP=auto])
 
 if test x"$WITH_LOG4CPP" != xno; then
@@ -206,7 +213,7 @@ dnl #########################################################################
 dnl Check if using lua
 dnl #########################################################################
 
-AC_ARG_WITH(lua, AC_HELP_STRING([--with-lua],[Enable lua scripting engine]),
+AC_ARG_WITH(lua, AS_HELP_STRING([--with-lua],[Enable lua scripting engine]),
 [WITH_LUA=$withval],[WITH_LUA=auto])
 
 if test x"$WITH_LUA" != xno ; then
@@ -240,7 +247,7 @@ dnl #########################################################################
 dnl Check if using jsoncpp
 dnl #########################################################################
 
-AC_ARG_WITH(jsoncpp, AC_HELP_STRING([--with-jsoncpp],[Enable JSONCPP for InfluxDB persistence]),
+AC_ARG_WITH(jsoncpp, AS_HELP_STRING([--with-jsoncpp],[Enable JSONCPP for InfluxDB persistence]),
 [WITH_JSONCPP=$withval],[WITH_JSONCPP=auto])
 
 if test x"$WITH_JSONCPP" != xno; then
@@ -288,18 +295,28 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 # Checks for library functions.
 AC_FUNC_FORK
-AC_TYPE_SIGNAL
+m4_warn([obsolete],
+[your code may safely assume C89 semantics that RETSIGTYPE is void.
+Remove this warning and the `AC_CACHE_CHECK' when you adjust the code.])dnl
+AC_CACHE_CHECK([return type of signal handlers],[ac_cv_type_signal],[AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([#include <sys/types.h>
+#include <signal.h>
+],
+		 [return *(signal (0, 0)) (0) == 1;])],
+		   [ac_cv_type_signal=int],
+		   [ac_cv_type_signal=void])])
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[$ac_cv_type_signal],[Define as the return type of signal handlers
+		    (`int' or `void').])
+
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([dup2 memmove memset strchr])
 
 AC_DEFINE(TIXML_USE_TICPP, [1], [Use TICPP interface])
 
 AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-AC_TRY_COMPILE([#include <sstream>
-#include <stdint.h>],
-[int64_t value; std::istringstream val("1234"); val >> value;],
-AC_DEFINE(STL_STREAM_SUPPORT_INT64, [1], [STL streams has support for 64 bit integer]),)
+AC_LANG([C++])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sstream>
+#include <stdint.h>]], [[int64_t value; std::istringstream val("1234"); val >> value;]])],[AC_DEFINE(STL_STREAM_SUPPORT_INT64, 1, STL streams has support for 64 bit integer)],[])
 AC_LANG_RESTORE
 
 
