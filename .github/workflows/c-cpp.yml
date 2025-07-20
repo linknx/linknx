@@ -51,7 +51,7 @@ jobs:
 
       # Store pthsem binaries for later use by linknx build.
       # The artifact is named after the version of gcc to make it unique.
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v2
       with:
           name: pthsem-gcc-${{ matrix.gcc-version }}
           path: /tmp/pthseminstalldir/**
@@ -90,7 +90,7 @@ jobs:
 
     steps:
       # Retrieve pthsem artifact and install it.
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v2
       with:
           name: pthsem-gcc-${{ matrix.gcc-version }}
           # This path must match the --with-pth option of configure
@@ -121,7 +121,7 @@ jobs:
       run: make check
     - name: make install
       run: sudo make install
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v2
       if: failure()
       with:
         name: test-suite.log
