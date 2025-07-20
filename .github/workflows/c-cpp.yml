@@ -90,7 +90,7 @@ jobs:
 
     steps:
       # Retrieve pthsem artifact and install it.
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v4
       with:
           name: pthsem-gcc-${{ matrix.gcc-version }}
           # This path must match the --with-pth option of configure
