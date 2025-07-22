@@ -2923,7 +2923,7 @@ std::string StringObjectValue::transcode(const std::string &source, const std::s
 	// Ask iconv to use replacement chars that look like the original ones for characters
 	// that are unavailable in target encoding.
 	iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
-	char cSource[source.size()];
+	char cSource[source.size()+1];
 	memcpy(cSource, source.c_str(), source.size() + 1);
 	ICONV_CONST char *sourceStart = &cSource[0];
 	size_t sourceLength = source.size();
