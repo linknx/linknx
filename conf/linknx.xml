@@ -2,6 +2,7 @@
 <config>
     <services>
         <knxconnection url="ip:127.0.0.1" />
+        <contain url="ip:127.0.0.1" port="1883" username="mqtt" password="secret" prefix="knx" />
         <xmlserver type="inet" port="1028"/>
         <exceptiondays>
             <date day="1" month="1" />

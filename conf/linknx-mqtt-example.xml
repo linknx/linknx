@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<!-- LinKNX configuration with MQTT integration example -->
+<config>
+    <services>
+        <!-- KNX/EIB connection -->
+        <knxconnection url="ip:127.0.0.1:6720"/>
+
+        <!-- MQTT broker connection for publishing KNX telegrams -->
+        <mqttconnection
+            url="localhost"
+            port="1883"
+            username="linknx"
+            password="mqtt_password"
+            prefix="knx"/>
+
+        <!-- XML control interface -->
+        <xmlserver type="inet" port="1028"/>
+
+        <!-- Optional: Email notifications -->
+        <emailserver type="smtp" host="smtp.example.com:25" from="linknx@example.com"/>
+
+        <!-- Optional: Persistent storage -->
+        <persistence type="file" path="/var/lib/linknx/persist"/>
+
+        <!-- Location for sunrise/sunset calculations -->
+        <location lon="6.1" lat="50.5"/>
+    </services>
+
+    <objects>
+        <!-- Lighting objects -->
+        <object id="light_kitchen" gad="1/1/11" type="1.001">Kitchen Light</object>
+        <object id="light_living" gad="1/1/12" type="1.001">Living Room Light</object>
+        <object id="dimmer_bedroom" gad="1/1/20" type="5.001">Bedroom Dimmer</object>
+
+        <!-- Temperature sensors -->
+        <object id="temp_kitchen" gad="1/2/10" type="9.001" init="request">Kitchen Temperature</object>
+        <object id="temp_living" gad="1/2/11" type="9.001" init="request">Living Room Temperature</object>
+        <object id="temp_outdoor" gad="1/2/20" type="9.001" init="request">Outdoor Temperature</object>
+
+        <!-- Switches and sensors -->
+        <object id="motion_hallway" gad="1/3/1" type="1.001">Hallway Motion Sensor</object>
+        <object id="window_kitchen" gad="1/3/10" type="1.001">Kitchen Window Contact</object>
+
+        <!-- Heating control -->
+        <object id="heating_mode" gad="1/4/1" type="1.001">Heating Mode</object>
+        <object id="setpoint_living" gad="1/4/10" type="9.001">Living Room Setpoint</object>
+    </objects>
+
+    <rules>
+        <!-- Example rule: Turn on kitchen light when motion detected -->
+        <rule id="motion_light_kitchen" init="true">
+            <condition type="object" id="motion_hallway" value="on"/>
+            <actionlist type="on-true">
+                <action type="set-value" id="light_kitchen" value="on"/>
+            </actionlist>
+            <actionlist type="on-false">
+                <action type="set-value" id="light_kitchen" value="off" delay="5m"/>
+            </actionlist>
+        </rule>
+    </rules>
+</config>

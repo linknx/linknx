@@ -46,12 +46,27 @@ void Services::start()
 {
     timers_m.startManager();
     knxConnection_m.startConnection();
+#ifdef HAVE_MQTT
+    if (!mqttConnection_m.isVoid())
+    {
+        mqttConnection_m.startConnection();
+        // Register MQTT connection as listener for KNX telegrams
+        knxConnection_m.addTelegramListener(&mqttConnection_m);
+    }
+#endif
 }
 
 void Services::stop()
 {
     infoStream("Services") << "Stopping services" << endlog;
     timers_m.stopManager();
+#ifdef HAVE_MQTT
+    if (!mqttConnection_m.isVoid())
+    {
+        knxConnection_m.removeTelegramListener(&mqttConnection_m);
+        mqttConnection_m.stopConnection();
+    }
+#endif
     knxConnection_m.stopConnection();
 }
 
@@ -80,6 +95,11 @@ void Services::importXml(ticpp::Element* pConfig)
     ticpp::Element* pKnxConnection = pConfig->FirstChildElement("knxconnection", false);
     if (pKnxConnection)
         knxConnection_m.importXml(pKnxConnection);
+#ifdef HAVE_MQTT
+    ticpp::Element* pMqttConnection = pConfig->FirstChildElement("mqttconnection", false);
+    if (pMqttConnection)
+        mqttConnection_m.importXml(pMqttConnection);
+#endif
     ticpp::Element* pExceptionDays = pConfig->FirstChildElement("exceptiondays", false);
     if (pExceptionDays)
         exceptionDays_m.importXml(pExceptionDays);
@@ -118,6 +138,15 @@ void Services::exportXml(ticpp::Element* pConfig)
     ticpp::Element pKnxConnection("knxconnection");
     knxConnection_m.exportXml(&pKnxConnection);
     pConfig->LinkEndChild(&pKnxConnection);
+
+#ifdef HAVE_MQTT
+    if (!mqttConnection_m.isVoid())
+    {
+        ticpp::Element pMqttConnection("mqttconnection");
+        mqttConnection_m.exportXml(&pMqttConnection);
+        pConfig->LinkEndChild(&pMqttConnection);
+    }
+#endif
 
     ticpp::Element pExceptionDays("exceptiondays");
     exceptionDays_m.exportXml(&pExceptionDays);

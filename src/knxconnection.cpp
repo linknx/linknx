@@ -27,7 +27,7 @@
 
 Logger& KnxConnection::logger_m(Logger::getInstance("KnxConnection"));
 
-KnxConnection::KnxConnection() : con_m(0), isRunning_m(false), stop_m(0), listener_m(0), isReady_m(false)
+KnxConnection::KnxConnection() : con_m(0), isRunning_m(false), stop_m(0), isReady_m(false)
 {}
 
 KnxConnection::~KnxConnection()
@@ -53,17 +53,20 @@ void KnxConnection::exportXml(ticpp::Element* pConfig)
 
 void KnxConnection::addTelegramListener(TelegramListener *listener)
 {
-    if (listener_m)
-        throw ticpp::Exception("KnxConnection: TelegramListener already registered");
-    listener_m = listener;
+    listeners_m.push_back(listener);
 }
 
 bool KnxConnection::removeTelegramListener(TelegramListener *listener)
 {
-    if (listener_m != listener)
-        return false;
-    listener_m = 0;
-    return true;
+    for (std::list<TelegramListener*>::iterator it = listeners_m.begin(); it != listeners_m.end(); ++it)
+    {
+        if (*it == listener)
+        {
+            listeners_m.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 void KnxConnection::write(eibaddr_t gad, uint8_t* buf, int len)
@@ -206,18 +209,19 @@ int KnxConnection::checkInput(pth_event_t ev)
             }
             dbg << std::dec << endlog;
         }
-        if (listener_m)
+        for (std::list<TelegramListener*>::iterator it = listeners_m.begin(); it != listeners_m.end(); ++it)
         {
+            TelegramListener* listener = *it;
             switch (buf[1] & 0xC0)
             {
             case 0x00:
-                listener_m->onRead(src, dest, buf, len);
+                listener->onRead(src, dest, buf, len);
                 break;
             case 0x40:
-                listener_m->onResponse(src, dest, buf, len);
+                listener->onResponse(src, dest, buf, len);
                 break;
             case 0x80:
-                listener_m->onWrite(src, dest, buf, len);
+                listener->onWrite(src, dest, buf, len);
                 break;
             }
         }

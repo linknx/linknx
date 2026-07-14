@@ -31,6 +31,10 @@
 #include "persistentstorage.h"
 #include "suncalc.h"
 
+#ifdef HAVE_MQTT
+#include "mqttconnection.h"
+#endif
+
 
 class Services
 {
@@ -55,6 +59,9 @@ public:
     ExceptionDays* getExceptionDays() { return &exceptionDays_m; };
     PersistentStorage* getPersistentStorage() { return persistentStorage_m; };
     LocationInfo* getLocationInfo() { return &locationInfo_m; };
+#ifdef HAVE_MQTT
+    MqttConnection* getMqttConnection() { return &mqttConnection_m; };
+#endif
     void setConfigFile(const char* filename) { if (filename) configFile_m = filename; };
     std::string getConfigFile() { return configFile_m; };
     void createDefault();
@@ -71,9 +78,12 @@ private:
     SmsGateway smsGateway_m;
     EmailGateway emailGateway_m;
     KnxConnection knxConnection_m;
+#ifdef HAVE_MQTT
+    MqttConnection mqttConnection_m;
+#endif
     ExceptionDays exceptionDays_m;
     LocationInfo locationInfo_m;
-    
+
     std::string configFile_m;
 };
 

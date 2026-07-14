@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "threads.h"
 #include <string>
+#include <list>
 #include "ticpp.h"
 #include "eibclient.h"
 
@@ -65,7 +66,7 @@ private:
     bool isRunning_m;
     pth_event_t stop_m;
     std::string url_m;
-    TelegramListener *listener_m;
+    std::list<TelegramListener*> listeners_m;
     bool isReady_m;
 
     void Run (pth_sem_t * stop);

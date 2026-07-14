@@ -383,6 +383,16 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="mqttconnection">
+    <xs:complexType>
+      <xs:attribute name="url" type="xs:string" use="required"/>
+      <xs:attribute name="port" type="xs:unsignedInt" use="required"/>
+      <xs:attribute name="username" type="xs:string" use="required"/>
+      <xs:attribute name="password" type="xs:string" use="required"/>
+      <xs:attribute name="prefix" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
   <xs:element name="listener">
     <xs:complexType>
       <xs:attribute name="gad" type="xs:string" use="required"/>
@@ -569,6 +579,7 @@
     <xs:complexType>
       <xs:all>
         <xs:element ref="knxconnection" minOccurs="0"/>
+        <xs:element ref="mqttconnection" minOccurs="0"/>
         <xs:element ref="xmlserver" minOccurs="0"/>
         <xs:element ref="emailserver" minOccurs="0"/>
         <xs:element ref="smsgateway" minOccurs="0"/>
