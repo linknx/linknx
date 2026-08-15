@@ -279,6 +279,7 @@ if test ".$with_pth" != .no; then
         cross_compile=no
         m4_define(_code1, [dnl
         #include <stdio.h>
+		#include <stdlib.h>
         #include <pthsem.h>
         ])
         m4_define(_code2, [dnl
